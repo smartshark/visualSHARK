@@ -280,6 +280,12 @@ generated during execution of the create_commit_graph command and returns it for
 
 </dd></dl>
 
+<dl class="class">
+<dt id="visualSHARK.views.VSJobViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">VSJobViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#VSJobViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.VSJobViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Job information.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-visualSHARK.models">
 <span id="visualshark-models"></span><h2>visualSHARK.models<a class="headerlink" href="#module-visualSHARK.models" title="Permalink to this headline">¶</a></h2>
@@ -300,6 +306,32 @@ generated during execution of the create_commit_graph command and returns it for
 <dt id="visualSHARK.models.ProjectStats">
 <em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">ProjectStats</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#ProjectStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.ProjectStats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contains project stats per day.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.models.UserProfile">
+<em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">UserProfile</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#UserProfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.UserProfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fow now the userprofile only holds the channel.</p>
+<p>This can be extended to hold more information in the future, e.g.,
+customizable dashboards.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.models.VSJob">
+<em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">VSJob</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#VSJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.VSJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Job with configuration and results.</p>
+<dl class="staticmethod">
+<dt id="visualSHARK.models.VSJob.job_created">
+<em class="property">static </em><code class="descname">job_created</code><span class="sig-paren">(</span><em>sender</em>, <em>instance</em>, <em>created</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#VSJob.job_created"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.VSJob.job_created" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trigger the submission to the worker queue.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.models.VSJobType">
+<em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">VSJobType</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#VSJobType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.VSJobType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possible types of jobs.</p>
 </dd></dl>
 
 </div>

@@ -95,6 +95,8 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../deployment.html">Deployment</a></li>
 </ul>
 
             
@@ -162,17 +164,21 @@
 <span></span><span class="c1">##!/usr/bin/env python</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
 
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="k">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="k">import</span> <span class="n">post_save</span>
-<span class="kn">from</span> <span class="nn">django.db</span> <span class="k">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="k">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span>
 <span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="k">import</span> <span class="n">receiver</span>
-<span class="c1"># from django.core.files.storage import FileSystemStorage</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="k">import</span> <span class="n">User</span>
 
 <span class="kn">from</span> <span class="nn">rest_framework.authtoken.models</span> <span class="k">import</span> <span class="n">Token</span>
 
 <span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="n">connect</span>
 <span class="kn">from</span> <span class="nn">pycoshark.mongomodels</span> <span class="k">import</span> <span class="n">Project</span><span class="p">,</span> <span class="n">VCSSystem</span><span class="p">,</span> <span class="n">Commit</span><span class="p">,</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">CodeEntityState</span><span class="p">,</span> <span class="n">FileAction</span><span class="p">,</span> <span class="n">People</span><span class="p">,</span> <span class="n">IssueSystem</span><span class="p">,</span> <span class="n">Issue</span><span class="p">,</span> <span class="n">Message</span><span class="p">,</span> <span class="n">MailingList</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">MynbouData</span>
+
+<span class="kn">from</span> <span class="nn">visualSHARK.util.rmq</span> <span class="k">import</span> <span class="n">send_to_queue</span><span class="p">,</span> <span class="n">send_to_user</span>
 
 
 <span class="c1"># this is just because we do not have access to reindex the database and mongodb does not check for indexes but just creates them and if they are there does nothing</span>
@@ -211,15 +217,32 @@
 <span class="n">MynbouData</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">MynbouData</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="UserProfile"><a class="viewcode-back" href="../../api.html#visualSHARK.models.UserProfile">[docs]</a><span class="k">class</span> <span class="nc">UserProfile</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fow now the userprofile only holds the channel.</span>
+
+<span class="sd">    This can be extended to hold more information in the future, e.g.,</span>
+<span class="sd">    customizable dashboards. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s1">&#39;profile&#39;</span><span class="p">)</span>
+    <span class="n">channel</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span></div>
+
+
 <span class="c1"># this is just for the token authentication for the rest-api</span>
 <span class="nd">@receiver</span><span class="p">(</span><span class="n">post_save</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">create_auth_token</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">created</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+        <span class="c1"># create Token for the rest framework</span>
         <span class="n">Token</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">instance</span><span class="p">)</span>
+        <span class="c1"># create user profile for channel</span>
+        <span class="n">UserProfile</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">instance</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ProjectStats"><a class="viewcode-back" href="../../api.html#visualSHARK.models.ProjectStats">[docs]</a><span class="k">class</span> <span class="nc">ProjectStats</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Contains project stats per day.&quot;&quot;&quot;</span>
+
     <span class="n">project_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
     <span class="n">stats_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">number_commits</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -254,6 +277,50 @@
     <span class="n">approach</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
     <span class="n">description</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="VSJobType"><a class="viewcode-back" href="../../api.html#visualSHARK.models.VSJobType">[docs]</a><span class="k">class</span> <span class="nc">VSJobType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Possible types of jobs.&quot;&quot;&quot;</span>
+
+    <span class="n">ident</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ident</span></div>
+
+
+<div class="viewcode-block" id="VSJob"><a class="viewcode-back" href="../../api.html#visualSHARK.models.VSJob">[docs]</a><span class="k">class</span> <span class="nc">VSJob</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Job with configuration and results.&quot;&quot;&quot;</span>
+
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">executed_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">requested_by</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">)</span>
+    <span class="n">job_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">VSJobType</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>  <span class="c1"># for now jsonized data (username, etc.)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">error_count</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># number of tries for execution (error count)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">ident</span>
+
+    <span class="k">def</span> <span class="nf">requeue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">send_to_queue</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">QUEUE</span><span class="p">[</span><span class="s1">&#39;job_queue&#39;</span><span class="p">],</span> <span class="p">{</span><span class="s1">&#39;job_type&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">ident</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+        <span class="n">send_to_user</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">requested_by</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> job re-queued&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="s1">&#39;job_type&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">ident</span><span class="p">,</span> <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+<div class="viewcode-block" id="VSJob.job_created"><a class="viewcode-back" href="../../api.html#visualSHARK.models.VSJob.job_created">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="nd">@receiver</span><span class="p">(</span><span class="n">post_save</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="s1">&#39;visualSHARK.VSJob&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">job_created</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">created</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Trigger the submission to the worker queue.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+            <span class="c1"># changes are saved but not committed to the database before the request finishes, so we hook on_commit with a callback</span>
+            <span class="k">def</span> <span class="nf">callme</span><span class="p">():</span>
+                <span class="n">send_to_queue</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">QUEUE</span><span class="p">[</span><span class="s1">&#39;job_queue&#39;</span><span class="p">],</span> <span class="p">{</span><span class="s1">&#39;job_type&#39;</span><span class="p">:</span> <span class="n">instance</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">ident</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+                <span class="n">send_to_user</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">requested_by</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> job queued&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="s1">&#39;job_type&#39;</span><span class="p">:</span> <span class="n">instance</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">ident</span><span class="p">,</span> <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+            <span class="n">transaction</span><span class="o">.</span><span class="n">on_commit</span><span class="p">(</span><span class="n">callme</span><span class="p">)</span>
+
+        <span class="c1"># on save of the results we can also pass the result to the user</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">created</span><span class="p">:</span>
+            <span class="n">send_to_user</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">requested_by</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> job finished&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="s1">&#39;job_type&#39;</span><span class="p">:</span> <span class="n">instance</span><span class="o">.</span><span class="n">job_type</span><span class="o">.</span><span class="n">ident</span><span class="p">,</span> <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="n">instance</span><span class="o">.</span><span class="n">error_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">})</span></div></div>
 </pre></div>
 
            </div>

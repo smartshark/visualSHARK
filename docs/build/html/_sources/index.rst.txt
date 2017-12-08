@@ -7,6 +7,14 @@ Welcome to visualSHARK's documentation!
 =======================================
 
 *visualSHARK* is a visualization tool for SmartSHARK.
+It provides a ReSTful API as a backend overlay over SmartSHARKs MongoDB.
+The fronted consists of VueJS SPA.
+
+:doc:`installation`
+    Installation of **visualSHARK**
+
+:doc:`deployment`
+   Deployment information (server config) for **visualSHARK**
 
 :doc:`api`
    The complete API documentation of **visualSHARK**
@@ -16,6 +24,8 @@ Welcome to visualSHARK's documentation!
    :caption: Contents:
 
    api
+   installation
+   deployment
 
 Indices and tables
 ==================

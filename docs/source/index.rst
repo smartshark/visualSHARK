@@ -10,6 +10,11 @@ Welcome to visualSHARK's documentation!
 It provides a ReSTful API as a backend overlay over SmartSHARKs MongoDB.
 The fronted consists of VueJS SPA.
 
+:doc:`installation`
+    Installation of **visualSHARK**
+
+:doc:`deployment`
+   Deployment information (server config) for **visualSHARK**
 
 :doc:`api`
    The complete API documentation of **visualSHARK**
@@ -19,6 +24,8 @@ The fronted consists of VueJS SPA.
    :caption: Contents:
 
    api
+   installation
+   deployment
 
 Indices and tables
 ==================

@@ -95,6 +95,8 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../deployment.html">Deployment</a></li>
 </ul>
 
             
@@ -172,22 +174,24 @@
 
 <span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="k">import</span> <span class="n">authenticate</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="k">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.http</span> <span class="k">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="k">import</span> <span class="n">HttpResponse</span><span class="p">,</span> <span class="n">JsonResponse</span>
 
 <span class="kn">from</span> <span class="nn">rest_framework.views</span> <span class="k">import</span> <span class="n">APIView</span>
 <span class="kn">from</span> <span class="nn">rest_framework</span> <span class="k">import</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">rest_framework</span> <span class="k">import</span> <span class="n">viewsets</span> <span class="k">as</span> <span class="n">rviewsets</span>
 <span class="kn">from</span> <span class="nn">rest_framework.response</span> <span class="k">import</span> <span class="n">Response</span>
 <span class="kn">from</span> <span class="nn">rest_framework_mongoengine</span> <span class="k">import</span> <span class="n">viewsets</span>
-<span class="kn">from</span> <span class="nn">rest_framework.decorators</span> <span class="k">import</span> <span class="n">detail_route</span>
+<span class="kn">from</span> <span class="nn">rest_framework.decorators</span> <span class="k">import</span> <span class="n">detail_route</span><span class="p">,</span> <span class="n">list_route</span>
+<span class="kn">from</span> <span class="nn">rest_framework</span> <span class="k">import</span> <span class="n">filters</span>
+<span class="kn">import</span> <span class="nn">django_filters</span>
 
 <span class="kn">from</span> <span class="nn">mongoengine.queryset.visitor</span> <span class="k">import</span> <span class="n">Q</span>
 
 <span class="kn">from</span> <span class="nn">.models</span> <span class="k">import</span> <span class="n">Commit</span><span class="p">,</span> <span class="n">Project</span><span class="p">,</span> <span class="n">VCSSystem</span><span class="p">,</span> <span class="n">IssueSystem</span><span class="p">,</span> <span class="n">Token</span><span class="p">,</span> <span class="n">People</span><span class="p">,</span> <span class="n">FileAction</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">CodeEntityState</span><span class="p">,</span> <span class="n">Issue</span><span class="p">,</span> <span class="n">Message</span><span class="p">,</span> <span class="n">MailingList</span><span class="p">,</span> <span class="n">MynbouData</span>
-<span class="kn">from</span> <span class="nn">.models</span> <span class="k">import</span> <span class="n">CommitGraph</span><span class="p">,</span> <span class="n">CommitLabelField</span><span class="p">,</span> <span class="n">ProjectStats</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="k">import</span> <span class="n">CommitGraph</span><span class="p">,</span> <span class="n">CommitLabelField</span><span class="p">,</span> <span class="n">ProjectStats</span><span class="p">,</span> <span class="n">VSJob</span><span class="p">,</span> <span class="n">VSJobType</span>
 
 <span class="kn">from</span> <span class="nn">.serializers</span> <span class="k">import</span> <span class="n">CommitSerializer</span><span class="p">,</span> <span class="n">ProjectSerializer</span><span class="p">,</span> <span class="n">VcsSerializer</span><span class="p">,</span> <span class="n">IssueSystemSerializer</span><span class="p">,</span> <span class="n">AuthSerializer</span><span class="p">,</span> <span class="n">SingleCommitSerializer</span><span class="p">,</span> <span class="n">FileActionSerializer</span><span class="p">,</span> <span class="n">TagSerializer</span><span class="p">,</span> <span class="n">CodeEntityStateSerializer</span><span class="p">,</span> <span class="n">IssueSerializer</span><span class="p">,</span> <span class="n">PeopleSerializer</span><span class="p">,</span> <span class="n">MessageSerializer</span><span class="p">,</span> <span class="n">SingleIssueSerializer</span><span class="p">,</span> <span class="n">MailingListSerializer</span><span class="p">,</span> <span class="n">FileSerializer</span>
-<span class="kn">from</span> <span class="nn">.serializers</span> <span class="k">import</span> <span class="n">CommitGraphSerializer</span><span class="p">,</span> <span class="n">CommitLabelFieldSerializer</span><span class="p">,</span> <span class="n">ProductSerializer</span>
+<span class="kn">from</span> <span class="nn">.serializers</span> <span class="k">import</span> <span class="n">CommitGraphSerializer</span><span class="p">,</span> <span class="n">CommitLabelFieldSerializer</span><span class="p">,</span> <span class="n">ProductSerializer</span><span class="p">,</span> <span class="n">SingleMessageSerializer</span><span class="p">,</span> <span class="n">VSJobSerializer</span>
 
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="k">import</span> <span class="n">FieldDoesNotExist</span>
 <span class="kn">from</span> <span class="nn">django.db.models.fields.reverse_related</span> <span class="k">import</span> <span class="n">ForeignObjectRel</span><span class="p">,</span> <span class="n">OneToOneRel</span>
@@ -195,6 +199,7 @@
 <span class="kn">from</span> <span class="nn">rest_framework.filters</span> <span class="k">import</span> <span class="n">OrderingFilter</span>
 
 <span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">prediction</span>
+<span class="kn">from</span> <span class="nn">.util.helper</span> <span class="k">import</span> <span class="n">tag_filter</span><span class="p">,</span> <span class="n">OntdekBaan3</span> <span class="k">as</span> <span class="n">OntdekBaan</span>
 
 <span class="c1"># from visibleSHARK.util.label import LabelPath</span>
 <span class="c1"># from mynbou.label import LabelPath</span>
@@ -255,7 +260,10 @@
 
         <span class="n">token</span> <span class="o">=</span> <span class="n">Token</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
         <span class="n">ass</span> <span class="o">=</span> <span class="n">AuthSerializer</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">ass</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">ass</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;is_superuser&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span>
+        <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">channel</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="MongoReadOnlyModelViewSet"><a class="viewcode-back" href="../../api.html#visualSHARK.views.MongoReadOnlyModelViewSet">[docs]</a><span class="k">class</span> <span class="nc">MongoReadOnlyModelViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ReadOnlyModelViewSet</span><span class="p">):</span>
@@ -494,9 +502,54 @@
     <span class="n">mongo_search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="s1">&#39;email&#39;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">MessageViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ReadOnlyModelViewSet</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MessageViewSet</span><span class="p">(</span><span class="n">MongoReadOnlyModelViewSet</span><span class="p">):</span>
     <span class="n">queryset</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
     <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">MessageSerializer</span>
+    <span class="n">filter_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;mailing_list_id&#39;</span><span class="p">,)</span>
+    <span class="n">ordering_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;subject&#39;</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">)</span>
+    <span class="n">mongo_search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;subject&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Handle special case for person search.&quot;&quot;&quot;</span>
+        <span class="n">qry</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
+        <span class="n">person_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;person_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">person_id</span><span class="p">:</span>
+            <span class="n">qry</span> <span class="o">=</span> <span class="n">qry</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Q</span><span class="p">(</span><span class="n">from_id</span><span class="o">=</span><span class="n">person_id</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">qry</span>
+
+    <span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add additional information the each message.&quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queryset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span>
+
+        <span class="n">recipients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_ids</span><span class="p">:</span>
+            <span class="n">recipients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">People</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">li</span><span class="p">))</span>
+
+        <span class="n">cc_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">cc_ids</span><span class="p">:</span>
+            <span class="n">cc_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">People</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">li</span><span class="p">))</span>
+
+        <span class="n">patches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
+            <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;patch&#39;</span><span class="p">:</span> <span class="n">li</span><span class="p">})</span>
+
+        <span class="n">reference_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">reference_ids</span><span class="p">:</span>
+            <span class="n">reference_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Message</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">li</span><span class="p">))</span>
+
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">()</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;sender&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;in_reply_to_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">in_reply_to_id</span><span class="p">:</span>
+            <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;in_reply_to_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">in_reply_to_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">from_id</span><span class="p">:</span>
+            <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;sender&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">People</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">from_id</span><span class="p">)</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;recipients&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">recipients</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;reference_ids&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference_ids</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;cc_ids&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cc_ids</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;patches&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">patches</span>
+        <span class="n">serializer</span> <span class="o">=</span> <span class="n">SingleMessageSerializer</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">CommitLabelFieldViewSet</span><span class="p">(</span><span class="n">rviewsets</span><span class="o">.</span><span class="n">ReadOnlyModelViewSet</span><span class="p">):</span>
@@ -582,10 +635,10 @@
         <span class="n">end_commit</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;end_commit&#39;</span><span class="p">]</span>
 
         <span class="n">nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="kn">import</span> <span class="nn">importlib</span>
-        <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;mynbouSHARK.path_approaches.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">approach</span><span class="p">))</span>
+        <span class="c1"># import importlib</span>
+        <span class="c1"># mod = importlib.import_module(&#39;mynbouSHARK.path_approaches.{}&#39;.format(approach))</span>
         <span class="k">if</span> <span class="n">approach</span> <span class="o">==</span> <span class="s1">&#39;commit_to_commit&#39;</span><span class="p">:</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">OntdekBaan</span><span class="p">(</span><span class="n">dg</span><span class="p">)</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">OntdekBaan</span><span class="p">(</span><span class="n">dg</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">get_all_paths</span><span class="p">(</span><span class="n">start_commit</span><span class="p">,</span> <span class="n">end_commit</span><span class="p">):</span>
                 <span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 
@@ -604,21 +657,23 @@
         <span class="n">dg</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">read_gpickle</span><span class="p">(</span><span class="n">cg</span><span class="o">.</span><span class="n">directed_pickle</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
 
         <span class="n">nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="c1"># paths = []</span>
-        <span class="c1"># for p in nx.all_simple_paths(dg, start_commit, end_commit):</span>
-        <span class="c1">#     paths.append(p)</span>
-        <span class="c1">#     nodes = nodes.union(set(p))</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">shortest_path</span><span class="p">(</span><span class="n">dg</span><span class="p">,</span> <span class="n">start_commit</span><span class="p">,</span> <span class="n">end_commit</span><span class="p">)</span>
-        <span class="n">nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="n">o</span> <span class="o">=</span> <span class="n">OntdekBaan</span><span class="p">(</span><span class="n">dg</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">get_all_paths</span><span class="p">(</span><span class="n">start_commit</span><span class="p">,</span> <span class="n">end_commit</span><span class="p">):</span>
+            <span class="c1"># paths.append(p)</span>
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="c1"># path = nx.shortest_path(dg, start_commit, end_commit)</span>
+        <span class="c1"># nodes = set(path)</span>
 
         <span class="k">return</span> <span class="n">Response</span><span class="p">({</span><span class="s1">&#39;paths&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">nodes</span><span class="p">)]})</span></div>
 
 
-<div class="viewcode-block" id="ProductViewSet"><a class="viewcode-back" href="../../api.html#visualSHARK.views.ProductViewSet">[docs]</a><span class="k">class</span> <span class="nc">ProductViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ReadOnlyModelViewSet</span><span class="p">):</span>
+<div class="viewcode-block" id="ProductViewSet"><a class="viewcode-back" href="../../api.html#visualSHARK.views.ProductViewSet">[docs]</a><span class="k">class</span> <span class="nc">ProductViewSet</span><span class="p">(</span><span class="n">MongoReadOnlyModelViewSet</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Product data from mynbouSHARK.&quot;&quot;&quot;</span>
     <span class="n">queryset</span> <span class="o">=</span> <span class="n">MynbouData</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
     <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">ProductSerializer</span>
-    <span class="n">filter_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;vcs_system_id&#39;</span><span class="p">)</span>
+    <span class="n">filter_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;vcs_system_id&#39;</span><span class="p">,)</span>
+    <span class="n">ordering_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,)</span>
 
     <span class="nd">@detail_route</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;get&#39;</span><span class="p">])</span>
     <span class="k">def</span> <span class="nf">file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -672,7 +727,7 @@
         <span class="k">for</span> <span class="n">test_id</span> <span class="ow">in</span> <span class="n">test</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
             <span class="n">te</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">MynbouData</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">test_id</span><span class="p">)</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()))</span>
 
-        <span class="c1"># 2. build model &amp; evaluate</span>
+        <span class="c1"># 2. build model &amp; predict</span>
         <span class="n">pred</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">te</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
@@ -708,6 +763,103 @@
                 <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;people&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">p</span><span class="o">.</span><span class="n">number_people</span>
             <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ReleaseView</span><span class="p">(</span><span class="n">APIView</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">vcs_system_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;vcs_system_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">discard_qualifiers</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;discard_qualifiers&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">discard_patch</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;discard_patch&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">discard_qualifiers</span> <span class="o">=</span> <span class="n">discard_qualifiers</span> <span class="o">==</span> <span class="s1">&#39;true&#39;</span>
+        <span class="n">discard_patch</span> <span class="o">=</span> <span class="n">discard_patch</span> <span class="o">==</span> <span class="s1">&#39;true&#39;</span>
+
+        <span class="n">versions</span> <span class="o">=</span> <span class="n">tag_filter</span><span class="p">(</span><span class="n">Tag</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">vcs_system_id</span><span class="o">=</span><span class="n">vcs_system_id</span><span class="p">),</span> <span class="n">discard_qualifiers</span><span class="o">=</span><span class="n">discard_qualifiers</span><span class="p">,</span> <span class="n">discard_patch</span><span class="o">=</span><span class="n">discard_patch</span><span class="p">)</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">versions</span><span class="p">),</span> <span class="s1">&#39;results&#39;</span><span class="p">:</span> <span class="n">versions</span><span class="p">}</span>
+        <span class="c1"># print(history)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="VSJobViewSet"><a class="viewcode-back" href="../../api.html#visualSHARK.views.VSJobViewSet">[docs]</a><span class="k">class</span> <span class="nc">VSJobViewSet</span><span class="p">(</span><span class="n">rviewsets</span><span class="o">.</span><span class="n">ModelViewSet</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Job information.&quot;&quot;&quot;</span>
+
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">VSJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">VSJobSerializer</span>
+    <span class="n">filter_backends</span> <span class="o">=</span> <span class="p">(</span><span class="n">django_filters</span><span class="o">.</span><span class="n">rest_framework</span><span class="o">.</span><span class="n">DjangoFilterBackend</span><span class="p">,</span> <span class="n">filters</span><span class="o">.</span><span class="n">OrderingFilter</span><span class="p">)</span>
+    <span class="n">filter_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;job_type__name&#39;</span><span class="p">,)</span>
+    <span class="n">ordering_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;job_type&#39;</span><span class="p">,</span> <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;executed_at&#39;</span><span class="p">,</span> <span class="s1">&#39;error_count&#39;</span><span class="p">)</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;job_type__name&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">qry</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_queryset</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">qry</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">requested_by</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+
+    <span class="nd">@detail_route</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">requeue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">VSJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">requeue</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">)</span>
+
+    <span class="nd">@list_route</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">collect_other</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;api_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">SERVERSHARK_API_URL</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;api_key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">API_KEY</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;substitutions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">SUBSTITUTIONS</span>
+
+        <span class="n">jt</span> <span class="o">=</span> <span class="n">VSJobType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ident</span><span class="o">=</span><span class="s1">&#39;collect_other&#39;</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">VSJob</span><span class="p">(</span><span class="n">job_type</span><span class="o">=</span><span class="n">jt</span><span class="p">,</span> <span class="n">requested_by</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">)</span>
+
+    <span class="nd">@list_route</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">collect_revision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="c1"># enrich with our data</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;api_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">SERVERSHARK_API_URL</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;api_key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">API_KEY</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;substitutions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">SUBSTITUTIONS</span>
+
+        <span class="n">jt</span> <span class="o">=</span> <span class="n">VSJobType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ident</span><span class="o">=</span><span class="s1">&#39;collect_revision&#39;</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">VSJob</span><span class="p">(</span><span class="n">job_type</span><span class="o">=</span><span class="n">jt</span><span class="p">,</span> <span class="n">requested_by</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">)</span>
+
+    <span class="nd">@list_route</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">test_connection_servershark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;api_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">SERVERSHARK_API_URL</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;api_key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">API_KEY</span>
+        <span class="n">dat</span><span class="p">[</span><span class="s1">&#39;substitutions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">SUBSTITUTIONS</span>
+
+        <span class="n">jt</span> <span class="o">=</span> <span class="n">VSJobType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ident</span><span class="o">=</span><span class="s1">&#39;test_connection_servershark&#39;</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">VSJob</span><span class="p">(</span><span class="n">job_type</span><span class="o">=</span><span class="n">jt</span><span class="p">,</span> <span class="n">requested_by</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">)</span>
+
+    <span class="nd">@list_route</span><span class="p">(</span><span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">test_connection_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">dat</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">jt</span> <span class="o">=</span> <span class="n">VSJobType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ident</span><span class="o">=</span><span class="s1">&#39;test_connection_worker&#39;</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">VSJob</span><span class="p">(</span><span class="n">job_type</span><span class="o">=</span><span class="n">jt</span><span class="p">,</span> <span class="n">requested_by</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+        <span class="n">j</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">dat</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
