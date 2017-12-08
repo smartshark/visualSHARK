@@ -90,12 +90,12 @@ export default {
   methods: {
     requeueJob () {
       rest.requeueJob(this.id)
-      .then(response => {
-        this.$store.dispatch('popLoading')
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+        .then(response => {
+          this.$store.dispatch('popLoading')
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     getJob (id) {
       this.$store.dispatch('getJob', this.id)

@@ -31,7 +31,7 @@ const persist = (store) => {
 
   if (typeof msgs !== 'undefined' && msgs !== null) {
     try {
-      msgs = JSON.parse(msgs)  // otherwise it will be an object list
+      msgs = JSON.parse(msgs) // otherwise it will be an object list
       let tmp = []
       msgs.forEach(item => {
         tmp.push(item)

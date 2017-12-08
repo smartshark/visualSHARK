@@ -40,183 +40,183 @@ const actions = {
   updateGridCommits ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getCommits(dat)
-    .then(response => {
-      commit(types.GRID_COMMITS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_COMMITS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridReleases ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getReleases(dat)
-    .then(response => {
-      commit(types.GRID_RELEASES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_RELEASES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridJobs ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getJobs(dat)
-    .then(response => {
-      commit(types.GRID_JOBS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_JOBS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridFileActions ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getFileActions(dat)
-    .then(response => {
-      commit(types.GRID_FILE_ACTIONS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_FILE_ACTIONS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridCodeEntityStates ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getCodeEntityStates(dat)
-    .then(response => {
-      commit(types.GRID_CODE_ENTITY_STATES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_CODE_ENTITY_STATES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridTags ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getTags(dat)
-    .then(response => {
-      commit(types.GRID_TAGS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_TAGS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridIssues ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getIssues(dat)
-    .then(response => {
-      commit(types.GRID_ISSUES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_ISSUES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridPeople ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getPeople(dat)
-    .then(response => {
-      commit(types.GRID_PEOPLE, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_PEOPLE, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridFiles ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getFiles(dat)
-    .then(response => {
-      commit(types.GRID_FILES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_FILES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridMessages ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getMessages(dat)
-    .then(response => {
-      commit(types.GRID_MESSAGES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_MESSAGES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridFileChanges ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getFileChanges(dat)
-    .then(response => {
-      commit(types.GRID_FILE_CHANGES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_FILE_CHANGES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridFileHistory ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getFileHistory(dat)
-    .then(response => {
-      commit(types.GRID_FILE_HISTORY, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_FILE_HISTORY, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateGridDefectLinks ({commit}, dat) {
     commit(types.PUSH_LOADING)
     commit(types.GRID_DEFECT_LINKS, { response: {data: {}} })
     rest.getDefectLinks(dat)
-    .then(response => {
-      commit(types.GRID_DEFECT_LINKS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.GRID_DEFECT_LINKS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateDashboardStats ({commit}) {
     commit(types.PUSH_LOADING)
     rest.getStats()
-    .then(response => {
-      commit(types.SET_DASHBOARD_STATS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_STATS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateDashboardStatsHistory ({commit}) {
     commit(types.PUSH_LOADING)
     rest.getStatsHistory()
-    .then(response => {
-      commit(types.SET_DASHBOARD_STATS_HISTORY, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_STATS_HISTORY, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   }
 }
 

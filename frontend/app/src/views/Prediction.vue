@@ -285,16 +285,16 @@ export default {
 
       this.$store.dispatch('pushLoading')
       rest.predict({ training: this.trainingProducts, test: this.testProducts, model: this.predictionModel })
-      .then(response => {
-        this.$store.dispatch('popLoading')
-        let data = response.data.product
-        this.currentProductData = data
-        this.gridData = data.slice(0, 15)
-        this.gridDataCount = data.length
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+        .then(response => {
+          this.$store.dispatch('popLoading')
+          let data = response.data.product
+          this.currentProductData = data
+          this.gridData = data.slice(0, 15)
+          this.gridDataCount = data.length
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     getNames (productIds) {
       let names = []
@@ -319,17 +319,17 @@ export default {
 
       this.$store.dispatch('pushLoading')
       rest.predictEvaluate({ training: this.trainingProducts, test: this.testProducts, model: this.predictionModel })
-      .then(response => {
-        this.$store.dispatch('popLoading')
-        let dat = response.data
-        dat.title = this.predictionModel + ', train: ' + this.getNames(this.trainingProducts).join(',') + ', test: ' + this.getNames(this.testProducts).join(',')
-        this.results.push(dat)
-        this.clearChart()
-        this.drawChart(response.data)
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+        .then(response => {
+          this.$store.dispatch('popLoading')
+          let dat = response.data
+          dat.title = this.predictionModel + ', train: ' + this.getNames(this.trainingProducts).join(',') + ', test: ' + this.getNames(this.testProducts).join(',')
+          this.results.push(dat)
+          this.clearChart()
+          this.drawChart(response.data)
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     }
   }
 }

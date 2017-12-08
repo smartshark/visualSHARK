@@ -313,8 +313,8 @@ export default {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
     },
-      responseType: 'text',
-      transformResponse: [function (data) { let tmp = data.replace(/\bNaN\b/g, 'null').replace(/\b-Infinity\b/g, 'null').replace(/\b\+Infinity\b/g, 'null'); return JSON.parse(tmp) }]
+    responseType: 'text',
+    transformResponse: [function (data) { let tmp = data.replace(/\bNaN\b/g, 'null').replace(/\b-Infinity\b/g, 'null').replace(/\b\+Infinity\b/g, 'null'); return JSON.parse(tmp) }]
     })
   },
   getProductFileDownload (id) {
@@ -323,7 +323,7 @@ export default {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
     },
-      responseType: 'arraybuffer'
+    responseType: 'arraybuffer'
     })
   },
   getPossiblePaths (dat) {

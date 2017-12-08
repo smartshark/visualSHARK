@@ -34,42 +34,42 @@ const getters = {
 const actions = {
   login ({commit}, dat) {
     rest.login(dat)
-    .then(response => {
-      // console.log(response)
-      const token = response.data[0].key
-      const username = dat.user
-      const isSuperuser = response.data[0].is_superuser
-      const channel = response.data[0].channel
-      commit(types.LOGIN, { token, username, isSuperuser, channel })
+      .then(response => {
+        // console.log(response)
+        const token = response.data[0].key
+        const username = dat.user
+        const isSuperuser = response.data[0].is_superuser
+        const channel = response.data[0].channel
+        commit(types.LOGIN, { token, username, isSuperuser, channel })
 
-      rest.setToken(token)
-    })
-    .catch(error => {
-      // commit(types.PUSH_ERROR, { error })
-      commit(types.LOGIN_ERROR, { error })
-    })
+        rest.setToken(token)
+      })
+      .catch(error => {
+        // commit(types.PUSH_ERROR, { error })
+        commit(types.LOGIN_ERROR, { error })
+      })
   },
   testConnectionWorker ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.testConnectionWorkerJob(dat)
-    .then(response => {
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   testConnectionServershark ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.testConnectionServersharkJob(dat)
-    .then(response => {
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   pushUserMessage ({commit}, message) {
     commit(types.PUSH_USER_MESSAGE, { message })

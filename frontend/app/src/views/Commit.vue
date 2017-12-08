@@ -211,12 +211,12 @@ export default {
     schedulePlugin () {
       let dat = {plugin_ids: [this.runPlugin], url: this.currentVcs.url, project_mongo_ids: [this.currentProject.id], revisions: [this.currentCommit.revision_hash]}
       rest.createRevisionJob(dat)
-      .then(response => {
-        this.$store.dispatch('popLoading')
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+        .then(response => {
+          this.$store.dispatch('popLoading')
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     getCommit (id) {
       this.$store.dispatch('getCommit', this.id)

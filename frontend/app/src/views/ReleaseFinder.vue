@@ -157,12 +157,12 @@ export default {
     schedulePlugin () {
       let dat = {plugin_ids: [this.runPlugin], url: this.currentVcs.url, project_mongo_ids: [this.currentProject.id], start_commit: this.startCommit, end_commit: this.endCommit, path_approach: this.labelPathApproach, defect_label_name: this.defectLabelName, metric_approach: this.metricApproach, dataset: this.dataset, file_ending: this.fileEnding}
       rest.createOtherJob(dat)
-      .then(response => {
-        this.$store.dispatch('popLoading')
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+        .then(response => {
+          this.$store.dispatch('popLoading')
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     refreshGrid (dat) {
       this.triggerRefresh = false

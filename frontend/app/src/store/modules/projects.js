@@ -112,26 +112,26 @@ const actions = {
   updateDashboardStats ({commit}) {
     commit(types.PUSH_LOADING)
     rest.getStats()
-    .then(response => {
-      commit(types.SET_DASHBOARD_STATS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_STATS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateDashboardStatsHistory ({commit}) {
     commit(types.PUSH_LOADING)
     rest.getStatsHistory()
-    .then(response => {
-      commit(types.SET_DASHBOARD_STATS_HISTORY, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_STATS_HISTORY, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   updateDashboard ({commit}) {
     commit(types.PUSH_LOADING)
@@ -142,148 +142,148 @@ const actions = {
     commit(types.PUSH_LOADING)
     let dat = {'limit': 1}
     rest.getCommits(dat)
-    .then(response => {
-      commit(types.SET_DASHBOARD_COMMITS, { count: response.data.count })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_COMMITS, { count: response.data.count })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
     rest.getIssues(dat)
-    .then(response => {
-      commit(types.SET_DASHBOARD_ISSUES, { count: response.data.count })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_ISSUES, { count: response.data.count })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
     rest.getMessages(dat)
-    .then(response => {
-      commit(types.SET_DASHBOARD_EMAILS, { count: response.data.count })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_EMAILS, { count: response.data.count })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
     rest.getFiles(dat)
-    .then(response => {
-      commit(types.SET_DASHBOARD_FILES, { count: response.data.count })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_FILES, { count: response.data.count })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
     rest.getPeople(dat)
-    .then(response => {
-      commit(types.SET_DASHBOARD_PEOPLE, { count: response.data.count })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_PEOPLE, { count: response.data.count })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
     rest.getProjects(dat)
-    .then(response => {
-      commit(types.SET_DASHBOARD_PROJECTS, { count: response.data.count })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DASHBOARD_PROJECTS, { count: response.data.count })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getCommit ({commit}, id) {
     commit(types.PUSH_LOADING)
     commit(types.SET_COMMIT, { response: {data: {}} })
     rest.getCommit(id)
-    .then(response => {
-      commit(types.SET_COMMIT, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_COMMIT, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getJob ({commit}, id) {
     commit(types.PUSH_LOADING)
     commit(types.SET_JOB, { response: {data: {}} })
     rest.getJob(id)
-    .then(response => {
-      commit(types.SET_JOB, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_JOB, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getMessage ({commit}, id) {
     commit(types.PUSH_LOADING)
     commit(types.SET_MESSAGE, { response: {data: {}} })
     rest.getMessage(id)
-    .then(response => {
-      commit(types.SET_MESSAGE, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_MESSAGE, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getIssue ({commit}, id) {
     commit(types.PUSH_LOADING)
     commit(types.SET_ISSUE, { response: {data: {}} })
     rest.getIssue(id)
-    .then(response => {
-      commit(types.SET_ISSUE, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_ISSUE, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getPerson ({commit}, id) {
     commit(types.PUSH_LOADING)
     commit(types.SET_PERSON, { response: {data: {}} })
     rest.getPerson(id)
-    .then(response => {
-      commit(types.SET_PERSON, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_PERSON, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getProducts ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getProducts(dat)
-    .then(response => {
-      commit(types.SET_PRODUCTS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_PRODUCTS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getProductPaths ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getProductPaths(dat)
-    .then(response => {
-      commit(types.SET_PRODUCT_PATHS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_PRODUCT_PATHS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   clearProductPaths ({commit}) {
     commit(types.SET_PRODUCT_PATHS, { response: {data: {paths: [], products: []}} })
@@ -292,53 +292,53 @@ const actions = {
     commit(types.PUSH_LOADING)
     commit(types.SET_COMMIT_GRAPH, { response: {data: {}} })
     rest.getCommitGraph(id)
-    .then(response => {
-      commit(types.SET_COMMIT_GRAPH, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_COMMIT_GRAPH, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getPossiblePaths ({commit}, dat) {
     commit(types.PUSH_LOADING)
     commit(types.SET_POSSIBLE_PATHS, { response: {data: {}} })
     rest.getPossiblePaths(dat)
-    .then(response => {
-      commit(types.SET_POSSIBLE_PATHS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_POSSIBLE_PATHS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getReleasePaths ({commit}, dat) {
     commit(types.PUSH_LOADING)
     commit(types.SET_POSSIBLE_PATHS, { response: {data: {}} })
     rest.getReleasePaths(dat)
-    .then(response => {
-      commit(types.SET_POSSIBLE_PATHS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_POSSIBLE_PATHS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getReleaseApproaches ({commit}) {
     commit(types.PUSH_LOADING)
     commit(types.SET_RELEASE_APPROACHES, { response: {data: {}} })
     rest.getReleaseApproaches()
-    .then(response => {
-      commit(types.SET_RELEASE_APPROACHES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_RELEASE_APPROACHES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   clearPaths ({commit}) {
     commit(types.SET_POSSIBLE_PATHS, { response: { data: { paths: [] } } })
@@ -347,14 +347,14 @@ const actions = {
     commit(types.PUSH_LOADING)
     commit(types.SET_DEFECT_LINK_APPROACHES, { response: {data: {}} })
     rest.getDefectLinkApproaches()
-    .then(response => {
-      commit(types.SET_DEFECT_LINK_APPROACHES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_DEFECT_LINK_APPROACHES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   clearBugFixingNodes ({commit}) {
     commit(types.SET_BUG_FIXING_NODES, { response: {data: {results: []}} })
@@ -363,26 +363,26 @@ const actions = {
     commit(types.PUSH_LOADING)
     commit(types.SET_BUG_FIXING_NODES, { response: {data: {results: []}} })
     rest.getBugFixingNodes(dat)
-    .then(response => {
-      commit(types.SET_BUG_FIXING_NODES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_BUG_FIXING_NODES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getMarkNodes ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getMarkNodes(dat)
-    .then(response => {
-      commit(types.SET_MARK_NODES, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_MARK_NODES, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   clearMarkNodes ({commit}) {
     commit(types.SET_MARK_NODES, { response: { data: { results: [] } } })
@@ -391,53 +391,53 @@ const actions = {
     commit(types.PUSH_LOADING)
     // commit(types.SET_ARTICULATION_POINTS, { response: {data: {results: []}} })
     rest.getArticulationPoints(dat)
-    .then(response => {
-      commit(types.SET_ARTICULATION_POINTS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_ARTICULATION_POINTS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   clearArticulationPoints ({commit}) {
     commit(types.SET_ARTICULATION_POINTS, { response: { data: { results: [] } } })
   },
   getAllProjects ({commit}) {
     rest.getAllProjects()
-    .then(response => {
-      commit(types.RECEIVE_PROJECTS, { response })
-    })
-    .catch(error => {
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.RECEIVE_PROJECTS, { response })
+      })
+      .catch(error => {
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getAllVcs ({commit}) {
     rest.getAllVcs()
-    .then(response => {
-      commit(types.RECEIVE_VCS, { response })
-    })
-    .catch(error => {
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.RECEIVE_VCS, { response })
+      })
+      .catch(error => {
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getAllIssueSystems ({commit}) {
     rest.getAllIssueSystems()
-    .then(response => {
-      commit(types.RECEIVE_IS, { response })
-    })
-    .catch(error => {
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.RECEIVE_IS, { response })
+      })
+      .catch(error => {
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   getAllMailingLists ({commit}) {
     rest.getAllMailingLists()
-    .then(response => {
-      commit(types.RECEIVE_ML, { response })
-    })
-    .catch(error => {
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.RECEIVE_ML, { response })
+      })
+      .catch(error => {
+        commit(types.PUSH_ERROR, { error })
+      })
   },
   setProject ({commit, getters}, project) {
     // on changing the project we also set the projects VCS and ITS if there is only one.
@@ -471,28 +471,28 @@ const actions = {
     commit(types.PUSH_LOADING)
     commit(types.SET_COMMIT_ANALYTICS, { response: {data: {}} })
     rest.getCommitAnalytics(id)
-    .then(response => {
-      commit(types.SET_COMMIT_ANALYTICS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      console.log(error)
-      commit(types.POP_LOADING)
-      commit(types.SET_COMMIT_ANALYTICS, { })
-    })
+      .then(response => {
+        commit(types.SET_COMMIT_ANALYTICS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        console.log(error)
+        commit(types.POP_LOADING)
+        commit(types.SET_COMMIT_ANALYTICS, { })
+      })
   },
   getCommitLabelFields ({commit}, dat) {
     commit(types.PUSH_LOADING)
     commit(types.SET_COMMIT_LABEL_FIELDS, { response: {data: {results: []}} })
     rest.getCommitLabelFields(dat)
-    .then(response => {
-      commit(types.SET_COMMIT_LABEL_FIELDS, { response })
-      commit(types.POP_LOADING)
-    })
-    .catch(error => {
-      commit(types.POP_LOADING)
-      commit(types.PUSH_ERROR, { error })
-    })
+      .then(response => {
+        commit(types.SET_COMMIT_LABEL_FIELDS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   }
 }
 

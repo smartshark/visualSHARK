@@ -114,12 +114,12 @@ export default {
     schedulePlugin () {
       let dat = {plugin_ids: [this.runPlugin], url: this.currentVcs.url, project_mongo_ids: [this.currentProject.id], start_commit: this.currentProductComplete.start_commit, end_commit: this.currentProductComplete.end_commit, path_approach: this.currentProductComplete.label_path_approach, defect_label_name: this.currentProductComplete.defect_link_approach + '_bugfix', metric_approach: this.currentProductComplete.metrics_approach, dataset: this.currentProduct.name, file_ending: this.currentProductComplete.file_ending}
       rest.createOtherJob(dat)
-      .then(response => {
-        this.$store.dispatch('popLoading')
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+        .then(response => {
+          this.$store.dispatch('popLoading')
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     sortMetric (a, b) {
       if (a.metric > b.metric) {
@@ -173,81 +173,81 @@ export default {
     downloadProduct (version) {
       this.$store.dispatch('pushLoading')
       rest.getProductFileDownload(version.id)
-      .then(response => {
-        this.$store.dispatch('popLoading')
+        .then(response => {
+          this.$store.dispatch('popLoading')
 
-        // this is kind of stupid, but it seems to be the only way
-        // save response in blob, create blob url, create A element, link it and click it.
-        let blob = new Blob([response.data], { type: 'application/json' })
-        let url = window.URL.createObjectURL(blob)
-        let link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
-        link.href = url
-        link.download = this.currentProject.name + '-' + version.name + '.json'
-        document.body.appendChild(link)
-        link.click()
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+          // this is kind of stupid, but it seems to be the only way
+          // save response in blob, create blob url, create A element, link it and click it.
+          let blob = new Blob([response.data], { type: 'application/json' })
+          let url = window.URL.createObjectURL(blob)
+          let link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
+          link.href = url
+          link.download = this.currentProject.name + '-' + version.name + '.json'
+          document.body.appendChild(link)
+          link.click()
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     getProduct (version) {
       this.clearChart()
       this.currentProduct = version
       this.$store.dispatch('pushLoading')
       rest.getProductFile(version.id)
-      .then(response => {
-        this.$store.dispatch('popLoading')
-        let data = response.data.product
-        this.currentProductData = data
-        this.currentProductComplete = response.data
+        .then(response => {
+          this.$store.dispatch('popLoading')
+          let data = response.data.product
+          this.currentProductData = data
+          this.currentProductComplete = response.data
 
-        this.currentProductMetrics = []
-        for (let col of Object.keys(data[1])) {
-          this.currentProductMetrics.push({'metric': col})
-        }
-        this.gridDataCount = this.currentProductMetrics.length
-        this.triggerRefreshProd = true
-
-        const types = ['all', 'file_gui', 'file_test', 'file_db', 'file_network', 'file_multithreading', 'file_webservice', 'file_fileio', 'none']
-
-        let datasets = [
-          {
-            label: 'clean',
-            data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            borderColor: 'rgba(51, 204, 51, 0.7)',
-            backgroundColor: 'rgba(51, 204, 51, 0.7)'
-          },
-          {
-            label: 'buggy',
-            data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            borderColor: 'rgba(225, 58, 55, 0.7)',
-            backgroundColor: 'rgba(225, 58, 55, 0.7)'
+          this.currentProductMetrics = []
+          for (let col of Object.keys(data[1])) {
+            this.currentProductMetrics.push({'metric': col})
           }
-        ]
-        for (let row of data) {
-          let t = 'none'
-          for (let tp of types) {
-            // console.log('gui: ', row['gui'])
-            if (row[tp] === true) {
-              t = types.indexOf(tp)
-              if (row.label === true) {
-                datasets[1].data[t] += 1
-              } else {
-                datasets[0].data[t] += 1
+          this.gridDataCount = this.currentProductMetrics.length
+          this.triggerRefreshProd = true
+
+          const types = ['all', 'file_gui', 'file_test', 'file_db', 'file_network', 'file_multithreading', 'file_webservice', 'file_fileio', 'none']
+
+          let datasets = [
+            {
+              label: 'clean',
+              data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+              borderColor: 'rgba(51, 204, 51, 0.7)',
+              backgroundColor: 'rgba(51, 204, 51, 0.7)'
+            },
+            {
+              label: 'buggy',
+              data: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+              borderColor: 'rgba(225, 58, 55, 0.7)',
+              backgroundColor: 'rgba(225, 58, 55, 0.7)'
+            }
+          ]
+          for (let row of data) {
+            let t = 'none'
+            for (let tp of types) {
+              // console.log('gui: ', row['gui'])
+              if (row[tp] === true) {
+                t = types.indexOf(tp)
+                if (row.label === true) {
+                  datasets[1].data[t] += 1
+                } else {
+                  datasets[0].data[t] += 1
+                }
               }
             }
+            if (row.label === true) {
+              datasets[1].data[0] += 1
+            } else {
+              datasets[0].data[0] += 1
+            }
           }
-          if (row.label === true) {
-            datasets[1].data[0] += 1
-          } else {
-            datasets[0].data[0] += 1
-          }
-        }
-        this.drawChart(datasets, types)
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      })
+          this.drawChart(datasets, types)
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     clearChart () {
       // clear the canvas first
