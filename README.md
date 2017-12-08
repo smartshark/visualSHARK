@@ -62,6 +62,8 @@ Install Backend
 ---------------
 
 ```bash
+git clone https://github.com/smartshark/visualSHARK.git
+
 cd /srv/www/visualSHARK
 python3.6 -m venv .
 source bin/activate
