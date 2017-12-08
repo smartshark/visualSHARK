@@ -1,0 +1,321 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>visualSHARK.models &mdash; visualSHARK 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="visualSHARK 0.1.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> visualSHARK
+          
+
+          
+            
+            <img src="../../_static/SmartSHARK_read_the_docs_logo.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">visualSHARK</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>visualSHARK.models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for visualSHARK.models</h1><div class="highlight"><pre>
+<span></span><span class="c1">##!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="k">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="k">import</span> <span class="n">post_save</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="k">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="k">import</span> <span class="n">receiver</span>
+<span class="c1"># from django.core.files.storage import FileSystemStorage</span>
+
+<span class="kn">from</span> <span class="nn">rest_framework.authtoken.models</span> <span class="k">import</span> <span class="n">Token</span>
+
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="n">connect</span>
+<span class="kn">from</span> <span class="nn">pycoshark.mongomodels</span> <span class="k">import</span> <span class="n">Project</span><span class="p">,</span> <span class="n">VCSSystem</span><span class="p">,</span> <span class="n">Commit</span><span class="p">,</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">CodeEntityState</span><span class="p">,</span> <span class="n">FileAction</span><span class="p">,</span> <span class="n">People</span><span class="p">,</span> <span class="n">IssueSystem</span><span class="p">,</span> <span class="n">Issue</span><span class="p">,</span> <span class="n">Message</span><span class="p">,</span> <span class="n">MailingList</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">MynbouData</span>
+
+
+<span class="c1"># this is just because we do not have access to reindex the database and mongodb does not check for indexes but just creates them and if they are there does nothing</span>
+<span class="c1"># nevertheless this requires the right to index stuff which we not have</span>
+<span class="k">def</span> <span class="nf">remove_index</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;indexes&#39;</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">del</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;indexes&#39;</span><span class="p">]</span>
+    <span class="k">del</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;index_specs&#39;</span><span class="p">]</span>
+    <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;index_specs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">tmp</span>
+
+<span class="n">con</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;host&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASES</span><span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">][</span><span class="s1">&#39;HOST&#39;</span><span class="p">],</span>
+       <span class="s1">&#39;port&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASES</span><span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">][</span><span class="s1">&#39;PORT&#39;</span><span class="p">],</span>
+       <span class="s1">&#39;db&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASES</span><span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">][</span><span class="s1">&#39;NAME&#39;</span><span class="p">],</span>
+       <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASES</span><span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">][</span><span class="s1">&#39;USER&#39;</span><span class="p">],</span>
+       <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASES</span><span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">][</span><span class="s1">&#39;PASSWORD&#39;</span><span class="p">],</span>
+       <span class="s1">&#39;authentication_source&#39;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASES</span><span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">][</span><span class="s1">&#39;AUTHENTICATION_DB&#39;</span><span class="p">],</span>
+       <span class="s1">&#39;connect&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+<span class="n">connect</span><span class="p">(</span><span class="o">**</span><span class="n">con</span><span class="p">)</span>
+
+<span class="c1"># these are the mongodb models which we directly use in the visualSHARK</span>
+<span class="n">Project</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">Project</span><span class="p">)</span>
+<span class="n">VCSSystem</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">VCSSystem</span><span class="p">)</span>
+<span class="n">Commit</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">Commit</span><span class="p">)</span>
+<span class="n">Tag</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">Tag</span><span class="p">)</span>
+<span class="n">File</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">File</span><span class="p">)</span>
+<span class="n">FileAction</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">FileAction</span><span class="p">)</span>
+<span class="n">People</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">People</span><span class="p">)</span>
+<span class="n">CodeEntityState</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">CodeEntityState</span><span class="p">)</span>
+<span class="n">IssueSystem</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">IssueSystem</span><span class="p">)</span>
+<span class="n">Issue</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">Issue</span><span class="p">)</span>
+<span class="n">Message</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">Message</span><span class="p">)</span>
+<span class="n">MailingList</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">MailingList</span><span class="p">)</span>
+<span class="n">Event</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">Event</span><span class="p">)</span>
+<span class="n">MynbouData</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="n">remove_index</span><span class="p">(</span><span class="n">MynbouData</span><span class="p">)</span>
+
+
+<span class="c1"># this is just for the token authentication for the rest-api</span>
+<span class="nd">@receiver</span><span class="p">(</span><span class="n">post_save</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">create_auth_token</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">created</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+        <span class="n">Token</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">instance</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ProjectStats"><a class="viewcode-back" href="../../api.html#visualSHARK.models.ProjectStats">[docs]</a><span class="k">class</span> <span class="nc">ProjectStats</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Contains project stats per day.&quot;&quot;&quot;</span>
+    <span class="n">project_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">stats_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">number_commits</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">number_issues</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">number_files</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">number_messages</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">number_people</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_name</span></div>
+
+
+<div class="viewcode-block" id="CommitGraph"><a class="viewcode-back" href="../../api.html#visualSHARK.models.CommitGraph">[docs]</a><span class="k">class</span> <span class="nc">CommitGraph</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Contains the raw data (pickle) and pre-computed graph nodes and their layout for the CommitGraph View.&quot;&quot;&quot;</span>
+
+    <span class="n">vcs_system_id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">directed_graph</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">upload_to</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPUTED_FILES</span><span class="p">)</span>
+    <span class="n">directed_pickle</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">upload_to</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPUTED_FILES</span><span class="p">)</span>
+    <span class="n">last_updated</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span></div>
+
+
+<div class="viewcode-block" id="CommitLabelField"><a class="viewcode-back" href="../../api.html#visualSHARK.models.CommitLabelField">[docs]</a><span class="k">class</span> <span class="nc">CommitLabelField</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Contains currently available commit labels from labelSHARK.</span>
+
+<span class="sd">    This needs to be synced with the fetch_commit_label_approaches command.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">approach</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Alexander Trautsch.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

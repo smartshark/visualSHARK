@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API Documentation &mdash; visualSHARK 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="visualSHARK 0.1.0 documentation" href="index.html"/>
+        <link rel="prev" title="Welcome to visualSHARK’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> visualSHARK
+          
+
+          
+            
+            <img src="_static/SmartSHARK_read_the_docs_logo.png" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-visualSHARK.views">visualSHARK.views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-visualSHARK.models">visualSHARK.models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-visualSHARK.serializers">visualSHARK.serializers</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">visualSHARK</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>API Documentation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Model definitions for the MongoDB can be found in the <a class="reference external" href="https://github.com/smartshark/pycoSHARK">pycoshark</a> models.</p>
+<div class="section" id="module-visualSHARK.views">
+<span id="visualshark-views"></span><h2>visualSHARK.views<a class="headerlink" href="#module-visualSHARK.views" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="visualSHARK.views.CodeEntityStateViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">CodeEntityStateViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CodeEntityStateViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CodeEntityStateViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint for CodeEntityStates.</p>
+<dl class="method">
+<dt id="visualSHARK.views.CodeEntityStateViewSet.list">
+<code class="descname">list</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CodeEntityStateViewSet.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CodeEntityStateViewSet.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Again a nested serializer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.CommitGraphViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">CommitGraphViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitGraphViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitGraphViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commit Graph ReST endpoint.</p>
+<p>This endpoint reads the commit graph nodes and their positions (according to graphviz) from the file
+generated during execution of the create_commit_graph command and returns it for the commit graph SVG.</p>
+<dl class="method">
+<dt id="visualSHARK.views.CommitGraphViewSet.articulation_points">
+<code class="descname">articulation_points</code><span class="sig-paren">(</span><em>request</em>, <em>vcs_system_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitGraphViewSet.articulation_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitGraphViewSet.articulation_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of nodes that are articulation points.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="visualSHARK.views.CommitGraphViewSet.mark_nodes">
+<code class="descname">mark_nodes</code><span class="sig-paren">(</span><em>request</em>, <em>vcs_system_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitGraphViewSet.mark_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitGraphViewSet.mark_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic node marker.</p>
+<p>We can mark nodes according to search terms or because auf certain (boolan) labels.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="visualSHARK.views.CommitGraphViewSet.product_path">
+<code class="descname">product_path</code><span class="sig-paren">(</span><em>request</em>, <em>vcs_system_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitGraphViewSet.product_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitGraphViewSet.product_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return path for the approach used in this exact product.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.CommitViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">CommitViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint for Commits.</p>
+<dl class="method">
+<dt id="visualSHARK.views.CommitViewSet.get_queryset">
+<code class="descname">get_queryset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitViewSet.get_queryset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitViewSet.get_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add special case if we search for a person, could be committer or author.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="visualSHARK.views.CommitViewSet.retrieve">
+<code class="descname">retrieve</code><span class="sig-paren">(</span><em>request</em>, <em>id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#CommitViewSet.retrieve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.CommitViewSet.retrieve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add additional information the each tag.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.FileActionViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">FileActionViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#FileActionViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.FileActionViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint for FileActions.</p>
+<dl class="method">
+<dt id="visualSHARK.views.FileActionViewSet.list">
+<code class="descname">list</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#FileActionViewSet.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.FileActionViewSet.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Again a nested serializer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.MongoReadOnlyModelViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">MongoReadOnlyModelViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#MongoReadOnlyModelViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.MongoReadOnlyModelViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper to allow filtering and searching via the ReST API.</p>
+<dl class="method">
+<dt id="visualSHARK.views.MongoReadOnlyModelViewSet.get_queryset">
+<code class="descname">get_queryset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#MongoReadOnlyModelViewSet.get_queryset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.MongoReadOnlyModelViewSet.get_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply requested searches and filters to the queryset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.ProductViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">ProductViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#ProductViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.ProductViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Product data from mynbouSHARK.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.RelatedOrderingFilter">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">RelatedOrderingFilter</code><a class="reference internal" href="_modules/visualSHARK/views.html#RelatedOrderingFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.RelatedOrderingFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extends OrderingFilter to support ordering by fields in related models.</p>
+<dl class="method">
+<dt id="visualSHARK.views.RelatedOrderingFilter.is_valid_field">
+<code class="descname">is_valid_field</code><span class="sig-paren">(</span><em>model</em>, <em>field</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#RelatedOrderingFilter.is_valid_field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.RelatedOrderingFilter.is_valid_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return true if the field exists within the model (or in the related</p>
+<p>model specified using the Django ORM __ notation)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.views.TagViewSet">
+<em class="property">class </em><code class="descclassname">visualSHARK.views.</code><code class="descname">TagViewSet</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#TagViewSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.TagViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint for Tags.</p>
+<dl class="method">
+<dt id="visualSHARK.views.TagViewSet.list">
+<code class="descname">list</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/views.html#TagViewSet.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.views.TagViewSet.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nested serializer, we need additional actions for pagination.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-visualSHARK.models">
+<span id="visualshark-models"></span><h2>visualSHARK.models<a class="headerlink" href="#module-visualSHARK.models" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="visualSHARK.models.CommitGraph">
+<em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">CommitGraph</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#CommitGraph"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.CommitGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains the raw data (pickle) and pre-computed graph nodes and their layout for the CommitGraph View.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.models.CommitLabelField">
+<em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">CommitLabelField</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#CommitLabelField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.CommitLabelField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains currently available commit labels from labelSHARK.</p>
+<p>This needs to be synced with the fetch_commit_label_approaches command.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="visualSHARK.models.ProjectStats">
+<em class="property">class </em><code class="descclassname">visualSHARK.models.</code><code class="descname">ProjectStats</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/visualSHARK/models.html#ProjectStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#visualSHARK.models.ProjectStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains project stats per day.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-visualSHARK.serializers">
+<span id="visualshark-serializers"></span><h2>visualSHARK.serializers<a class="headerlink" href="#module-visualSHARK.serializers" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to visualSHARK’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Alexander Trautsch.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
