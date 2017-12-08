@@ -23,7 +23,7 @@
                 <input type="text" class="form-control" v-model="dataset">
               </div>
               <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">file ending</span>
+                <span class="input-group-addon">file ending (without dot)</span>
                 <input type="text" class="form-control" v-model="fileEnding">
               </div>
               <div class="input-group" style="width: 600px;">

@@ -111,3 +111,28 @@ systemd worker example::
     [Install]
     WantedBy=multi-user.target
 
+
+RabbitMQ Message Broker
+-----------------------
+
+The certificate needs to be in the /etc/rabbitmq folder.
+
+/etc/rabbimq/rabbitmq.config::
+
+    [
+    {rabbitmq_management,
+      [{listener, [{port,     15671},
+                   {ssl,      true},
+                   {ssl_opts, [{cacertfile, "/etc/rabbitmq/chain.pem"},
+                               {certfile,   "/etc/rabbitmq/cert.pem"},
+                               {keyfile,    "/etc/rabbitmq/key.pem"}]}
+                  ]}
+      ]},
+    {rabbitmq_web_stomp, [{port, 15673},
+                          {ssl, true},
+                          {ssl_config, [{cacertfile, "/etc/rabbitmq/chain.pem"},
+                                      {certfile,   "/etc/rabbitmq/cert.pem"},
+                                      {keyfile,    "/etc/rabbitmq/key.pem"},
+                                      {port, 15674}]}
+                         ]}
+    ].

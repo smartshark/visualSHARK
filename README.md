@@ -21,8 +21,8 @@ apt-get install python3.6-dev
 apt-get install python3.6-venv
 ```
 
-python-3.6 uwsgi module
------------------------
+python-3.6 uwsgi module (only for production deployment)
+--------------------------------------------------------
 ```bash
 apt-get install python3.6 python3.6-dev uwsgi uwsgi-src uuid-dev libcap-dev libpcre3-dev
 cd ~
