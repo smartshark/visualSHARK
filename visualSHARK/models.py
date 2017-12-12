@@ -28,37 +28,41 @@ def remove_index(cls):
     tmp['index_specs'] = []
     return tmp
 
-con = {'host': settings.DATABASES['mongodb']['HOST'],
-       'port': settings.DATABASES['mongodb']['PORT'],
-       'db': settings.DATABASES['mongodb']['NAME'],
-       'username': settings.DATABASES['mongodb']['USER'],
-       'password': settings.DATABASES['mongodb']['PASSWORD'],
-       'authentication_source': settings.DATABASES['mongodb']['AUTHENTICATION_DB'],
-       'connect': False}
-connect(**con)
+if not settings.TESTING:
+    con = {'host': settings.DATABASES['mongodb']['HOST'],
+           'port': settings.DATABASES['mongodb']['PORT'],
+           'db': settings.DATABASES['mongodb']['NAME'],
+           'username': settings.DATABASES['mongodb']['USER'],
+           'password': settings.DATABASES['mongodb']['PASSWORD'],
+           'authentication_source': settings.DATABASES['mongodb']['AUTHENTICATION_DB'],
+           'connect': False}
+    connect(**con)
 
-# these are the mongodb models which we directly use in the visualSHARK
-Project._meta = remove_index(Project)
-VCSSystem._meta = remove_index(VCSSystem)
-Commit._meta = remove_index(Commit)
-Tag._meta = remove_index(Tag)
-File._meta = remove_index(File)
-FileAction._meta = remove_index(FileAction)
-People._meta = remove_index(People)
-CodeEntityState._meta = remove_index(CodeEntityState)
-IssueSystem._meta = remove_index(IssueSystem)
-Issue._meta = remove_index(Issue)
-Message._meta = remove_index(Message)
-MailingList._meta = remove_index(MailingList)
-Event._meta = remove_index(Event)
-MynbouData._meta = remove_index(MynbouData)
+    # these are the mongodb models which we directly use in the visualSHARK
+    Project._meta = remove_index(Project)
+    VCSSystem._meta = remove_index(VCSSystem)
+    Commit._meta = remove_index(Commit)
+    Tag._meta = remove_index(Tag)
+    File._meta = remove_index(File)
+    FileAction._meta = remove_index(FileAction)
+    People._meta = remove_index(People)
+    CodeEntityState._meta = remove_index(CodeEntityState)
+    IssueSystem._meta = remove_index(IssueSystem)
+    Issue._meta = remove_index(Issue)
+    Message._meta = remove_index(Message)
+    MailingList._meta = remove_index(MailingList)
+    Event._meta = remove_index(Event)
+    MynbouData._meta = remove_index(MynbouData)
+
+if settings.TESTING:
+    connect('test', host='mongomock://localhost')
 
 
 class UserProfile(models.Model):
     """Fow now the userprofile only holds the channel.
 
     This can be extended to hold more information in the future, e.g.,
-    customizable dashboards. 
+    customizable dashboards.
     """
     user = models.OneToOneField(User, related_name='profile')
     channel = models.UUIDField(default=uuid.uuid4, editable=False)

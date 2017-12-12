@@ -24,7 +24,7 @@ apt-get install python3.6-venv
 python-3.6 uwsgi module (only for production deployment)
 --------------------------------------------------------
 ```bash
-apt-get install python3.6 python3.6-dev uwsgi uwsgi-src uuid-dev libcap-dev libpcre3-dev
+apt-get install python3.6 python3.6-dev uwsgi uwsgi-src uuid-dev libcap-dev libpcre3-dev libssl-dev
 cd ~
 PYTHON=python3.6 uwsgi --build-plugin "/usr/src/uwsgi/plugins/python python36"
 mv python36_plugin.so /usr/lib/uwsgi/plugins/python36_plugin.so
@@ -34,6 +34,7 @@ chmod 644 /usr/lib/uwsgi/plugins/python36_plugin.so
 pygraphviz
 ----------
 ```bash
+apt-get install graphviz-dev
 pip install pygraphviz --install-option="--include-path=/usr/include/graphviz" --install-option="--library-path=/usr/lib/graphviz/"
 ```
 
@@ -51,7 +52,7 @@ RabbitMQ
 --------
 ```bash
 apt-get install rabbitmq-server
-rabbitctl enable web_stomp, management
+rabbitmqctl enable web_stomp, management
 ```
 
 
@@ -62,6 +63,7 @@ Install Backend
 ---------------
 
 ```bash
+apt-get install libmysqlclient-dev
 git clone https://github.com/smartshark/visualSHARK.git
 
 cd /srv/www/visualSHARK
