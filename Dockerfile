@@ -36,3 +36,11 @@ RUN apt-get install libmysqlclient-dev
 RUN git clone --recursive https://github.com/smartshark/visualSHARK /root/visualshark
 RUN python3.6 -m pip install -r /root/visualshark/requirements.txt
 RUN python3.6 -m pip install pygraphviz --install-option="--include-path=/usr/include/graphviz" --install-option="--library-path=/usr/lib/graphviz/"
+RUN cp /root/visualshark/sntest/settings_dist.py /root/visualshark/sntest/settings.py
+# Change settings
+# Migrate Database
+# Create superuser
+
+# Install Frontend
+RUN npm install /root/visualshark/frontend/app
+RUN cp /root/visualshark/frontend/app/config/prod.local.env.js /root/visualshark/frontend/app/config/prod.env.js
