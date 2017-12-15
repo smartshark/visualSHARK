@@ -31,7 +31,7 @@ export default {
   name: 'rightside',
   computed: {
     ...mapGetters({
-      projects: 'allProjectData',
+      projects: 'allProjects',
       vcs: 'projectsVcs',
       its: 'projectsIts',
       mls: 'projectsMls'

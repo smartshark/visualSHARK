@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <div class="animated fadeIn" v-if="currentProject && currentProject.vcs_id">
+    <div class="animated fadeIn" v-if="currentProject && currentVcs">
       <div class="card">
         <div class="card-header"><i class="fa fa-files-o"></i> Files</div>
         <div class="card-block">
@@ -12,7 +12,7 @@
         </div>
       </div>
     </div>
-    <div class="animated fadeIn" v-if="currentProject && !currentProject.vcs_id">
+    <div class="animated fadeIn" v-if="currentProject && !currentVcs">
       <alert type="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No VCS</strong>
@@ -59,11 +59,12 @@ export default {
   },
   computed: mapGetters({
     currentProject: 'currentProject',
+    currentVcs: 'currentVcs',
     gridFiles: 'gridFiles'
   }),
   watch: {
-    currentProject (value) {
-      if (typeof value.vcs_id !== 'undefined') {
+    currentVcs (value) {
+      if (typeof value.id !== 'undefined') {
         this.triggerRefresh = true
       }
     }
@@ -71,7 +72,7 @@ export default {
   methods: {
     refreshGrid (dat) {
       this.triggerRefresh = false
-      dat.filter = dat.filter + '&vcs_system_id=' + this.currentProject.vcs_id
+      dat.filter = dat.filter + '&vcs_system_id=' + this.currentVcs.id
       this.$store.dispatch('updateGridFiles', dat)
     }
   }

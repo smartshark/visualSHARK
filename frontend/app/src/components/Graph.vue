@@ -14,7 +14,7 @@
 <script>
 export default {
   name: 'graph',
-  props: {nodes: [Object], edges: [Array], maxX: Number, maxY: Number, minY: Number, minX: Number, scaleFactor: Number, nodeRadius: Number, options: [Object], possiblePaths: [Array], productPaths: [Object, Array], showBugFixing: Boolean, bugFixingNodes: [Array], markNodes: [Object, Array], articulationPoints: [Array]},
+  props: {nodes: [Object], edges: [Array], maxX: Number, maxY: Number, minY: Number, minX: Number, scaleFactor: Number, nodeRadius: Number, options: [Object], possiblePaths: [Array, Object], productPaths: [Object, Array], showBugFixing: Boolean, bugFixingNodes: [Array], markNodes: [Object, Array], articulationPoints: [Array]},
   data () {
     return {
       productColors: {}
@@ -45,6 +45,23 @@ export default {
       }
       return col
     },
+    rainbow (numOfSteps, step) {
+      let r, g, b
+      let h = step / numOfSteps
+      let i = ~~(h * 6)
+      let f = h * 6 - i
+      let q = 1 - f
+      switch (i % 6) {
+        case 0: r = 1; g = f; b = 0; break
+        case 1: r = q; g = 1; b = 0; break
+        case 2: r = 0; g = 1; b = f; break
+        case 3: r = 0; g = q; b = 1; break
+        case 4: r = f; g = 0; b = 1; break
+        case 5: r = 1; g = 0; b = q; break
+      }
+      let c = '#' + ('00' + (~~(r * 255)).toString(16)).slice(-2) + ('00' + (~~(g * 255)).toString(16)).slice(-2) + ('00' + (~~(b * 255)).toString(16)).slice(-2)
+      return (c)
+    },
     markColor (revisionHash) {
       if (this.markNodes.hasOwnProperty(revisionHash)) {
         const conv = this.markNodes[revisionHash].join(' & ')
@@ -67,6 +84,31 @@ export default {
           let tmp = this.productPaths.products[i].lastIndexOf('-') + 1
           let labeltext = this.productPaths.products[i].substr(tmp)
           let col = this.color(this.getNumbers(labeltext))
+
+          let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+          circle.setAttributeNS(null, 'r', 5)
+          circle.setAttributeNS(null, 'fill', col)
+          circle.setAttributeNS(null, 'cx', x)
+          circle.setAttributeNS(null, 'cy', y - 5)
+          g.appendChild(circle)
+
+          let label = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+          label.setAttributeNS(null, 'x', x + 10)
+          label.setAttributeNS(null, 'y', y)
+
+          let text = document.createTextNode(labeltext)
+          label.appendChild(text)
+          g.appendChild(label)
+
+          offw = offw + labeltext.length * 8 + 15
+        }
+      }
+
+      if (typeof this.possiblePaths.paths !== 'undefined') {
+        for (let i = 0; i < this.possiblePaths.paths.length; i++) {
+          x = offw
+          let labeltext = 'path nr. ' + i
+          let col = this.rainbow(this.possiblePaths.paths.length, i)
 
           let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
           circle.setAttributeNS(null, 'r', 5)
@@ -158,6 +200,22 @@ export default {
         }
         i++
       }
+    },
+    createPathColors () {
+      if (typeof this.possiblePaths.paths === 'undefined') {
+        return
+      }
+
+      // determine the path in which the node resides, create the color and push to the object
+      let i = 0
+      for (let path of this.possiblePaths.paths) {
+        // let labeltext = 'path nr. ' + i
+        let col = this.rainbow(this.possiblePaths.paths.length, i)
+        for (let node of path) {
+          this.productColors[node] = col
+        }
+        i++
+      }
     }
   },
   watch: {
@@ -170,16 +228,23 @@ export default {
     markNodes (value) {
       this.removeLegend()
       this.drawLegend()
+    },
+    possiblePaths (value) {
+      this.productColors = {}
+      console.log('create possible paths', value)
+      this.createPathColors()
+      this.removeLegend()
+      this.drawLegend()
     }
   },
   computed: {
     myMarkPath () {
-      if (typeof this.possiblePaths === 'undefined') {
+      if (typeof this.possiblePaths.paths === 'undefined') {
         return []
       }
 
       let myMarkNodes = []
-      for (let path of this.possiblePaths) {
+      for (let path of this.possiblePaths.paths) {
         for (let node of path) {
           if (myMarkNodes.indexOf(node) !== -1) {
             myMarkNodes.push(node)
@@ -251,6 +316,11 @@ circle.bugFixing.markCommit {
 
 circle.markCommit2 {
   stroke: green;
+  stroke-width: 0.1px;
+}
+
+circle.markCommit3 {
+  stroke: black;
   stroke-width: 0.1px;
 }
 

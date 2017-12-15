@@ -52,7 +52,8 @@ RabbitMQ
 --------
 ```bash
 apt-get install rabbitmq-server
-rabbitmqctl enable web_stomp, management
+systemctl start rabbitmq-server
+rabbitmq-plugins enable rabbitmq_webstomp, rabbitmq_management
 ```
 
 

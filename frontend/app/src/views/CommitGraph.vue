@@ -1,9 +1,6 @@
 <template>
   <div class="wrapper">
-    <div class="animated fadeIn" v-if="currentProject && currentProject.issue_id && $route.path !== '/analytics/cgraph'">
-      not implemented
-    </div>
-    <div class="animated fadeIn" v-if="currentProject && currentProject.vcs_id && $route.path === '/analytics/cgraph'">
+    <div class="animated fadeIn" v-if="currentProject && currentVcs">
       <div class="row">
         <div class="col-sm-12">
           <div class="card">
@@ -122,7 +119,7 @@
         </div>
       </div>
     </div>
-    <div class="animated fadeIn" v-if="currentProject && !currentProject.vcs_id">
+    <div class="animated fadeIn" v-if="currentProject && !currentVcs">
       <alert type="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No VCS</strong>
@@ -269,11 +266,11 @@ export default {
         this.dlText = 'Save SVG'
       }
     },
-    currentProject (value) {
-      if (typeof value.vcs_id !== 'undefined') {
-        this.$store.dispatch('getProducts', {'filter': '&vcs_system_id=' + this.currentVcs.id, order: 'name'})
-        this.$store.dispatch('getCommitGraph', value.vcs_id)
-        this.cgConfig.vcsId = value.vcs_id
+    currentVcs (value) {
+      if (typeof value.id !== 'undefined') {
+        this.$store.dispatch('getProducts', {'filter': '&vcs_system_id=' + value.id, order: 'name'})
+        this.$store.dispatch('getCommitGraph', value.id)
+        this.cgConfig.vcsId = value.id
 
         this.showGraph = true
         this.nodeRadius = 5
@@ -286,13 +283,11 @@ export default {
         let tmp = 'matrix(' + this.matrix.join(' ') + ')'
         document.getElementById('cg-elements').setAttributeNS(null, 'transform', tmp)
         this.dlText = 'loading...'
-      } else {
-        this.showGraph = false
       }
     },
     showArticulationPoints (value) {
       if (value === true) {
-        this.$store.dispatch('getArticulationPoints', {commitGraph: this.currentProject.vcs_id})
+        this.$store.dispatch('getArticulationPoints', {commitGraph: this.currentVcs.id})
       } else if (value === false) {
         this.$store.dispatch('clearArticulationPoints')
       }
@@ -311,14 +306,14 @@ export default {
     },
     showBugFixing (value) {
       if (value === true) {
-        this.$store.dispatch('getBugFixingNodes', {commitGraph: this.currentProject.vcs_id, approach: this.currentDefectLinkApproach})
+        this.$store.dispatch('getBugFixingNodes', {commitGraph: this.currentVcs.id, approach: this.currentDefectLinkApproach})
       } else if (value === false) {
         this.$store.dispatch('clearBugFixingNodes')
       }
     },
     currentDefectLinkApproach (value) {
       if (this.graph.showBugFixing === true) {
-        this.$store.dispatch('getDefectLinks', {commitGraph: this.currentProject.vcs_id, approach: this.currentDefectLinkApproach})
+        this.$store.dispatch('getDefectLinks', {commitGraph: this.currentVcs.id, approach: this.currentDefectLinkApproach})
       }
     },
     nodeRadiusDebounce (value) {
@@ -379,7 +374,7 @@ export default {
       }
 
       if (this.startCommit !== false && this.endCommit !== false) {
-        this.$store.dispatch('getPossiblePaths', {commitGraph: this.currentProject.vcs_id, startCommit: this.startCommit.revisionHash, endCommit: this.endCommit.revisionHash})
+        this.$store.dispatch('getPossiblePaths', {commitGraph: this.currentVcs.id, startCommit: this.startCommit.revisionHash, endCommit: this.endCommit.revisionHash})
       }
       // console.log('path: ', this.startCommit, this.endCommit)
     },

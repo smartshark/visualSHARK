@@ -1,9 +1,9 @@
 <template>
   <div class="wrapper">
-    <div class="animated fadeIn" v-if="currentProject && currentProject.vcs_id">
+    <div class="animated fadeIn" v-if="currentProject && currentVcs">
       <router-view></router-view>
     </div>
-    <div class="animated fadeIn" v-if="currentProject && !currentProject.vcs_id">
+    <div class="animated fadeIn" v-if="currentProject && !currentVcs">
       <alert type="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No VCS</strong>
@@ -38,7 +38,8 @@ export default {
     alert
   },
   computed: mapGetters({
-    currentProject: 'currentProject'
+    currentProject: 'currentProject',
+    currentVcs: 'currentVcs'
   })
 }
 </script>

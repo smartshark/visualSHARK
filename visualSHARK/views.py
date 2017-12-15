@@ -496,13 +496,14 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         nodes = set()
 
         o = OntdekBaan(dg)
+        paths = []
         for p in o.get_all_paths(start_commit, end_commit):
-            # paths.append(p)
-            nodes = nodes.union(set(p))
+            paths.append(p)
+            # nodes = nodes.union(set(p))
         # path = nx.shortest_path(dg, start_commit, end_commit)
         # nodes = set(path)
 
-        return Response({'paths': [list(nodes)]})
+        return Response({'paths': paths})
 
 
 class ProductViewSet(MongoReadOnlyModelViewSet):

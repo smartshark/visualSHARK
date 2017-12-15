@@ -560,12 +560,7 @@ const mutations = {
     state.currentPerson = response.data
   },
   [types.SET_POSSIBLE_PATHS] (state, { response }) {
-    state.possiblePaths = response.data.paths
-    if (typeof response.data.versions !== 'undefined') {
-      state.possiblePathsReleases = response.data.versions
-    } else {
-      state.possiblePathsReleases = []
-    }
+    state.possiblePaths = response.data
   },
   [types.SET_BUG_FIXING_NODES] (state, { response }) {
     state.bugFixingNodes = response.data.results
