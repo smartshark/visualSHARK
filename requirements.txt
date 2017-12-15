@@ -5,7 +5,7 @@ django-rest-framework-mongoengine==3.3.1
 djangorestframework==3.7.1
 mysqlclient==1.3.12
 networkx==2.0
-pygraphviz==1.3.1
+#pygraphviz==1.3.1
 pytz==2017.2
 git+https://github.com/smartshark/pycoSHARK.git@1.0.10#egg=pycoshark-1.0.10
 git+https://github.com/smartshark/mynbouSHARK.git#egg=mynbouSHARK-0.1.0

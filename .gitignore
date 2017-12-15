@@ -4,3 +4,4 @@ sntest/settings.py
 node_modules
 frontend/app/config/prod.env.js
 docs/build
+.idea/
