@@ -376,6 +376,7 @@ const actions = {
     commit(types.PUSH_LOADING)
     rest.getMarkNodes(dat)
       .then(response => {
+        console.log('mark nodes', response)
         commit(types.SET_MARK_NODES, { response })
         commit(types.POP_LOADING)
       })

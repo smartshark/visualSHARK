@@ -22,6 +22,7 @@
     "sass-loader": "^6.0.6",
     "simple-line-icons": "^2.4.1",
     "vue": "^2.5.2",
+    "vue-multiselect": "^2.0.8",
     "vue-progressbar": "git+https://github.com/atrautsch/vue-progressbar.git",
     "vue-router": "^3.0.1",
     "vue-strap": "github:wffranco/vue-strap",

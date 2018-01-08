@@ -84,18 +84,20 @@
                       <input type="checkbox" v-model="showCommitLabel" class="checkbox-dropdown">
                       <div class="checkbox-label">Show commit label</div>
                       <div class="input-group">
-                        <select v-model="currentCommitLabelField" class="form-control">
+                        <multiselect v-model="currentCommitLabelFields" :options="commitLabelFields" :multiple="true" track-by="id" label="label"></multiselect>
+                        <!--<select v-model="currentCommitLabelField" class="form-control">
                           <option v-for="item in commitLabelFields" :value="item.id">{{item.approach }}: {{ item.name }}</option>
-                        </select>
+                        </select>-->
                       </div>
                     </div>
                     <div class="input-group" style="width: 600px">
                       <input type="checkbox" v-model="showProduct" class="checkbox-dropdown">
                       <div class="checkbox-label">Show Product</div>
                       <div class="input-group">
-                        <select v-model="currentProduct" class="form-control">
+                        <multiselect v-model="currentProducts" :options="products.data" :multiple="true" track-by="id" label="name"></multiselect>
+                        <!--<select v-model="currentProduct" class="form-control">
                           <option v-for="item in products.data" :value="item.id">{{ item.name }}</option>
-                        </select>
+                        </select>-->
                       </div>
                     </div>
                     <div class="input-group">
@@ -167,6 +169,7 @@ import { mapGetters } from 'vuex'
 import { alert, dropdown, checkbox } from 'vue-strap'
 import { debounce } from 'lodash'
 
+import Multiselect from 'vue-multiselect'
 import Graph from '@/components/Graph'
 
 export default {
@@ -201,12 +204,14 @@ export default {
       dlText: 'loading...',
       showCommitLabel: false,
       cgConfig: {vcsId: null, searchMessage: null, label: null},
+      currentCommitLabelFields: [],
       currentCommitLabelField: 0,
-      currentProduct: 0
+      currentProduct: 0,
+      currentProducts: []
     }
   },
   components: {
-    alert, Graph, dropdown, checkbox
+    alert, Graph, dropdown, checkbox, Multiselect
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -232,6 +237,10 @@ export default {
     this.cgConfig.vcsId = this.currentVcs.id
   },
   watch: {
+    currentCommitLabelFields (value) {
+      console.log(value)
+      console.log(value.map(a => a.id))
+    },
     showDownload (value) {
       // this is the simplest method available to save the svg by embedding all of it into the download attribute of the a tag.
       // this will not scale to big graphs
@@ -279,6 +288,8 @@ export default {
         this.filesCommittedDebounce = 0
         this.showReleases = false
         this.showBugFixing = false
+        this.startCommit = false
+        this.endCommit = false
         this.graphOptions = {onlyTags: false, onlyNumberFilesCommitted: 0, onlyCodeFiles: false, offsetX: 10, offsetY: 10, showDirection: false, showBugFixing: false}
         let tmp = 'matrix(' + this.matrix.join(' ') + ')'
         document.getElementById('cg-elements').setAttributeNS(null, 'transform', tmp)
@@ -292,14 +303,14 @@ export default {
         this.$store.dispatch('clearArticulationPoints')
       }
     },
-    currentProduct (value) {
+    currentProducts (value) {
       if (this.showProduct === true) {
-        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productId: this.currentProduct})
+        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productIds: this.currentProducts.map(a => a.id)})
       }
     },
     showProduct (value) {
-      if (value === true && this.currentProduct !== 0) {
-        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productId: this.currentProduct})
+      if (value === true && this.currentProducts.length > 0) {
+        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productIds: this.currentProducts.map(a => a.id)})
       } else {
         this.$store.dispatch('clearProductPaths')
       }
@@ -327,7 +338,8 @@ export default {
     },
     currentCommitLabelField (value) {
       if (this.showCommitLabel === true) {
-        this.cgConfig.label = value
+        this.cgConfig.label = this.currentCommitLabelFields.map(a => a.id)
+        // this.cgConfig.label = currentCommitLabelFields.find(item => item.id === countryCode);
       }
       this.$store.dispatch('getMarkNodes', this.cgConfig)
     },
@@ -341,8 +353,8 @@ export default {
       this.$store.dispatch('getMarkNodes', this.cgConfig)
     },
     showCommitLabel (value) {
-      if (value === true && this.currentCommitLabelField !== 0) {
-        this.cgConfig.label = this.currentCommitLabelField
+      if (value === true && this.currentCommitLabelFields.length > 0) {
+        this.cgConfig.label = this.currentCommitLabelFields.map(a => a.id)
       } else {
         this.cgConfig.label = null
       }
@@ -429,6 +441,8 @@ export default {
 </script>
 
 <style>
+@import '~vue-multiselect/dist/vue-multiselect.min.css';
+
 .commitView {
   position: absolute;
   top: -10px;

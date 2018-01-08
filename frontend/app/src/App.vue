@@ -58,6 +58,9 @@ export default {
   /* Import Simple Line Icons Set */
   $simple-line-font-path: '~simple-line-icons/fonts/';
   @import '~simple-line-icons/css/simple-line-icons.css';
+
+  /*multiselect css*/
+  
 </style>
 
 <style lang="scss">

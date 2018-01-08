@@ -69,7 +69,18 @@ export default {
         for (let i = 0; i < conv.length; i++) {
           s = s + conv.charCodeAt(i)
         }
-        const col = this.color(s)
+        // const col = this.color(s)
+        // duplicate code with legend
+        let labels = []
+        for (let att in this.markNodes) {
+          if (this.markNodes.hasOwnProperty(att)) {
+            let conv = this.markNodes[att].join(' & ')
+            if (labels.indexOf(conv) === -1) {
+              labels.push(conv)
+            }
+          }
+        }
+        const col = this.rainbow(labels.length, labels.indexOf(conv))
         return col
       }
     },
@@ -141,11 +152,13 @@ export default {
       }
 
       // add labels to legend
+      let i = 0
       for (let lbl in labels) {
         const labeltext = labels[lbl]
         // numeric representation for color seed
-        let col = this.color(this.getNumbers(labeltext))
-
+        // let col = this.color(this.getNumbers(labeltext))
+        let col = this.rainbow(labels.length, i)
+        i++
         x = offw
         let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
         circle.setAttributeNS(null, 'r', 5)

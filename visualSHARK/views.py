@@ -418,13 +418,20 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         response = {}
 
         if label:
-            labelfield = CommitLabelField.objects.get(pk=label)
-            label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
+            qry1 = {'vcs_system_id': vcs_system_id}
+            qry2 = {'$or': []}
+            labels = []
 
-            dat = {'vcs_system_id': vcs_system_id,
-                   'labels__{}'.format(label_name): True}
-            for v in Commit.objects.filter(**dat):
-                response[v.revision_hash] = [label_name]
+            for lid in label.split(','):
+                labelfield = CommitLabelField.objects.get(pk=lid)
+                label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
+                qry = {'vcs_system_id': vcs_system_id, 'labels__{}'.format(label_name): True}
+
+                for c in Commit.objects.filter(**qry):
+                    if c.revision_hash in response.keys():
+                        response[c.revision_hash].append(label_name)
+                    else:
+                        response[c.revision_hash] = [label_name]
 
         if search:
             for v in Commit.objects.filter(vcs_system_id=vcs_system_id, message__icontains=search):
@@ -456,30 +463,35 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         """Return path for the approach used in this exact product."""
         cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
 
-        product_id = request.query_params.get('product_id', None)
+        product_ids = request.query_params.get('product_ids', None)
 
-        if not product_id:
-            raise Exception('need commits')
-
-        p = MynbouData.objects.get(id=product_id)
-
-        # extract approach, start and end commit
-        tmp = json.loads(p.file.read())
+        if not product_ids:
+            raise Exception('need products')
 
         dg = nx.read_gpickle(cg.directed_pickle.path)
-        approach = tmp['label_path_approach']
-        start_commit = tmp['start_commit']
-        end_commit = tmp['end_commit']
 
-        nodes = set()
-        # import importlib
-        # mod = importlib.import_module('mynbouSHARK.path_approaches.{}'.format(approach))
-        if approach == 'commit_to_commit':
-            c = OntdekBaan(dg)
-            for path in c.get_all_paths(start_commit, end_commit):
-                nodes = nodes.union(set(path))
+        resp = {'paths': [], 'products': []}
+        for product_id in product_ids.split(','):
+            p = MynbouData.objects.get(id=product_id)
 
-        return Response({'paths': [list(nodes)], 'products': [p.name]})
+            # extract approach, start and end commit
+            tmp = json.loads(p.file.read())        
+            approach = tmp['label_path_approach']
+            start_commit = tmp['start_commit']
+            end_commit = tmp['end_commit']
+
+            nodes = set()
+            # import importlib
+            # mod = importlib.import_module('mynbouSHARK.path_approaches.{}'.format(approach))
+            if approach == 'commit_to_commit':
+                c = OntdekBaan(dg)
+                for path in c.get_all_paths(start_commit, end_commit):
+                    nodes = nodes.union(set(path))
+
+            resp['paths'].append(list(nodes))
+            resp['products'].append(p.name)
+
+        return Response(resp)
 
     @detail_route(methods=['get'])
     def path(self, request, vcs_system_id=None):

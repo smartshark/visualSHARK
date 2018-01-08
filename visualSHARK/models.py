@@ -119,6 +119,10 @@ class CommitLabelField(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
 
+    @property
+    def label(self):
+        return '{}: {}'.format(self.approach, self.name)
+
 
 class VSJobType(models.Model):
     """Possible types of jobs."""
