@@ -359,6 +359,9 @@ export default {
     if (dat.label !== null) {
       qry = qry + 'label=' + dat.label.join(',') + '&'
     }
+    if (dat.travis !== null) {
+      qry = qry + 'travis=' + dat.travis.join(',') + '&'
+    }
     let req = this.getUrl('analytics/commitgraph/' + dat.vcsId + '/mark_nodes/' + qry)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',

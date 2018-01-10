@@ -82,23 +82,24 @@
                     </div>
                     <div class="input-group" style="width: 600px">
                       <input type="checkbox" v-model="showCommitLabel" class="checkbox-dropdown">
-                      <div class="checkbox-label">Show commit label</div>
-                      <div class="input-group">
-                        <multiselect v-model="currentCommitLabelFields" :options="commitLabelFields" :multiple="true" track-by="id" label="label"></multiselect>
+                      <div class="checkbox-label" style="width: 220px;">Show commit label</div>
+                      <multiselect v-model="currentCommitLabelFields" :options="commitLabelFields" :multiple="true" track-by="id" label="label"></multiselect>
                         <!--<select v-model="currentCommitLabelField" class="form-control">
                           <option v-for="item in commitLabelFields" :value="item.id">{{item.approach }}: {{ item.name }}</option>
                         </select>-->
-                      </div>
                     </div>
                     <div class="input-group" style="width: 600px">
                       <input type="checkbox" v-model="showProduct" class="checkbox-dropdown">
-                      <div class="checkbox-label">Show Product</div>
-                      <div class="input-group">
-                        <multiselect v-model="currentProducts" :options="products.data" :multiple="true" track-by="id" label="name"></multiselect>
+                      <div class="checkbox-label" style="width: 220px;">Show Product</div>
+                      <multiselect v-model="currentProducts" :options="products.data" :multiple="true" track-by="id" label="name"></multiselect>
                         <!--<select v-model="currentProduct" class="form-control">
                           <option v-for="item in products.data" :value="item.id">{{ item.name }}</option>
                         </select>-->
-                      </div>
+                    </div>
+                    <div class="input-group" style="width: 600px">
+                      <input type="checkbox" v-model="showTravisStates" class="checkbox-dropdown">
+                      <div class="checkbox-label" style="width: 220px;">Travis States</div>
+                      <multiselect v-model="currentTravisStates" :options="travisStates" :multiple="true"></multiselect>
                     </div>
                     <div class="input-group">
                       <input type="checkbox" v-model="graphOptions.onlyTags" class="checkbox-dropdown">
@@ -203,11 +204,15 @@ export default {
       searchMessage: '',
       dlText: 'loading...',
       showCommitLabel: false,
-      cgConfig: {vcsId: null, searchMessage: null, label: null},
+      cgConfig: {vcsId: null, searchMessage: null, label: null, travis: null},
       currentCommitLabelFields: [],
       currentCommitLabelField: 0,
       currentProduct: 0,
-      currentProducts: []
+      currentProducts: [],
+      showTravisStates: false,
+      currentTravisStates: [],
+      // todo: this needs to be in global state requested from backend
+      travisStates: ['PASSED', 'FAILED', 'ERROR']
     }
   },
   components: {
@@ -357,6 +362,15 @@ export default {
         this.cgConfig.label = this.currentCommitLabelFields.map(a => a.id)
       } else {
         this.cgConfig.label = null
+      }
+      this.$store.dispatch('getMarkNodes', this.cgConfig)
+    },
+    showTravisStates (value) {
+      console.log(this.currentTravisStates)
+      if (value === true && this.currentTravisStates.length > 0) {
+        this.cgConfig.travis = this.currentTravisStates
+      } else {
+        this.cgConfig.travis = null
       }
       this.$store.dispatch('getMarkNodes', this.cgConfig)
     }

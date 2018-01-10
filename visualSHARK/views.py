@@ -24,7 +24,7 @@ import django_filters
 
 from mongoengine.queryset.visitor import Q
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer
@@ -414,8 +414,19 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         """
         search = request.query_params.get('searchMessage', None)
         label = request.query_params.get('label', None)
+        travis = request.query_params.get('travis', None)
 
         response = {}
+
+        if travis:
+            travis_states = travis.split(',')
+            for v in Commit.objects.filter(vcs_system_id=vcs_system_id):
+                for tj in TravisBuild.objects.filter(vcs_system_id=vcs_system_id, commit_id=v.id):
+                    if tj.state not in travis_states:
+                        continue
+                    if v.revision_hash not in response.keys():
+                        response[v.revision_hash] = []
+                    response[v.revision_hash].append('travis_{}'.format(tj.state))
 
         if label:
             qry1 = {'vcs_system_id': vcs_system_id}
@@ -465,12 +476,12 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         product_ids = request.query_params.get('product_ids', None)
 
+        resp = {'paths': [], 'products': []}
         if not product_ids:
-            raise Exception('need products')
+            return Response(resp)
 
         dg = nx.read_gpickle(cg.directed_pickle.path)
 
-        resp = {'paths': [], 'products': []}
         for product_id in product_ids.split(','):
             p = MynbouData.objects.get(id=product_id)
 

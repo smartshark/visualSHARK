@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 from mongoengine import connect
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
@@ -52,7 +52,9 @@ if not settings.TESTING:
     Message._meta = remove_index(Message)
     MailingList._meta = remove_index(MailingList)
     Event._meta = remove_index(Event)
+    TravisBuild._meta = remove_index(TravisBuild)
     MynbouData._meta = remove_index(MynbouData)
+
 
 if settings.TESTING:
     connect('test', host='mongomock://localhost')
