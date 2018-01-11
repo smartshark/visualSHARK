@@ -182,7 +182,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
         return qry
 
     def retrieve(self, request, id=None):
-        """Add additional information the each tag."""
+        """Add additional information the each commit."""
         commit = self.queryset.get(revision_hash=id)
 
         tags = []
@@ -421,18 +421,17 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         if travis:
             travis_states = travis.split(',')
             for v in Commit.objects.filter(vcs_system_id=vcs_system_id):
+                states = []
                 for tj in TravisBuild.objects.filter(vcs_system_id=vcs_system_id, commit_id=v.id):
-                    if tj.state not in travis_states:
+                    if tj.state.upper() not in travis_states:
                         continue
+                    states.append('travis_{}'.format(tj.state))
+                if states:
                     if v.revision_hash not in response.keys():
                         response[v.revision_hash] = []
-                    response[v.revision_hash].append('travis_{}'.format(tj.state))
+                    response[v.revision_hash].append(list(set(states)))
 
         if label:
-            qry1 = {'vcs_system_id': vcs_system_id}
-            qry2 = {'$or': []}
-            labels = []
-
             for lid in label.split(','):
                 labelfield = CommitLabelField.objects.get(pk=lid)
                 label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
@@ -486,7 +485,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
             p = MynbouData.objects.get(id=product_id)
 
             # extract approach, start and end commit
-            tmp = json.loads(p.file.read())        
+            tmp = json.loads(p.file.read())
             approach = tmp['label_path_approach']
             start_commit = tmp['start_commit']
             end_commit = tmp['end_commit']
