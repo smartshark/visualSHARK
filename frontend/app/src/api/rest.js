@@ -354,13 +354,13 @@ export default {
   getMarkNodes (dat) {
     let qry = '?'
     if (dat.searchMessage !== null) {
-      qry = qry + 'searchMessage=' + dat.searchMessage + '&'
+      qry = qry + 'searchMessage=' + encodeURIComponent(dat.searchMessage) + '&'
     }
     if (dat.label !== null) {
-      qry = qry + 'label=' + dat.label.join(',') + '&'
+      qry = qry + 'label=' + encodeURIComponent(dat.label.join(',')) + '&'
     }
     if (dat.travis !== null) {
-      qry = qry + 'travis=' + dat.travis.join(',') + '&'
+      qry = qry + 'travis=' + encodeURIComponent(dat.travis.join(',')) + '&'
     }
     let req = this.getUrl('analytics/commitgraph/' + dat.vcsId + '/mark_nodes/' + qry)
     return axios.get(req, {headers: {

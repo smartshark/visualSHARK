@@ -35,6 +35,8 @@ pygraphviz
 ----------
 ```bash
 apt-get install graphviz-dev
+cd /srv/www/visualSHARK
+source bin/activate
 pip install pygraphviz --install-option="--include-path=/usr/include/graphviz" --install-option="--library-path=/usr/lib/graphviz/"
 ```
 
