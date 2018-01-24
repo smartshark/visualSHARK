@@ -4,7 +4,7 @@ export default {
   token: null,
   getUrl (base) {
     if (process.env.NODE_ENV === 'development') {
-      return 'http://localhost:8000/vs/' + base
+      return 'http://10.0.0.52:8000/vs/' + base
     }
     if (process.env.NODE_ENV === 'production') {
       return process.env.VS_API_URL + base
@@ -385,6 +385,27 @@ export default {
   getCommitAnalytics (revisionHash) {
     let req = this.getUrl('analytics/commit/' + revisionHash + '/')
     return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getTopicModelsForProject (projectId) {
+    let req = this.getUrl('analytics/topicmodel?project_id=' + projectId)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getTopicModel (dat) {
+    let req = this.getUrl('analytics/topicmodel')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  evaluateTopicModelForCommit (dat) {
+    let req = this.getUrl('analytics/topicmodel')
+    return axios.put(req, dat, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
     }})

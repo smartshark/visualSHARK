@@ -99,7 +99,43 @@
                 </div>
               </div>
             </div>
-          </div>
+            <div class="col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="fa fa-pie-chart"></i> Topic Model Information
+                </div>
+                <div class="card-block">
+                   <div class="form-group row">
+                     <label for="staticEmail" class="col-sm-2 col-form-label">Name: </label>
+                     <div class="col-sm-10">
+                        <select v-model="topicModel" class="form-control" @change="evaluateForTopicModel()">
+                           <option disabled value="false">Please select one</option>
+                          <option v-for="item in topicModels.data" :value="item">{{ item.name }}</option>
+                        </select>
+                     </div>
+                  </div>
+		<div class="table-responsive" v-if="this.topicModel.id !== false && typeof this.topicModel.id !== 'undefined' && topicEvaluation">
+                 <table class="table">
+                    <thead>
+                      <tr>
+                       <th scope="col">#</th>
+                       <th scope="col">Score</th>
+                       <th scope="col">Topic Description</th>
+                     </tr>
+                    </thead>
+                    <tbody>
+                       <tr v-for="topic in topicEvaluation.data">
+                         <th scope="row">{{ topic.id }}</th>
+                         <td>{{ topic.score }}</td>
+                         <td>{{ topic.topicPrint }}</td>
+                       </tr>
+                     </tbody>
+                  </table>
+                </div>
+                </div>
+              </div>
+           </div>
+         </div>
         </div>
       </div>
     </div>
@@ -142,7 +178,7 @@
       </div>
     </div>
     <div class="animated fadeIn" v-if="currentIts && !currentIts.id">
-      <alert type="danger" dismissable>
+      <alert type="danger" dismissable>topicModels: 'topicModels',
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Issue System</strong>
         <p>
@@ -187,6 +223,7 @@ export default {
           type: -1
         }
       },
+      topicModel: false,
       triggerRefresh: false
     }
   },
@@ -194,6 +231,8 @@ export default {
     Grid, modal, alert
   },
   computed: mapGetters({
+    topicModels: 'topicModels',
+    topicEvaluation: 'topicEvaluation',
     gridIssues: 'gridIssues',
     currentProject: 'currentProject',
     currentIssue: 'currentIssue',
@@ -202,7 +241,9 @@ export default {
   mounted () {
     if (this.id !== false && typeof this.id !== 'undefined') {
       this.$store.dispatch('getIssue', this.id)
+      this.evaluateForTopicModel()
     }
+    this.$store.dispatch('getAllTopicModels', this.currentProject.id)
   },
   watch: {
     currentProject (value) {
@@ -214,6 +255,7 @@ export default {
     id (value) {
       if (value !== false && typeof value !== 'undefined') {
         this.$store.dispatch('getIssue', value)
+        this.evaluateForTopicModel()
       }
     },
     currentIssue (value) {
@@ -227,6 +269,13 @@ export default {
       if (this.currentIts !== null && this.currentIts.id !== null) {
         dat.filter = dat.filter + '&issue_system_id=' + this.currentIts.id
         this.$store.dispatch('updateGridIssues', dat)
+        this.$store.dispatch('getAllTopicModels', this.currentProject.id)
+      }
+    },
+    evaluateForTopicModel () {
+      if (this.id !== false && typeof this.id !== 'undefined' && this.topicModel.id !== false && typeof this.topicModel.id !== 'undefined') {
+        let dat = {'id': this.topicModel.id, 'issueId': this.id}
+        this.$store.dispatch('evaluateTopicModelwithIssue', dat)
       }
     }
   }

@@ -24,7 +24,7 @@ import django_filters
 
 from mongoengine.queryset.visitor import Q
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, IssueComment, Message, MailingList, MynbouData, TopicModel
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer
@@ -37,6 +37,13 @@ from rest_framework.filters import OrderingFilter
 
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan3 as OntdekBaan
+
+import gensim
+import string
+import re
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -618,6 +625,102 @@ class ReleaseView(APIView):
         # print(history)
         return Response(history)
 
+class TopicModelView(APIView):
+
+    def get(self,request):
+        project_id = request.GET.get('project_id', None)
+        topicModels = []
+        for m in TopicModel.objects.filter(project_id=project_id):
+            topicModels.append({"name": str(m.name), "id": str(m.id), "passes": m.config["passes"], "language_filter": m.config["language_filter"], "issue_comments": m.config["issue_comments"], "issues": m.config["issues"], "messages": m.config["messages"], "K": m.config["K"], "project_filter": m.config["project_filter"], "filter": m.config["filter"]});
+        response = { 'models': topicModels }
+        return Response(response)
+
+    def post(self, request):     
+        model_id = request.data["id"]          
+        model = TopicModel.objects.get(id=model_id)
+        response = { 'data': model.view.read() }
+        return Response(response)
+
+    def put(self, request):    
+        model_id = request.data["id"] 
+        commit_id = request.data["issueId"]  
+        
+        folder = "tmp/" + model_id + "/"
+        need_load = False
+        clear_cache = False
+
+        if not os.path.exists(folder):
+           os.makedirs(folder)
+           need_load = True       
+        
+        model = TopicModel.objects.get(id=model_id)
+
+        if need_load:
+           # Load objects form db and save local
+           dic = open(folder + 'dic.dict','wb')
+           dic.write(model.dic.read())
+           dic.close()
+       
+           #LDA
+           lda = open(folder + 'topic.model','wb')
+           lda.write(model.lda.read())
+           lda.close()   
+           lda_id2word = open(folder + 'topic.model.id2word','wb')
+           lda_id2word.write(model.lda_id2word.read())
+           lda_id2word.close()
+           lda_state = open(folder + 'topic.model.state','wb')
+           lda_state.write(model.lda_state.read())
+           lda_state.close()
+           lda_expElogbeta = open(folder + 'topic.model.expElogbeta.npy','wb')
+           lda_expElogbeta.write(model.lda_expElogbeta.read())
+           lda_expElogbeta.close()
+
+
+        dic = gensim.corpora.Dictionary.load(folder + 'dic.dict') 
+        lda = gensim.models.LdaModel.load(folder + 'topic.model')
+        
+        if clear_cache:
+           os.remove(folder + 'dic.dict') 
+           os.remove(folder + 'topic.model')
+           os.remove(folder + 'topic.model.id2word')
+           os.remove(folder + 'topic.model.state')
+           os.remove(folder + 'topic.model.expElogbeta.npy')
+
+        ## Evaluate the issue
+        issue = Issue.objects.get(id=commit_id)
+        s = str(issue.title) + " " + str(issue.desc)
+        if model.config['issue_comments'] == 'true':
+           for issue_comment in IssueComment.objects.filter(issue_id=issue.id):
+               s += str(issue_comment.comment)
+        # Clean s
+        whitelist = set("abcdefghijklmnopqrstuvwxy ABCDEFGHIJKLMNOPQRSTUVWXYZ?.!'")
+        stopword = set(stopwords.words('english'))
+        punctuation = set(string.punctuation) 
+        lemmatize = WordNetLemmatizer()
+        
+        # Remove URLS
+        s = re.sub(r'^https?:\/\/.*[\r\n]*', '', s, flags=re.MULTILINE);
+        s = s.replace('\r\n',' ');
+        s = s.replace('\n',' ');
+        # Only words..
+        s = ''.join(filter(whitelist.__contains__, s));
+        # Rest
+        s = " ".join([i for i in s.lower().split() if i not in stopword])  
+        s = " ".join(lemmatize.lemmatize(i) for i in s.split())  
+        s = "".join(i for i in s if i not in punctuation)
+        # Words with size 2 or less makes no sense
+        s = " ".join([w for w in s.split() if len(w)>2])
+        s = s.split()        
+        s = dic.doc2bow(s)
+        topics = lda[s]
+        result_topics = []
+        for topic in topics:
+            result_topics.append({ "id" : topic[0], "score" : topic[1], "topicPrint" : lda.print_topic(topic[0]) })
+
+        print(result_topics)
+
+        response = { 'evaluation': result_topics }
+        return Response(response)
 
 class VSJobViewSet(rviewsets.ModelViewSet):
     """Job information."""

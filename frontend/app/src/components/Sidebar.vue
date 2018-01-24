@@ -35,6 +35,9 @@
             <li class="nav-item">
               <router-link :to="'/analytics/release'" class="nav-link" exact><i class="fa fa-flag-checkered"></i> Release Finder</router-link>
             </li>
+            <li class="nav-item">
+              <router-link :to="'/analytics/topicModels'" class="nav-link" exact><i class="fa fa-pie-chart"></i> Topic Models</router-link>
+            </li>
           </ul>
         </router-link>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/system'}" disabled>
