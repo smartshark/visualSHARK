@@ -299,7 +299,11 @@ export default {
     }})
   },
   getProductPaths (dat) {
-    let req = this.getUrl('analytics/commitgraph/' + dat.commitGraph + '/product_path/?product_id=' + dat.productId)
+    let qry = '?'
+    if (dat.productIds !== null) {
+      qry = qry + 'product_ids=' + dat.productIds.join(',')
+    }
+    let req = this.getUrl('analytics/commitgraph/' + dat.commitGraph + '/product_path/' + qry)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
@@ -353,7 +357,10 @@ export default {
       qry = qry + 'searchMessage=' + dat.searchMessage + '&'
     }
     if (dat.label !== null) {
-      qry = qry + 'label=' + dat.label + '&'
+      qry = qry + 'label=' + dat.label.join(',') + '&'
+    }
+    if (dat.travis !== null) {
+      qry = qry + 'travis=' + dat.travis.join(',') + '&'
     }
     let req = this.getUrl('analytics/commitgraph/' + dat.vcsId + '/mark_nodes/' + qry)
     return axios.get(req, {headers: {

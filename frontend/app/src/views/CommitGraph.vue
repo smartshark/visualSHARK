@@ -82,21 +82,18 @@
                     </div>
                     <div class="input-group" style="width: 600px">
                       <input type="checkbox" v-model="showCommitLabel" class="checkbox-dropdown">
-                      <div class="checkbox-label">Show commit label</div>
-                      <div class="input-group">
-                        <select v-model="currentCommitLabelField" class="form-control">
-                          <option v-for="item in commitLabelFields" :value="item.id">{{item.approach }}: {{ item.name }}</option>
-                        </select>
-                      </div>
+                      <div class="checkbox-label" style="width: 220px;">Show commit label</div>
+                      <multiselect v-model="currentCommitLabelFields" :options="commitLabelFields" :multiple="true" track-by="id" label="label"></multiselect>
                     </div>
                     <div class="input-group" style="width: 600px">
                       <input type="checkbox" v-model="showProduct" class="checkbox-dropdown">
-                      <div class="checkbox-label">Show Product</div>
-                      <div class="input-group">
-                        <select v-model="currentProduct" class="form-control">
-                          <option v-for="item in products.data" :value="item.id">{{ item.name }}</option>
-                        </select>
-                      </div>
+                      <div class="checkbox-label" style="width: 220px;">Show Product</div>
+                      <multiselect v-model="currentProducts" :options="products.data" :multiple="true" track-by="id" label="name"></multiselect>
+                    </div>
+                    <div class="input-group" style="width: 600px">
+                      <input type="checkbox" v-model="showTravisStates" class="checkbox-dropdown">
+                      <div class="checkbox-label" style="width: 220px;">Travis States</div>
+                      <multiselect v-model="currentTravisStates" :options="travisStates" :multiple="true"></multiselect>
                     </div>
                     <div class="input-group">
                       <input type="checkbox" v-model="graphOptions.onlyTags" class="checkbox-dropdown">
@@ -167,6 +164,7 @@ import { mapGetters } from 'vuex'
 import { alert, dropdown, checkbox } from 'vue-strap'
 import { debounce } from 'lodash'
 
+import Multiselect from 'vue-multiselect'
 import Graph from '@/components/Graph'
 
 export default {
@@ -191,7 +189,6 @@ export default {
       endCommit: false,
       startPathCommit: false,
       endPathCommit: false,
-      showProduct: false,
       currentReleaseApproach: 1,
       showBugFixing: false,
       showArticulationPoints: false,
@@ -199,14 +196,19 @@ export default {
       searchMessageDebounce: '',
       searchMessage: '',
       dlText: 'loading...',
+      cgConfig: {vcsId: null, searchMessage: null, label: null, travis: null},
       showCommitLabel: false,
-      cgConfig: {vcsId: null, searchMessage: null, label: null},
-      currentCommitLabelField: 0,
-      currentProduct: 0
+      showProduct: false,
+      showTravisStates: false,
+      currentCommitLabelFields: [],
+      currentProducts: [],
+      currentTravisStates: [],
+      // todo: this needs to be in global state requested from backend
+      travisStates: ['PASSED', 'FAILED', 'ERRORED']
     }
   },
   components: {
-    alert, Graph, dropdown, checkbox
+    alert, Graph, dropdown, checkbox, Multiselect
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -226,10 +228,10 @@ export default {
   }),
   mounted () {
     // TODO: add to basic data (same as projects)
+    this.cgConfig.cvsId = this.currentVcs.id
     this.$store.dispatch('getProducts', {'filter': '&vcs_system_id=' + this.currentVcs.id, order: 'name'})
     this.$store.dispatch('getCommitLabelFields', {})
     this.$store.dispatch('getCommitGraph', this.currentVcs.id)
-    this.cgConfig.vcsId = this.currentVcs.id
   },
   watch: {
     showDownload (value) {
@@ -267,6 +269,7 @@ export default {
       }
     },
     currentVcs (value) {
+      // we reset the graph configuration here, in the future this could be replaced by a per graph configuration inthe global state so that one can switch between projects witout losing information
       if (typeof value.id !== 'undefined') {
         this.$store.dispatch('getProducts', {'filter': '&vcs_system_id=' + value.id, order: 'name'})
         this.$store.dispatch('getCommitGraph', value.id)
@@ -279,10 +282,22 @@ export default {
         this.filesCommittedDebounce = 0
         this.showReleases = false
         this.showBugFixing = false
+        this.startCommit = false
+        this.endCommit = false
         this.graphOptions = {onlyTags: false, onlyNumberFilesCommitted: 0, onlyCodeFiles: false, offsetX: 10, offsetY: 10, showDirection: false, showBugFixing: false}
         let tmp = 'matrix(' + this.matrix.join(' ') + ')'
         document.getElementById('cg-elements').setAttributeNS(null, 'transform', tmp)
         this.dlText = 'loading...'
+
+        // reset commit graph config and new features for marking commits
+        this.showCommitLabel = false
+        this.showTravisStates = false
+        this.showProduct = false
+        this.currentCommitLabelFields = []
+        this.currentProducts = []
+        this.currentTravisStates = []
+        // this.cgConfig = {vcsId: value.id, searchMessage: null, label: null, travis: null}
+        // this.$store.dispatch('getMarkNodes', this.cgConfig)
       }
     },
     showArticulationPoints (value) {
@@ -292,28 +307,16 @@ export default {
         this.$store.dispatch('clearArticulationPoints')
       }
     },
-    currentProduct (value) {
+    currentProducts (value) {
       if (this.showProduct === true) {
-        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productId: this.currentProduct})
+        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productIds: this.currentProducts.map(a => a.id)})
       }
     },
     showProduct (value) {
-      if (value === true && this.currentProduct !== 0) {
-        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productId: this.currentProduct})
+      if (value === true && this.currentProducts.length > 0) {
+        this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productIds: this.currentProducts.map(a => a.id)})
       } else {
         this.$store.dispatch('clearProductPaths')
-      }
-    },
-    showBugFixing (value) {
-      if (value === true) {
-        this.$store.dispatch('getBugFixingNodes', {commitGraph: this.currentVcs.id, approach: this.currentDefectLinkApproach})
-      } else if (value === false) {
-        this.$store.dispatch('clearBugFixingNodes')
-      }
-    },
-    currentDefectLinkApproach (value) {
-      if (this.graph.showBugFixing === true) {
-        this.$store.dispatch('getDefectLinks', {commitGraph: this.currentVcs.id, approach: this.currentDefectLinkApproach})
       }
     },
     nodeRadiusDebounce (value) {
@@ -325,12 +328,6 @@ export default {
     searchMessageDebounce (value) {
       this.debounceInputSearchMessage(value)
     },
-    currentCommitLabelField (value) {
-      if (this.showCommitLabel === true) {
-        this.cgConfig.label = value
-      }
-      this.$store.dispatch('getMarkNodes', this.cgConfig)
-    },
     searchMessage (value) {
       // todo: change this to mutate cgConfig in store
       if (value !== '') {
@@ -338,15 +335,39 @@ export default {
       } else {
         this.cgConfig.searchMessage = null
       }
-      this.$store.dispatch('getMarkNodes', this.cgConfig)
+      this.refreshMarks()
     },
-    showCommitLabel (value) {
-      if (value === true && this.currentCommitLabelField !== 0) {
-        this.cgConfig.label = this.currentCommitLabelField
+    currentCommitLabelFields (value) {
+      if (this.showCommitLabel === true && value.length > 0) {
+        this.cgConfig.label = value.map(a => a.id)
       } else {
         this.cgConfig.label = null
       }
-      this.$store.dispatch('getMarkNodes', this.cgConfig)
+      this.refreshMarks()
+    },
+    showCommitLabel (value) {
+      if (value === true && this.currentCommitLabelFields.length > 0) {
+        this.cgConfig.label = this.currentCommitLabelFields.map(a => a.id)
+      } else {
+        this.cgConfig.label = null
+      }
+      this.refreshMarks()
+    },
+    currentTravisStates (value) {
+      if (this.showTravisStates === true && value.length > 0) {
+        this.cgConfig.travis = value
+      } else {
+        this.cgConfig.travis = null
+      }
+      this.refreshMarks()
+    },
+    showTravisStates (value) {
+      if (value === true && this.currentTravisStates.length > 0) {
+        this.cgConfig.travis = this.currentTravisStates
+      } else {
+        this.cgConfig.travis = null
+      }
+      this.refreshMarks()
     }
   },
   methods: {
@@ -359,6 +380,12 @@ export default {
     debounceInputFilesCommitted: debounce(function () {
       this.graphOptions.onlyNumberFilesCommitted = this.filesCommittedDebounce
     }, 500),
+    refreshMarks () {
+      if (this.cgConfig.vcsId === null) {
+        this.cgConfig.vcsId = this.currentVcs.id
+      }
+      this.$store.dispatch('getMarkNodes', this.cgConfig)
+    },
     hoverNode (node) {
       this.showCommit = true
       this.$store.dispatch('getCommit', node.revisionHash)
@@ -385,8 +412,8 @@ export default {
       this.endPathCommit = true
     },
     dragster (e) {
-      this.oldX = e.offsetX
-      this.oldY = e.offsetY
+      // this.oldX = e.offsetX
+      // this.oldY = e.offsetY
       if (e.buttons === 1) {
         let diffY = (e.offsetY - this.offsets.y)
         let diffX = (e.offsetX - this.offsets.x)
@@ -429,6 +456,8 @@ export default {
 </script>
 
 <style>
+@import '~vue-multiselect/dist/vue-multiselect.min.css';
+
 .commitView {
   position: absolute;
   top: -10px;

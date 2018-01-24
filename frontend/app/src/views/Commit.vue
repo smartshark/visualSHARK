@@ -3,7 +3,10 @@
     <div class="animated fadeIn" v-if="id && currentCommit.revision_hash">
       <div class="card">
         <div class="card-header">
-          Commit {{ currentCommit.revision_hash }}
+          Commit {{ currentCommit.revision_hash }}, parents: 
+          <template v-for="p in currentCommit.parents">
+            <router-link :to="{ name: 'Commit', params: { id: p }}">{{ p }}</router-link>&nbsp;
+          </template>
           <div v-if="isSuperuser" class="card-actions">
             <dropdown class="inline">
               <span slot="button">

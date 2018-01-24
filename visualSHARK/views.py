@@ -24,7 +24,7 @@ import django_filters
 
 from mongoengine.queryset.visitor import Q
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, IssueComment, Message, MailingList, MynbouData, TopicModel
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, TopicModel
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer
@@ -189,7 +189,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
         return qry
 
     def retrieve(self, request, id=None):
-        """Add additional information the each tag."""
+        """Add additional information the each commit."""
         commit = self.queryset.get(revision_hash=id)
 
         tags = []
@@ -421,17 +421,34 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         """
         search = request.query_params.get('searchMessage', None)
         label = request.query_params.get('label', None)
+        travis = request.query_params.get('travis', None)
 
         response = {}
 
-        if label:
-            labelfield = CommitLabelField.objects.get(pk=label)
-            label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
+        if travis:
+            travis_states = travis.split(',')
+            for v in Commit.objects.filter(vcs_system_id=vcs_system_id):
+                states = []
+                for tj in TravisBuild.objects.filter(vcs_system_id=vcs_system_id, commit_id=v.id):
+                    if tj.state.upper() not in travis_states:
+                        continue
+                    states.append('travis_{}'.format(tj.state))
+                if states:
+                    if v.revision_hash not in response.keys():
+                        response[v.revision_hash] = []
+                    response[v.revision_hash].append(list(set(states)))
 
-            dat = {'vcs_system_id': vcs_system_id,
-                   'labels__{}'.format(label_name): True}
-            for v in Commit.objects.filter(**dat):
-                response[v.revision_hash] = [label_name]
+        if label:
+            for lid in label.split(','):
+                labelfield = CommitLabelField.objects.get(pk=lid)
+                label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
+                qry = {'vcs_system_id': vcs_system_id, 'labels__{}'.format(label_name): True}
+
+                for c in Commit.objects.filter(**qry):
+                    if c.revision_hash in response.keys():
+                        response[c.revision_hash].append(label_name)
+                    else:
+                        response[c.revision_hash] = [label_name]
 
         if search:
             for v in Commit.objects.filter(vcs_system_id=vcs_system_id, message__icontains=search):
@@ -463,30 +480,35 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         """Return path for the approach used in this exact product."""
         cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
 
-        product_id = request.query_params.get('product_id', None)
+        product_ids = request.query_params.get('product_ids', None)
 
-        if not product_id:
-            raise Exception('need commits')
-
-        p = MynbouData.objects.get(id=product_id)
-
-        # extract approach, start and end commit
-        tmp = json.loads(p.file.read())
+        resp = {'paths': [], 'products': []}
+        if not product_ids:
+            return Response(resp)
 
         dg = nx.read_gpickle(cg.directed_pickle.path)
-        approach = tmp['label_path_approach']
-        start_commit = tmp['start_commit']
-        end_commit = tmp['end_commit']
 
-        nodes = set()
-        # import importlib
-        # mod = importlib.import_module('mynbouSHARK.path_approaches.{}'.format(approach))
-        if approach == 'commit_to_commit':
-            c = OntdekBaan(dg)
-            for path in c.get_all_paths(start_commit, end_commit):
-                nodes = nodes.union(set(path))
+        for product_id in product_ids.split(','):
+            p = MynbouData.objects.get(id=product_id)
 
-        return Response({'paths': [list(nodes)], 'products': [p.name]})
+            # extract approach, start and end commit
+            tmp = json.loads(p.file.read())
+            approach = tmp['label_path_approach']
+            start_commit = tmp['start_commit']
+            end_commit = tmp['end_commit']
+
+            nodes = set()
+            # import importlib
+            # mod = importlib.import_module('mynbouSHARK.path_approaches.{}'.format(approach))
+            if approach == 'commit_to_commit':
+                c = OntdekBaan(dg)
+                for path in c.get_all_paths(start_commit, end_commit):
+                    nodes = nodes.union(set(path))
+
+            resp['paths'].append(list(nodes))
+            resp['products'].append(p.name)
+
+        return Response(resp)
 
     @detail_route(methods=['get'])
     def path(self, request, vcs_system_id=None):

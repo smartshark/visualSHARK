@@ -108,7 +108,7 @@ npm run build
 Operation
 =========
 
-run backend
+run backend in dev mode
 ```bash
 cd /srv/www/visualSHARK
 source bin/activate
@@ -122,7 +122,7 @@ source bin/activate
 python manage peon
 ```
 
-run frontend
+run frontend in dev mode
 ```bash
 cd /srv/www/visualSHARK/frontend/app
 npm run dev

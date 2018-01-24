@@ -16,7 +16,7 @@ class CommitLabelFieldSerializer(rserializers.ModelSerializer):
 
     class Meta:
         model = CommitLabelField
-        fields = ('id', 'approach', 'name', 'description')
+        fields = ('id', 'approach', 'name', 'description', 'label')
 
 
 class CommitGraphSerializer(rserializers.ModelSerializer):
@@ -85,7 +85,7 @@ class SingleCommitSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = Commit
-        fields = ('commit_id', 'revision_hash', 'vcs_system_id', 'revision_hash', 'committer_date', 'author_date', 'message', 'branches', 'author_id', 'committer_id', 'author', 'committer', 'committer_date_offset', 'author_date_offset', 'tags', 'issue_links', 'labels')
+        fields = ('commit_id', 'parents', 'revision_hash', 'vcs_system_id', 'revision_hash', 'committer_date', 'author_date', 'message', 'branches', 'author_id', 'committer_id', 'author', 'committer', 'committer_date_offset', 'author_date_offset', 'tags', 'issue_links', 'labels')
 
 
 class RecSingleMessageSerializer(serializers.DocumentSerializer):
