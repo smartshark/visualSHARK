@@ -12,11 +12,30 @@ from django.contrib.auth.models import User
 
 from rest_framework.authtoken.models import Token
 
-from mongoengine import connect
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild
+from mongoengine import connect, Document, StringField, DictField, FileField, BooleanField
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, IssueComment, Issue, Message, MailingList, Event, MynbouData, TravisBuild
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
+class TopicModel(Document):
+    meta = {
+        'indexes': [
+            '#project_id'
+        ],
+        'shard_key': ('project_id', ),
+    }
+    default = BooleanField()
+    name = StringField()
+    project_id = StringField()
+    config = DictField()
+    view = FileField()
+    dic = FileField()
+    corpus = FileField()
+    corpus_index = FileField()
+    lda = FileField()
+    lda_id2word = FileField()
+    lda_state = FileField()
+    lda_expElogbeta = FileField()
 
 # this is just because we do not have access to reindex the database and mongodb does not check for indexes but just creates them and if they are there does nothing
 # nevertheless this requires the right to index stuff which we not have

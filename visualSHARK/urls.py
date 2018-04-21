@@ -10,7 +10,7 @@ from rest_framework.documentation import include_docs_urls
 from .views import Auth, StatsView
 
 from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet
-from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView
+from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, TopicModelView
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -39,6 +39,7 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^analytics/', include(rrouter.urls)),
     url(r'^analytics/release/', ReleaseView.as_view()),
+    url(r'^analytics/topicmodel', TopicModelView.as_view()),
     url(r'^system/', include(arouter.urls)),
     url(r'^auth/', Auth.as_view()),
     url(r'^stats/', StatsView.as_view()),

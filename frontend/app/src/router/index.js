@@ -20,6 +20,7 @@ import CommitGraph from '@/views/CommitGraph'
 import ProductInformation from '@/views/ProductInformation'
 import Prediction from '@/views/Prediction'
 import ReleaseFinder from '@/views/ReleaseFinder'
+import TopicModel from '@/views/TopicModel'
 
 import System from '@/views/System'
 import Jobs from '@/views/Jobs'
@@ -124,6 +125,18 @@ const router = new Router({
               path: 'release',
               name: 'Release Finder',
               component: ReleaseFinder
+            },
+            {
+              path: 'topicModels',
+              name: 'TopicModels',
+              props: true,
+              component: TopicModel,
+              children: [
+                {
+                  path: ':id',
+                  name: 'TopicModel'
+                }
+              ]
             }
           ]
         },

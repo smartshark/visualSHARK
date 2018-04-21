@@ -24,3 +24,5 @@ markdown
 pygments
 # used for the workers and vs
 pika
+gensim
+nltk

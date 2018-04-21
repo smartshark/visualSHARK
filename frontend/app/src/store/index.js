@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import projects from './modules/projects'
 import base from './modules/base'
+import topicmodels from './modules/topicmodel'
 import grid from './modules/grid'
 
 import l from '../api/local'
@@ -220,6 +221,7 @@ export default new Vuex.Store({
   modules: {
     base,
     projects,
+    topicmodels,
     grid
   },
   strict: true,

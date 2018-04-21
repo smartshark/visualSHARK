@@ -23,6 +23,9 @@ export const GRID_DEFECT_LINKS = 'GRID_DEFECT_LINKS'
 export const GRID_JOBS = 'GRID_JOBS'
 export const GRID_RELEASES = 'GRID_RELEASES'
 
+export const GRID_TOPICS = 'GRID_TOPICS'
+export const TOPIC_EVAL = 'TOPICS_EVAL'
+
 export const GRID_HOTSPOTS = 'GRID_HOTSPOTS'
 export const SET_HOTSPOT = 'SET_HOTSPOT'
 
