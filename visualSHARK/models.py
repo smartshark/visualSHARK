@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 from mongoengine import connect, Document, StringField, DictField, FileField, BooleanField
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, IssueComment, Issue, Message, MailingList, Event, MynbouData, TravisBuild
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 

@@ -14,13 +14,35 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><i class="fa fa-pie-chart"></i> Topic Model
+        <div class="card-header"><i class="fa fa-pie-chart"></i> Topic Model Visualization
         </div>
           <div class="card-body">
               <div id="lda"></div>
          </div>
         </div>
-      </div>
+
+      <div class="card">
+        <div class="card-header"><i class="fa fa-pie-chart"></i> Topic Model Details
+        </div>
+          <div class="card-body">
+             	<div class="table-responsive">
+                 <table class="table">
+                    <thead>
+                      <tr>
+                       <th scope="col">#</th>
+                       <th scope="col">Topic Description</th>
+                     </tr>
+                    </thead>
+                    <tbody>
+                       <tr v-for="topic in topics">
+                         <th scope="row">{{ topic.id }}</th>
+                         <td>{{ topic.description }}</td>
+                       </tr>
+                     </tbody>
+                  </table>
+                </div>
+         </div>
+        </div>
     </div>
   </div>
 </template>
@@ -53,7 +75,8 @@ export default {
       },
       triggerRefresh: false,
       triggerRefreshTags: false,
-      topicModelBody: ''
+      topicModelBody: '',
+      topics: []
     }
   },
   components: {
@@ -89,7 +112,9 @@ export default {
       let dat = {'id': id}
       rest.getTopicModel(dat)
         .then(response => {
+          console.log(response.data)
           LDAvis.getLDAvis('#lda', JSON.parse(response.data.data))
+          this.topics = response.data.table
         })
         .catch(e => {
           this.$store.dispatch('pushError', e)

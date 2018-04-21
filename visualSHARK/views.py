@@ -24,7 +24,7 @@ import django_filters
 
 from mongoengine.queryset.visitor import Q
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, TopicModel
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, TopicModel, IssueComment
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer
@@ -657,10 +657,52 @@ class TopicModelView(APIView):
         response = { 'models': topicModels }
         return Response(response)
 
+    def loadTopic(self, topic_id, model):
+        folder = "tmp/" + topic_id + "/"
+        need_load = False
+        clear_cache = False
+
+        if not os.path.exists(folder):
+           os.makedirs(folder)
+           need_load = True  
+        if need_load:
+           lda = open(folder + 'topic.model','wb')
+           lda.write(model.lda.read())
+           lda.close()   
+           lda_id2word = open(folder + 'topic.model.id2word','wb')
+           lda_id2word.write(model.lda_id2word.read())
+           lda_id2word.close()
+           lda_state = open(folder + 'topic.model.state','wb')
+           lda_state.write(model.lda_state.read())
+           lda_state.close()
+           lda_expElogbeta = open(folder + 'topic.model.expElogbeta.npy','wb')
+           lda_expElogbeta.write(model.lda_expElogbeta.read())
+           lda_expElogbeta.close()
+        return gensim.models.LdaModel.load(folder + 'topic.model')
+
     def post(self, request):     
         model_id = request.data["id"]          
         model = TopicModel.objects.get(id=model_id)
-        response = { 'data': model.view.read() }
+
+        # part 2
+        lda = self.loadTopic(model_id, model)
+
+        topics = []
+        for i in range(0, lda.num_topics):
+            topic = { 'id' : i , 'description': lda.print_topic(i) }
+            topics.append(topic)
+        
+        #part 3        
+      #  for m in TopicModel.objects.filter(project_id=model.project_id):
+       #     print("Vergleiche: ")
+        #    print(model_id)
+         #   print(m.id)
+         #   print(m.config)
+         #   lda2 = self.loadTopic(str(m.id), m)
+         #   mdiff, annotation = lda.diff(lda2, "jensen_shannon")
+         #   print(mdiff)
+
+        response = { 'data': model.view.read(), 'table' : topics }
         return Response(response)
 
     def put(self, request):    
