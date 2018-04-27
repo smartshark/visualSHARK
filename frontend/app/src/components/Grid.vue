@@ -242,7 +242,7 @@ export default {
       this.refresh()
     },
     refresh () {
-      let dat = {'limit': this.perPage, 'offset': this.offset, 'filter': this.filter, 'order': this.order.join(), 'search': this.search}
+      let dat = {'limit': Number(this.perPage), 'offset': this.offset, 'filter': this.filter, 'order': this.order.join(), 'search': this.search}
       this.$emit('refresh', dat)
     },
     setPage (page) {

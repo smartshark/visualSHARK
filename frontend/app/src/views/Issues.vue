@@ -108,7 +108,7 @@
                 </div>
                 <div class="card-block">
                   <template v-if="currentIssue.events">
-                  <grid :gridColumns="gridEvents.columns" :data="currentIssue.events" :count="currentIssue.events.length" :defaultPerPage="15" defaultFilterField="" :triggerRefresh="triggerRefreshEvents" @refresh="refreshGridEvents">
+                  <grid :gridColumns="gridEvents.columns" :data="gridEventData" :count="currentIssue.events.length" :defaultPerPage="15" defaultFilterField="" :triggerRefresh="triggerRefreshEvents" @refresh="refreshGridEvents">
                     <template slot="author" slot-scope="props">
                       <td><router-link :to="{ name: 'Person', params: { id: props.object.id }}">{{ props.object.name }} ({{ props.object.email }})</router-link></td>
                     </template>
@@ -220,6 +220,7 @@ export default {
           {ident: 'new_value', name: 'new'}
         ]
       },
+      gridEventData: [],
       triggerRefresh: false,
       triggerRefreshEvents: false
     }
@@ -241,9 +242,11 @@ export default {
   watch: {
     currentProject (value) {
       this.triggerRefresh = true
+      this.triggerRefreshEvents = true
     },
     currentIts (value) {
       this.triggerRefresh = true
+      this.triggerRefreshEvents = true
     },
     id (value) {
       if (value !== false && typeof value !== 'undefined') {
@@ -252,6 +255,7 @@ export default {
     },
     currentIssue (value) {
       if (value !== null && typeof value !== 'undefined') {
+        this.gridEventData = value.events
       }
     }
   },
@@ -265,6 +269,9 @@ export default {
     },
     refreshGridEvents (dat) {
       this.triggerRefreshEvents = false
+      if (this.currentIssue !== null) {
+        this.gridEventData = this.currentIssue.events.slice(dat.offset, dat.offset + dat.limit)
+      }
     }
   }
 }
