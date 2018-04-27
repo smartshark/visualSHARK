@@ -20,6 +20,7 @@ import CommitGraph from '@/views/CommitGraph'
 import ProductInformation from '@/views/ProductInformation'
 import Prediction from '@/views/Prediction'
 import ReleaseFinder from '@/views/ReleaseFinder'
+import History from '@/views/History'
 
 import System from '@/views/System'
 import Jobs from '@/views/Jobs'
@@ -124,6 +125,11 @@ const router = new Router({
               path: 'release',
               name: 'Release Finder',
               component: ReleaseFinder
+            },
+            {
+              path: 'history',
+              name: 'History',
+              component: History
             }
           ]
         },

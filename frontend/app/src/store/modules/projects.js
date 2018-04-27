@@ -12,6 +12,8 @@ const state = {
   vcs: [],
   is: [],
   ml: [],
+  allVcsBranches: [],
+  currentVcsBranches: [],
   dashboard: {projects: 0, commits: 0, issues: 0, emails: 0, files: 0, people: 0},
   dashboardStats: {},
   dashboardStatsHistory: [],
@@ -41,10 +43,14 @@ const getters = {
   allVcs: state => state.vcs,
   allIS: state => state.is,
   allML: state => state.ml,
+  allVcsBranches: state => state.allVcsBranches,
   currentProject: state => state.currentProject,
   currentVcs: state => state.currentVcs,
   currentIts: state => state.currentIts,
   currentMl: state => state.currentMl,
+  currentVcsBranches: state => {
+    return state.allVcsBranches.filter(item => state.currentVcs !== null && item.vcs_system_id === state.currentVcs.id)
+  },
   currentMessage: state => state.currentMessage,
   currentIssue: state => state.currentIssue,
   currentPerson: state => state.currentPerson,
@@ -376,7 +382,6 @@ const actions = {
     commit(types.PUSH_LOADING)
     rest.getMarkNodes(dat)
       .then(response => {
-        console.log('mark nodes', response)
         commit(types.SET_MARK_NODES, { response })
         commit(types.POP_LOADING)
       })
@@ -417,6 +422,15 @@ const actions = {
     rest.getAllVcs()
       .then(response => {
         commit(types.RECEIVE_VCS, { response })
+      })
+      .catch(error => {
+        commit(types.PUSH_ERROR, { error })
+      })
+  },
+  getAllVcsBranches ({commit}) {
+    rest.getAllVcsBranches()
+      .then(response => {
+        commit(types.SET_VCS_BRANCHES, { response })
       })
       .catch(error => {
         commit(types.PUSH_ERROR, { error })
@@ -604,6 +618,9 @@ const mutations = {
   },
   [types.RECEIVE_ML] (state, { response }) {
     state.ml = response.data.results
+  },
+  [types.SET_VCS_BRANCHES] (state, { response }) {
+    state.allVcsBranches = response.data.results
   }
 }
 

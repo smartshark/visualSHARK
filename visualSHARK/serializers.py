@@ -8,7 +8,7 @@ from rest_framework_mongoengine.fields import ObjectIdField
 from rest_framework import serializers as rserializers
 # from rest_framework import fields as rfields
 
-from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData
+from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData, Branch, Event
 from .models import CommitGraph, CommitLabelField, VSJob, VSJobType
 
 
@@ -107,14 +107,23 @@ class SingleMessageSerializer(serializers.DocumentSerializer):
         fields = ('subject', 'body', 'date', 'sender', 'recipients', 'mailing_list_id', 'reference_ids', 'in_reply_to_id', 'cc_ids', 'patches')
 
 
+class IssueEventSerializer(serializers.DocumentSerializer):
+    author = PersonSerializer()
+
+    class Meta:
+        model = Event
+        fields = ('created_at', 'author_id', 'author', 'status', 'old_value', 'new_value')
+
+
 class SingleIssueSerializer(serializers.DocumentSerializer):
     creator = PersonSerializer()
     reporter = PersonSerializer()
     assignee = PersonSerializer()
+    events = IssueEventSerializer(many=True)
 
     class Meta:
         model = Issue
-        fields = ('external_id', 'creator', 'reporter', 'assignee', 'title', 'desc', 'issue_type', 'priority', 'status', 'affects_versions', 'components', 'labels', 'resolution', 'fix_versions')
+        fields = ('external_id', 'creator', 'reporter', 'assignee', 'title', 'desc', 'issue_type', 'priority', 'status', 'affects_versions', 'components', 'labels', 'resolution', 'fix_versions', 'events')
 
 
 class FileRSerializer(rserializers.Serializer):
@@ -147,6 +156,12 @@ class VcsSerializer(serializers.DocumentSerializer):
     class Meta:
         model = VCSSystem
         fields = ('id', 'project_id', 'last_updated', 'repository_type', 'url')
+
+
+class BranchSerializer(serializers.DocumentSerializer):
+    class Meta:
+        model = Branch
+        fields = ('id', 'vcs_system_id', 'commit_id', 'name', 'is_origin_head')
 
 
 class IssueSystemSerializer(serializers.DocumentSerializer):

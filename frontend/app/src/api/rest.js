@@ -67,6 +67,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getAllVcsBranches () {
+    let req = this.getUrl('branch/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getAllIssueSystems () {
     let req = this.getUrl('is/')
     return axios.get(req, {headers: {

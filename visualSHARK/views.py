@@ -24,10 +24,10 @@ import django_filters
 
 from mongoengine.queryset.visitor import Q
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
-from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer
+from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer
 
 from django.core.exceptions import FieldDoesNotExist
@@ -298,6 +298,12 @@ class MailingListViewSet(viewsets.ReadOnlyModelViewSet):
     filter_fields = ('project_id')
 
 
+class BranchViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Branch.objects.all()
+    serializer_class = BranchSerializer
+    filter_fields = ('vcs_system_id')
+
+
 class IssueViewSet(MongoReadOnlyModelViewSet):
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
@@ -327,6 +333,16 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
             dat['creator'] = People.objects.get(id=r.creator_id)
         if r.assignee_id:
             dat['assignee'] = People.objects.get(id=r.assignee_id)
+
+        # this is an example of technical dept:
+        # I want the full Author object but we have to pass this in in this way
+
+        # dat['events'] = Event.objects.filter(issue_id=r.id)  # .values_list('created_at', 'author_id', 'status', 'old_value', 'new_value')
+        dat['events'] = []
+        for e in Event.objects.filter(issue_id=r.id).order_by('created_at'):
+            ev = {'created_at': e.created_at, 'author_id': e.author_id, 'status': e.status, 'old_value': e.old_value, 'new_value': e.new_value}
+            ev['author'] = People.objects.get(id=e.author_id)
+            dat['events'].append(ev)
         serializer = SingleIssueSerializer(dat)
         return Response(serializer.data)
 

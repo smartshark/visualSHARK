@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 from mongoengine import connect
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
@@ -54,6 +54,7 @@ if not settings.TESTING:
     Event._meta = remove_index(Event)
     TravisBuild._meta = remove_index(TravisBuild)
     MynbouData._meta = remove_index(MynbouData)
+    Branch._meta = remove_index(Branch)
 
 
 if settings.TESTING:
@@ -126,6 +127,13 @@ class CommitLabelField(models.Model):
         return '{}: {}'.format(self.approach, self.name)
 
 
+# class VcsHistory(models.Model):
+#     vcs_system_id = models.CharField(max_length=255)
+#     date = models.DateField()
+#     aggregate = models.FileField(blank=True, null=True, upload_to=settings.COMPUTED_FILES)
+#     last_updated = models.DateTimeField(blank=True, null=True, auto_now=True)
+
+
 class VSJobType(models.Model):
     """Possible types of jobs."""
 
@@ -162,9 +170,9 @@ class VSJob(models.Model):
             # changes are saved but not committed to the database before the request finishes, so we hook on_commit with a callback
             def callme():
                 send_to_queue(settings.QUEUE['job_queue'], {'job_type': instance.job_type.ident, 'data': json.loads(instance.data), 'job_id': instance.pk})
-                send_to_user(instance.requested_by.profile.channel, {'msg': '{} job queued'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': True})
+                send_to_user(instance.requested_by.profile.channel, {'msg': '{} job queued'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': True, 'job_id': instance.pk})
             transaction.on_commit(callme)
 
         # on save of the results we can also pass the result to the user
         if not created:
-            send_to_user(instance.requested_by.profile.channel, {'msg': '{} job finished'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': False, 'success': instance.error_count == 0})
+            send_to_user(instance.requested_by.profile.channel, {'msg': '{} job finished'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': False, 'success': instance.error_count == 0, 'job_id': instance.pk})

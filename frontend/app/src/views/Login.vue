@@ -92,6 +92,7 @@ export default {
         this.$store.dispatch('getAllVcs')
         this.$store.dispatch('getAllIssueSystems')
         this.$store.dispatch('getAllMailingLists')
+        this.$store.dispatch('getAllVcsBranches')
         this.$router.replace('/')
       }
     },

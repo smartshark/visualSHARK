@@ -100,6 +100,30 @@
               </div>
             </div>
           </div>
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  Events
+                </div>
+                <div class="card-block">
+                  <template v-if="currentIssue.events">
+                  <grid :gridColumns="gridEvents.columns" :data="currentIssue.events" :count="currentIssue.events.length" :defaultPerPage="15" defaultFilterField="" :triggerRefresh="triggerRefreshEvents" @refresh="refreshGridEvents">
+                    <template slot="author" slot-scope="props">
+                      <td><router-link :to="{ name: 'Person', params: { id: props.object.id }}">{{ props.object.name }} ({{ props.object.email }})</router-link></td>
+                    </template>
+                    <template slot="created_at" slot-scope="props">
+                      <td>{{props.object|momentgerman}}</td>
+                    </template>
+                  </grid>
+                  </template>
+                  <template v-else>
+                    No events
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -187,7 +211,17 @@ export default {
           type: -1
         }
       },
-      triggerRefresh: false
+      gridEvents: {
+        columns: [
+          {ident: 'status', name: 'Status'},
+          {ident: 'author', name: 'Author'},
+          {ident: 'created_at', name: 'Created'},
+          {ident: 'old_value', name: 'old'},
+          {ident: 'new_value', name: 'new'}
+        ]
+      },
+      triggerRefresh: false,
+      triggerRefreshEvents: false
     }
   },
   components: {
@@ -228,6 +262,9 @@ export default {
         dat.filter = dat.filter + '&issue_system_id=' + this.currentIts.id
         this.$store.dispatch('updateGridIssues', dat)
       }
+    },
+    refreshGridEvents (dat) {
+      this.triggerRefreshEvents = false
     }
   }
 }

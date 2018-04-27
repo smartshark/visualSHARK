@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from visualSHARK.models import VSJob
 from visualSHARK.util.remote import RemoteShark
+from visualSHARK.util.local import create_vcs_history
 
 
 class Command(BaseCommand):
@@ -40,6 +41,8 @@ class Command(BaseCommand):
         elif dat['job_type'] == 'test_connection_servershark':
             r = RemoteShark(dat['data']['api_url'], dat['data']['api_key'], dat['data']['substitutions'])
             res, msg = r.test_connection(dat['data'])
+        elif dat['job_type'] == 'create_vcs_history':
+            res, msg = create_vcs_history(dat['data'])
 
         # get job save result
         job = VSJob.objects.get(pk=dat['job_id'])

@@ -35,7 +35,6 @@ const actions = {
   login ({commit}, dat) {
     rest.login(dat)
       .then(response => {
-        // console.log(response)
         const token = response.data[0].key
         const username = dat.user
         const isSuperuser = response.data[0].is_superuser
@@ -45,7 +44,6 @@ const actions = {
         rest.setToken(token)
       })
       .catch(error => {
-        // commit(types.PUSH_ERROR, { error })
         commit(types.LOGIN_ERROR, { error })
       })
   },
@@ -144,7 +142,13 @@ const mutations = {
     if (message.created === false && message.job_type === 'test_connection_worker') {
       state.conWorker = message.success
     }
-    state.userMessages.push(message)
+
+    // if everything is alright we can remove the job queued message
+    if (message.created === false && message.success === true) {
+      state.userMessages = state.userMessages.filter(item => item.job_id !== message.job_id)
+    } else {
+      state.userMessages.push(message)
+    }
   },
   [types.SET_USER_MESSAGES] (state, { messages }) {
     state.userMessages = messages

@@ -50,6 +50,7 @@ export const SET_JOB = 'SET_JOB'
 export const RECEIVE_VCS = 'RECEIVE_VCS'
 export const RECEIVE_IS = 'RECEIVE_IS'
 export const RECEIVE_ML = 'RECEIVE_ML'
+export const SET_VCS_BRANCHES = 'SET_VCS_BRANCHES'
 
 export const LOGIN_ERROR = 'LOGIN_ERROR'
 export const PUSH_ERROR = 'PUSH_ERROR'

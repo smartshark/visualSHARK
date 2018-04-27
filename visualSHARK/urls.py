@@ -9,7 +9,7 @@ from rest_framework.documentation import include_docs_urls
 
 from .views import Auth, StatsView
 
-from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet
+from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet
 from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView
 
 # Routers provide an easy way of automatically determining the URL conf.
@@ -18,6 +18,7 @@ router.register(r'commit', CommitViewSet)
 router.register(r'tag', TagViewSet)
 router.register(r'project', ProjectViewSet)
 router.register(r'vcs', VcsViewSet)
+router.register(r'branch', BranchViewSet)
 router.register(r'is', IssueSystemViewSet)
 router.register(r'ml', MailingListViewSet)
 router.register(r'issue', IssueViewSet)

@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
     'STRICT_JSON': False
 }
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 COMPUTED_FILES = 'computed_files/'
 
