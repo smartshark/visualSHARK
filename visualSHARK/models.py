@@ -1,4 +1,4 @@
-##!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import copy
 import json
@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 from mongoengine import connect
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch, Hunk
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
@@ -55,6 +55,7 @@ if not settings.TESTING:
     TravisBuild._meta = remove_index(TravisBuild)
     MynbouData._meta = remove_index(MynbouData)
     Branch._meta = remove_index(Branch)
+    Hunk._meta = remove_index(Hunk)
 
 
 if settings.TESTING:

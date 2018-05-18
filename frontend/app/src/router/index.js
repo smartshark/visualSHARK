@@ -21,6 +21,7 @@ import ProductInformation from '@/views/ProductInformation'
 import Prediction from '@/views/Prediction'
 import ReleaseFinder from '@/views/ReleaseFinder'
 import History from '@/views/History'
+import IssueLinkList from '@/views/IssueLinkList'
 
 import System from '@/views/System'
 import Jobs from '@/views/Jobs'
@@ -110,6 +111,19 @@ const router = new Router({
               path: 'cgraph',
               name: 'Commit Graph',
               component: CommitGraph
+            },
+            {
+              path: 'issuelinklist',
+              name: 'Issue Links',
+              component: IssueLinkList,
+              props: true,
+              children: [
+                {
+                  props: true,
+                  path: ':commit',
+                  name: 'DefectLink'
+                }
+              ]
             },
             {
               path: 'productinformation',

@@ -24,10 +24,10 @@ import django_filters
 
 from mongoengine.queryset.visitor import Q
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
-from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer
+from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer
 
 from django.core.exceptions import FieldDoesNotExist
@@ -37,6 +37,7 @@ from rest_framework.filters import OrderingFilter
 
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan3 as OntdekBaan
+from .util.helper import Label
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -216,11 +217,29 @@ class FileActionViewSet(MongoReadOnlyModelViewSet):
     ordering_fields = ('mode', 'lines_added', 'lines_deleted', 'size_at_commit')
     filter_fields = ('commit_id',)
 
+    def get_queryset(self):
+        qry = super().get_queryset()
+
+        search = self.request.query_params.get('search', None)
+
+        # This is as efficient as it is going to get with mongodb, we can at least restrict files to the vcs system but
+        # the list can still get very large
+        if search:
+            c = self.request.query_params.get('commit_id', None)
+            if c:
+                commit = Commit.objects.get(id=c)
+                q_objects = Q(file_id__in=File.objects.filter(vcs_system_id=commit.vcs_system_id, path__icontains=search).values_list('id'))
+            else:
+                q_objects = Q(file_id__in=File.objects.filter(path__icontains=search).values_list('id'))
+            qry = qry.filter(q_objects)
+        return qry
+
     def _inject_data(self, qry):
         ret = []
         for d in qry:
             dat = d.to_mongo()
             dat['commit_id'] = d.commit_id
+            dat['id'] = d.id
             dat['file'] = File.objects.get(id=d.file_id)
             if d.old_file_id:
                 dat['old_file'] = File.objects.get(id=d.old_file_id)
@@ -249,22 +268,29 @@ class CodeEntityStateViewSet(MongoReadOnlyModelViewSet):
     filter_fields = ('commit_id', 'ce_type', 'long_name')
     mongo_search_fields = ('long_name',)
 
-    def _inject_data(self, qry):
-        ret = []
-        for d in qry:
-            dat = d.to_mongo()
-            ret.append(dat)
-        return ret
+    # def _inject_data(self, qry):
+    #     ret = []
+    #     for d in qry:
+    #         dat = d.to_mongo()
+    #         ret.append(dat)
+    #     return ret
 
-    def list(self, request):
-        """Again a nested serializer."""
-        qry = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(qry)
-        if page is not None:
-            serializer = self.serializer_class(self._inject_data(page), many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.serializer_class(self._inject_data(qry), many=True)
-        return Response(serializer.data)
+    # def list(self, request):
+    #     """Again a nested serializer."""
+    #     qry = self.filter_queryset(self.get_queryset())
+    #     page = self.paginate_queryset(qry)
+    #     if page is not None:
+    #         serializer = self.serializer_class(self._inject_data(page), many=True)
+    #         return self.get_paginated_response(serializer.data)
+    #     serializer = self.serializer_class(self._inject_data(qry), many=True)
+    #     return Response(serializer.data)
+
+
+class HunkViewSet(MongoReadOnlyModelViewSet):
+    queryset = Hunk.objects.all()
+    serializer_class = HunkSerializer
+    filter_fields = ('file_action_id', 'id')
+    mongo_search_fields = ('content',)
 
 
 class FileViewSet(MongoReadOnlyModelViewSet):
@@ -655,6 +681,32 @@ class ReleaseView(APIView):
         history = {'count': len(versions), 'results': versions}
         # print(history)
         return Response(history)
+
+# todo: both classes can be refactored, affected entities could be part of CodeEntityStates, IssueLinkCandidates part of commit
+class IssueLinkCandidatesView(APIView):
+    """Get list of Candidates for issue linking for one commit id."""
+
+    def get(self, request):
+        commit_id = request.GET.get('commit_id', None)
+        commit = Commit.objects.get(id=commit_id)
+        lbl = Label()
+        ret = lbl.generate_candidates(commit)
+
+        return Response(ret)
+
+
+class AffectedEntitiesView(APIView):
+    """Get list of Candidates for issue linking for one commit id."""
+
+    def get(self, request):
+        commit_id = request.GET.get('commit_id', None)
+        file_action_id = request.GET.get('file_action_id', None)
+
+        commit = Commit.objects.get(id=commit_id)
+        lbl = Label()
+        ret = lbl.generate_affected_entities(commit, file_action_id)
+
+        return Response(ret)
 
 
 class VSJobViewSet(rviewsets.ModelViewSet):

@@ -508,10 +508,16 @@ const actions = {
         commit(types.POP_LOADING)
         commit(types.PUSH_ERROR, { error })
       })
+  },
+  clearCurrentCommit ({commit}) {
+    commit(types.SET_PRODUCT_PATHS, { response: {data: {paths: [], products: []}} })
   }
 }
 
 const mutations = {
+  [types.CLEAR_CURRENT_COMMIT] (state) {
+    state.currentCommit = {}
+  },
   [types.UPDATE_DASHBOARD] (state, { dashboard }) {
     state.dashboard = dashboard
   },

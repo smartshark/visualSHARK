@@ -1,0 +1,126 @@
+{
+    "collections": [
+        {
+            "model": "Project",
+            "documents": [
+                {
+                    "id": "project1",
+                    "name": "Testproject"
+                }
+            ]
+        },
+        {
+            "model": "VCSSystem",
+            "documents": [
+                {
+                    "id": "vcs1",
+                    "project_id": "{project1}",
+                    "repository_type": "git",
+                    "url": "http://www.github.com/smartshark/visualSHARK"
+                }
+            ]
+        },
+        {
+            "model": "File",
+            "documents": [
+                {
+                    "id": "file1",
+                    "vcs_system_id": "{vcs1}",
+                    "path": "/tmp/test.py"
+                }
+            ]
+        },
+        {
+            "model": "Commit",
+            "documents": [
+                {
+                    "id": "commit1",
+                    "vcs_system_id": "{vcs1}",
+                    "revision_hash": "hash1",
+                    "message": "init"
+                },
+                {
+                    "id": "commit2",
+                    "vcs_system_id": "{vcs1}",
+                    "revision_hash": "hash2",
+                    "message": "Removed b"
+                }
+            ]
+        },
+        {
+            "model": "FileAction",
+            "documents": [
+                {
+                    "id": "fileaction1",
+                    "file_id": "{file1}",
+                    "commit_id": "{commit1}",
+                    "mode": "A"
+                },
+                {
+                    "id": "fileaction2",
+                    "file_id": "{file1}",
+                    "commit_id": "{commit2}",
+                    "mode": "M"
+                }
+            ]
+        },
+        {
+            "model": "CodeEntityState",
+            "documents": [
+                {
+                    "id": "ces1",
+                    "s_key": "CESFORCOMMIT1METHODB",
+                    "long_name": "test.b()",
+                    "commit_id": "{commit1}",
+                    "file_id": "{file1}",
+                    "ce_type": "method",
+                    "start_line": 0,
+                    "end_line": 0
+                },
+                {
+                    "id": "ces2",
+                    "s_key": "CESFORCOMMIT1METHODA",
+                    "long_name": "test.a()",
+                    "commit_id": "{commit1}",
+                    "file_id": "{file1}",
+                    "ce_type": "method",
+                    "start_line": 1,
+                    "end_line": 2
+                },
+                {
+                    "id": "ces3",
+                    "s_key": "CESFORCOMMIT2METHODB",
+                    "long_name": "test.b()",
+                    "commit_id": "{commit2}",
+                    "file_id": "{file1}",
+                    "ce_type": "method",
+                    "start_line": 0,
+                    "end_line": 0
+                }
+            ]
+        },
+        {
+            "model": "Hunk",
+            "documents": [
+                {
+                    "id": "hunk1",
+                    "file_action_id": "{fileaction1}",
+                    "new_start": 0,
+                    "new_lines": 3,
+                    "old_start": 0,
+                    "old_lines": 0,
+                    "content": "+def b(): pass\n+def a():\n    +print('narf')"
+                },
+                {
+                    "id": "hunk2",
+                    "file_action_id": "{fileaction2}",
+                    "new_start": 1,
+                    "new_lines": 0,
+                    "old_start": 1,
+                    "old_lines": 2,
+                    "content": "def b(): pass\n-def a():\n    -print('narf')"
+                }
+            ]
+        }
+    ]
+}

@@ -157,7 +157,9 @@ export default {
       gridCES: {
         columns: [
           {ident: 'long_name', filterIdent: 'long_name', name: 'Long Name'},
-          {ident: 'ce_type', sortIdent: 'ce_type', name: 'Mode'},
+          {ident: 'ce_type', sortIdent: 'ce_type', name: 'Type'},
+          {ident: 'start_line', name: 'Start Line'},
+          {ident: 'end_line', name: 'End Line'},
           {ident: 'metrics', name: 'Metrics'}
         ]
       },

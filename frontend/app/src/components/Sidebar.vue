@@ -27,6 +27,9 @@
               <router-link :to="'/analytics/cgraph'" class="nav-link" exact><i class="fa fa-code"></i> Commit Graph</router-link>
             </li>
             <li class="nav-item">
+              <router-link :to="'/analytics/issuelinklist'" class="nav-link" exact><i class="fa fa-link"></i> Defect Links</router-link>
+            </li>
+            <li class="nav-item">
               <router-link :to="'/analytics/productinformation'" class="nav-link" exact><i class="fa fa-tags"></i> Product Stats</router-link>
             </li>
             <li class="nav-item">

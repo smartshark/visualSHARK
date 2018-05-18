@@ -12,6 +12,7 @@ const state = {
   gridPeople: {data: [], count: 0},
   gridFiles: {data: [], count: 0},
   gridFileChanges: {data: [], count: 0},
+  gridHunks: {data: [], count: 0},
   gridHotspots: {data: [], count: 0},
   gridFileHistory: {data: [], count: 0},
   gridDefectLinks: {data: [], count: 0},
@@ -28,6 +29,7 @@ const getters = {
   gridFiles: state => state.gridFiles,
   gridHotspots: state => state.gridHotspots,
   gridFileActions: state => state.gridFileActions,
+  gridHunks: state => state.gridHunks,
   gridCodeEntityStates: state => state.gridCodeEntityStates,
   gridFileChanges: state => state.gridFileChanges,
   gridFileHistory: state => state.gridFileHistory,
@@ -37,6 +39,18 @@ const getters = {
 }
 
 const actions = {
+  updateGridHunks ({commit}, dat) {
+    commit(types.PUSH_LOADING)
+    rest.getHunks(dat)
+      .then(response => {
+        commit(types.GRID_HUNKS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
+  },
   updateGridCommits ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.getCommits(dat)
@@ -217,10 +231,29 @@ const actions = {
         commit(types.POP_LOADING)
         commit(types.PUSH_ERROR, { error })
       })
+  },
+  clearGridHunks ({commit}) {
+    commit(types.CLEAR_GRID_HUNKS)
+  },
+  clearGridFileActions ({commit}) {
+    commit(types.CLEAR_GRID_FILE_ACTIONS)
   }
 }
 
 const mutations = {
+  [types.CLEAR_GRID_HUNKS] (state) {
+    state.gridHunks = {data: [], count: 0}
+  },
+  [types.CLEAR_GRID_FILE_ACTIONS] (state) {
+    state.gridFileActions = {data: [], count: 0}
+  },
+  [types.GRID_HUNKS] (state, { response }) {
+    if (typeof response.data.results === 'undefined') {
+      state.gridHunks = {data: response.data, count: response.data.length}
+    } else {
+      state.gridHunks = {data: response.data.results, count: response.data.count}
+    }
+  },
   [types.GRID_COMMITS] (state, { response }) {
     if (typeof response.data.results === 'undefined') {
       state.gridCommits = {data: response.data, count: response.data.length}

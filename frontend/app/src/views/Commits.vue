@@ -64,6 +64,7 @@ export default {
       grid: {
         columns: [
           {ident: 'revision_hash', sortIdent: 'revision_hash', filterIdent: 'revision_hash', name: 'Sha'},
+          {ident: 'first_message_line', name: 'First Message Line'},
           {ident: 'committer_date', sortIdent: 'committer_date', name: 'Committer Date'}
         ],
         defaultOrder: {

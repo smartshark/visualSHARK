@@ -9,8 +9,8 @@ from rest_framework.documentation import include_docs_urls
 
 from .views import Auth, StatsView
 
-from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet
-from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView
+from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet, HunkViewSet
+from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -28,6 +28,7 @@ router.register(r'fileaction', FileActionViewSet)
 router.register(r'codeentitystate', CodeEntityStateViewSet)
 router.register(r'file', FileViewSet)
 router.register(r'product', ProductViewSet)
+router.register(r'hunk', HunkViewSet)
 
 rrouter = rrouters.DefaultRouter()
 rrouter.register(r'commitgraph', CommitGraphViewSet)
@@ -46,5 +47,7 @@ urlpatterns = [
     url(r'^analytics/predictevaluate', PredictionEvaluationView.as_view()),
     url(r'^analytics/predict', PredictionView.as_view()),
     url(r'^statshistory/', StatsHistoryView.as_view()),
+    url(r'^analytics/issuelinkcandidates', IssueLinkCandidatesView.as_view()),
+    url(r'^analytics/affectedentities', AffectedEntitiesView.as_view()),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 ]

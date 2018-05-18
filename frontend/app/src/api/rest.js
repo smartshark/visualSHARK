@@ -186,6 +186,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getHunks (dat) {
+    let req = this.getFilterUrl('hunk/', dat)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getJob (id) {
     let req = this.getUrl('system/job/' + id + '/')
     return axios.get(req, {headers: {
@@ -405,6 +412,20 @@ export default {
   },
   getStats () {
     let req = this.getUrl('stats/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getIssueLinkCandidates (commitId) {
+    let req = this.getUrl('analytics/issuelinkcandidates/?commit_id=' + commitId)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getAffectedEntities (commitId, faId) {
+    let req = this.getUrl('analytics/affectedentities/?commit_id=' + commitId + '&file_action_id=' + faId)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

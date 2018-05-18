@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
     'STRICT_JSON': False
 }
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
 COMPUTED_FILES = 'computed_files/'
 
@@ -221,3 +221,6 @@ SUBSTITUTIONS = {
     'project_name': {'name': '$project_name', 'description': 'Name of the project'},
     'revision': {'name': '$revision', 'description': 'revision hash of the revision which is processed'},
 }
+
+# this sets up mongomock connection to the database
+TEST_RUNNER = 'sntest.test_runner.MockDbTestRunner'

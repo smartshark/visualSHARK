@@ -13,7 +13,9 @@
                   {{ currentIssue.title }}
                 </div>
                 <div class="card-block">
-                  {{ currentIssue.desc }}
+                  <pre>
+                    {{ currentIssue.desc }}
+                  </pre>
                 </div>
               </div>
             </div>

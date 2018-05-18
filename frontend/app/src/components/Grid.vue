@@ -218,6 +218,7 @@ export default {
       }
     },
     perPage (value) {
+      this.currentPage = 0
       this.refresh()
     },
     triggerRefresh (value) {

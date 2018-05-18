@@ -8,7 +8,7 @@ from rest_framework_mongoengine.fields import ObjectIdField
 from rest_framework import serializers as rserializers
 # from rest_framework import fields as rfields
 
-from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData, Branch, Event
+from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData, Branch, Event, Hunk
 from .models import CommitGraph, CommitLabelField, VSJob, VSJobType
 
 
@@ -47,9 +47,14 @@ class PersonSerializer(serializers.DocumentSerializer):
 
 
 class CommitSerializer(serializers.DocumentSerializer):
+    first_message_line = rserializers.SerializerMethodField()  # that this works is pretty awesome
+    
     class Meta:
         model = Commit
-        fields = ('vcs_system_id', 'revision_hash', 'committer_date')
+        fields = ('vcs_system_id', 'first_message_line', 'revision_hash', 'committer_date')
+
+    def get_first_message_line(self, obj):
+        return obj.message.split('\n')[0]
 
 
 class TagSerializer(serializers.DocumentSerializer):
@@ -95,6 +100,13 @@ class RecSingleMessageSerializer(serializers.DocumentSerializer):
         fields = ('id', 'subject', 'date')
 
 
+class HunkSerializer(serializers.DocumentSerializer):
+
+    class Meta:
+        model = Hunk
+        fields = ('id', 'file_action_id', 'new_start', 'new_lines', 'old_start', 'old_lines', 'content')
+
+
 class SingleMessageSerializer(serializers.DocumentSerializer):
     sender = PersonSerializer()
     recipients = PersonSerializer(many=True)
@@ -136,14 +148,14 @@ class FileActionSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = FileAction
-        fields = ('commit_id', 'file_id', 'old_file_id', 'mode', 'size_at_commit', 'lines_added', 'lines_deleted', 'is_binary', 'file', 'old_file')
+        fields = ('commit_id', 'id', 'file_id', 'old_file_id', 'mode', 'size_at_commit', 'lines_added', 'lines_deleted', 'is_binary', 'file', 'old_file')
 
 
 class CodeEntityStateSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = CodeEntityState
-        fields = ('long_name', 'commit_id', 'file_id', 'ce_type', 'imports', 'metrics')
+        fields = ('long_name', 'commit_id', 'file_id', 'ce_type', 'imports', 'metrics', 'start_line', 'end_line')
 
 
 class ProjectSerializer(serializers.DocumentSerializer):

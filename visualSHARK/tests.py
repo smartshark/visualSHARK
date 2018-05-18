@@ -1,24 +1,71 @@
-from datetime import datetime
+# -*- coding: utf-8 -*-
+
+import json
+import importlib
 
 from django.test import TestCase
-from pymongo import MongoClient
 
-from visualSHARK.models import Project
+from visualSHARK.util.helper import Label
+from visualSHARK.models import Project, VCSSystem, Commit
 
 
-class GraphTests(TestCase):
-    # fixtures = ['base']
+class HelperTests(TestCase):
+    """This tests the helpers."""
 
-    def setUp(self):
-        c = MongoClient(host='mongomock://localhost')
-        self._db = c.test
+    def _load_fixture(self, fixture_name):
 
-        t1 = self._db.Project.insert_one({"name": 'Testproject'})
-        t2 = self._db.VCSSystem.insert_one({"url": 'http://localhost/testproject.git', "project_id": t1.inserted_id, 'repository_type': 'git', 'last_updated': datetime.now()})
+        # this would be nice but it does not work
+        # db = _get_db()
+        # db.connection.drop_database('testdb')
 
-        p1 = self._db.People.insert_one({'email': 'testuser@test.local', 'name': 'Test User', 'username': 'testuser'})
-        c = self._db.Commit.insert_one({'vcs_system_id': t2.inserted_id, 'revision_hash': 'abc', 'author_id': p1.inserted_id, 'author_date': datetime.now(), 'committer_id': p1.inserted_id, 'committer_date': datetime.now(), 'message': 'initial commit'})
+        self._ids = {}
 
-    def test_projects(self):
-        np = len(Project.objects.all())
-        self.assertEqual(np, 1)
+        # we really have to iterate over collections
+        for col in ['Project', 'VCSSystem', 'File', 'Commit', 'FileAction', 'CodeEntityState', 'Hunk']:
+            module = importlib.import_module('visualSHARK.models')
+            obj = getattr(module, col)
+            obj.drop_collection()
+
+        fixture = json.load(open('visualSHARK/fixtures/{}.json'.format(fixture_name), 'r'))
+        for col in fixture['collections']:
+
+            module = importlib.import_module('visualSHARK.models')
+            obj = getattr(module, col['model'])
+
+            for document in col['documents']:
+                tosave = document.copy()
+                had_id_mapping = False
+
+                for k, v in document.items():
+                    if k == 'id':
+                        self._ids[document['id']] = None
+                        del tosave['id']
+                        had_id_mapping = True
+                    if type(v) not in [int] and v.startswith('{') and v.endswith('}'):
+                        tosave[k] = self._ids[v.replace('{', '').replace('}', '')]
+
+                r = obj(**tosave)
+                r.save()
+                if had_id_mapping:
+                    self._ids[document['id']] = r.id
+
+    # def test_fixtures(self):
+    #     self.assertEqual(len(Project.objects.all()), 0)
+    #     self.assertEqual(len(VCSSystem.objects.all()), 0)
+
+    #     self._load_fixture('entity_matching')
+    #     projects = Project.objects.all()
+    #     self.assertEqual(len(projects), 1)
+
+    #     vcs = VCSSystem.objects.all()
+    #     self.assertEqual(len(vcs), 1)
+    #     self.assertEqual(vcs[0].project_id, projects[0].id)
+
+    def test_entity_matching(self):
+
+        # this removes method a, it should return no affected entities
+        self._load_fixture('entity_matching')
+
+        l = Label()
+        entities = l.generate_affected_entities(Commit.objects.get(id=self._ids['commit2']), self._ids['fileaction2'])
+        self.assertEqual(len(entities), 0)
