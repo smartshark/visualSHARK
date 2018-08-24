@@ -21,7 +21,11 @@
                     <i class="fa fa-plus"></i>
                   </span>
                   <div slot="dropdown-menu"class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-header text-center"><strong>Add Release</strong></div>
+                    <div class="dropdown-header text-center"><strong>Releases</strong></div>
+                    <a href="javascript:void(0)" @click="selectRelease">
+                      <template v-if="releaseCommit">{{ releaseCommit.revisionHash }}</template>
+                      <template v-else>select</template>
+                    </a>
                   </div>
                 </dropdown>
                 <dropdown class="inline">
@@ -187,6 +191,8 @@ export default {
       height: 0,
       startCommit: false,
       endCommit: false,
+      releaseCommit: false,
+      showReleasePaths: false,
       startPathCommit: false,
       endPathCommit: false,
       currentReleaseApproach: 1,
@@ -399,11 +405,20 @@ export default {
         this.endCommit = node
         this.endPathCommit = false
       }
-
+      if (this.showReleasePaths === true) {
+        this.releaseCommit = node
+        this.showReleasePaths = false
+      }
+      if (this.releaseCommit !== false) {
+        this.$store.dispatch('getReleasePaths', {commitGraph: this.currentVcs.id, commit: this.releaseCommit.revisionHash})
+      }
       if (this.startCommit !== false && this.endCommit !== false) {
         this.$store.dispatch('getPossiblePaths', {commitGraph: this.currentVcs.id, startCommit: this.startCommit.revisionHash, endCommit: this.endCommit.revisionHash})
       }
       // console.log('path: ', this.startCommit, this.endCommit)
+    },
+    selectRelease () {
+      this.showReleasePaths = true
     },
     startPath () {
       this.startPathCommit = true

@@ -55,17 +55,18 @@ class Command(BaseCommand):
         directed_graph = nx.DiGraph()
 
         nodes = {}
-        for c in Commit.objects.timeout(False).filter(vcs_system_id=vcs_id):
+        for c in Commit.objects.timeout(False).filter(vcs_system_id=vcs_id).only('id', 'revision_hash', 'parents'):
             directed_graph.add_node(c.revision_hash)
             nodes[c.revision_hash] = self.additional_node_data(c)
 
-        for c in Commit.objects.timeout(False).filter(vcs_system_id=vcs_id):
+        for c in Commit.objects.timeout(False).filter(vcs_system_id=vcs_id).only('id', 'revision_hash', 'parents'):
             for p in c.parents:
                 try:
                     p1 = Commit.objects.get(vcs_system_id=vcs_id, revision_hash=p)
                     directed_graph.add_edge(p1.revision_hash, c.revision_hash)
                 except Commit.DoesNotExist:
                     self.stdout.write(self.style.WARNING('[WARN]') + ' Commit: {} is parent of {} but it does not exist! Skipping...'.format(p, c.revision_hash))
+                    raise
 
         return directed_graph, nodes
 

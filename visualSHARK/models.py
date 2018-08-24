@@ -68,7 +68,7 @@ class UserProfile(models.Model):
     This can be extended to hold more information in the future, e.g.,
     customizable dashboards.
     """
-    user = models.OneToOneField(User, related_name='profile')
+    user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
     channel = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def __str__(self):
@@ -150,8 +150,8 @@ class VSJob(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, blank=False)
     executed_at = models.DateTimeField(blank=True, null=True)
-    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL)
-    job_type = models.ForeignKey(VSJobType)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    job_type = models.ForeignKey(VSJobType, on_delete=models.CASCADE)
     data = models.TextField()  # for now jsonized data (username, etc.)
     result = models.TextField(blank=True, null=True)
     error_count = models.IntegerField(default=0)  # number of tries for execution (error count)

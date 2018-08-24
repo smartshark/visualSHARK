@@ -352,7 +352,7 @@ export default {
     }})
   },
   getReleasePaths (dat) {
-    let req = this.getUrl('analytics/commitgraph/' + dat.commitGraph + '/release_path/?approach=' + dat.approach)
+    let req = this.getUrl('analytics/commitgraph/' + dat.commitGraph + '/ontdekbaan/?commit=' + dat.commit)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

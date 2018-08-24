@@ -1,10 +1,14 @@
 0.1.2 (in progress)
 - Grid does now switch to first page if entries to display is changed
+- Grid does now show if the data is not yet loaded (translucency for now)
 - added first line of commit message to commit list views
 - added hunk api endpoint
 - added lines to code entity states endpoint
 - added issue link candidates generation based on ITS and commit message
 - added custom test runner for execution with mongomock (disregarding the MySQL Part for now)
+- upgraded django to 2.1
+- optimized commit graph creation
+- included backend for new ontdekbaan time based paths view
 
 0.1.1
 - Successful jobs get acknowledged automatically

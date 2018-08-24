@@ -20,7 +20,7 @@
       </div>
     </form>
     <br/>
-    <table class="table">
+    <table :class="{table: true, tloading: loading}">
       <thead>
         <tr>
           <template v-for="item in gridColumns">
@@ -82,7 +82,8 @@ export default {
     defaultOrder: [Array, Object],
     count: Number,
     gridColumns: [Array, Object],
-    triggerRefresh: Boolean
+    triggerRefresh: Boolean,
+    loading: Boolean
   },
   data () {
     let sortOrders = {}
@@ -243,6 +244,7 @@ export default {
       this.refresh()
     },
     refresh () {
+      this.loading = true
       let dat = {'limit': Number(this.perPage), 'offset': this.offset, 'filter': this.filter, 'order': this.order.join(), 'search': this.search}
       this.$emit('refresh', dat)
     },
@@ -263,6 +265,9 @@ export default {
 </script>
 
 <style>
+table.tloading {
+  opacity: 0.3;
+}
 
 th.sortable {
   cursor: pointer;

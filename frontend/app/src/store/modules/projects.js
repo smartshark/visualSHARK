@@ -291,6 +291,18 @@ const actions = {
         commit(types.PUSH_ERROR, { error })
       })
   },
+  getReleasePaths ({commit}, dat) {
+    commit(types.PUSH_LOADING)
+    rest.getReleasePaths(dat)
+      .then(response => {
+        commit(types.SET_POSSIBLE_PATHS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
+  },
   clearProductPaths ({commit}) {
     commit(types.SET_PRODUCT_PATHS, { response: {data: {paths: [], products: []}} })
   },
@@ -311,19 +323,6 @@ const actions = {
     commit(types.PUSH_LOADING)
     commit(types.SET_POSSIBLE_PATHS, { response: {data: {}} })
     rest.getPossiblePaths(dat)
-      .then(response => {
-        commit(types.SET_POSSIBLE_PATHS, { response })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-  },
-  getReleasePaths ({commit}, dat) {
-    commit(types.PUSH_LOADING)
-    commit(types.SET_POSSIBLE_PATHS, { response: {data: {}} })
-    rest.getReleasePaths(dat)
       .then(response => {
         commit(types.SET_POSSIBLE_PATHS, { response })
         commit(types.POP_LOADING)

@@ -116,6 +116,8 @@ class Label(object):
         return datetime.fromtimestamp(tmp)
 
     def _get_links_github(self, its, commit, msg):
+        # TODO: gh issuse could be linked later to a commit
+        # this information is fetched by issueshark and can be accessed
         links = []
         issue_ids = []
 
@@ -154,7 +156,7 @@ class Label(object):
                 #         defect_ids.append(issue_id)
 
             # issue does not exist in our Database, still it is a candidate
-            except Issue.DoesNotExist as e:
+            except Issue.DoesNotExist:
                 tmp = {'issue_id': None, 'issue': issue_id, 'exists': False, 'type': None, 'status': None, 'resolution': None, 'created_at': None, 'updated_at': None, 'confidence': 0, 'confidence_reasons': []}
                 tmp['confidence'] -= 1
                 tmp['confidence_reasons'].append({'score': -1, 'reason': 'No issue with this ID.'})
@@ -326,6 +328,62 @@ def tag_filter(tags, discard_qualifiers=True, discard_patch=False):
             ret.append(v)
 
     return ret
+
+
+class OntdekBaan4(object):
+    """Simple variant of OntdekBaan which yields the paths via bfs until a break condition is hit."""
+
+    def __init__(self, g):
+        self._graph = g.copy()
+        self._nodes = set()
+        self._log = logging.getLogger(self.__class__.__name__)
+
+    def _bfs_paths(self, source, predecessors, break_condition):
+        paths = {0: [source]}
+        visited = set()
+        
+        queue = deque([(source, predecessors(source))])
+        while queue:
+            parent, children = queue[0]
+            
+            try:
+                # iterate over children list
+                child = next(children)
+                
+                # we keep track of visited pairs so that we do not have common suffixes
+                if (parent, child) not in visited:
+
+                    # find path which last node is parent, append first child
+                    for path_num, nodes in paths.items():
+                        if parent == nodes[-1]:
+                            paths[path_num].append(child)
+                            break
+                    else:
+                        paths[len(paths)] = [parent, child]
+
+                    visited.add((parent, child))
+                    if break_condition and not break_condition(child):
+                        queue.append((child, predecessors(child)))
+
+            # every child iterated
+            except StopIteration:
+                queue.popleft()
+        return paths
+
+    def set_path(self, start, direction='backward', break_condition=None):
+        self._start = start
+        self._direction = direction
+        self._break_condition = break_condition
+
+    def all_paths(self):
+        if self._direction == 'backward':
+            paths = self._bfs_paths(self._start, self._graph.predecessors, self._break_condition)
+
+        if self._direction == 'forward':
+            paths = self._bfs_paths(self._start, self._graph.successors, self._break_condition)
+
+        for path_num, path in paths.items():
+            yield path
 
 
 class OntdekBaan3(object):
