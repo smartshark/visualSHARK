@@ -93,7 +93,7 @@ export default {
 header.navbar .navbar-brand {
   background-image: none !important;
   font-size: 1rem;
-  padding-top: 0.9rem !important;
+  /*padding-top: 0.9rem !important;*/
 }
 
 .navbar-brand {

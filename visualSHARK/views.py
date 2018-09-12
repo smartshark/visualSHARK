@@ -463,7 +463,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         if travis:
             travis_states = travis.split(',')
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id):
+            for v in Commit.objects.filter(vcs_system_id=vcs_system_id).only(['revision_hash', 'id']):
                 states = []
                 for tj in TravisBuild.objects.filter(vcs_system_id=vcs_system_id, commit_id=v.id):
                     if tj.state.upper() not in travis_states:
@@ -480,20 +480,20 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
                 label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
                 qry = {'vcs_system_id': vcs_system_id, 'labels__{}'.format(label_name): True}
 
-                for c in Commit.objects.filter(**qry):
+                for c in Commit.objects.filter(**qry).only('revision_hash'):
                     if c.revision_hash in response.keys():
                         response[c.revision_hash].append(label_name)
                     else:
                         response[c.revision_hash] = [label_name]
 
         if search:
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id, message__icontains=search):
+            for v in Commit.objects.filter(vcs_system_id=vcs_system_id, message__icontains=search).only('revision_hash'):
                 if v.revision_hash in response.keys():
                     response[v.revision_hash].append('search')
                 else:
                     response[v.revision_hash] = ['search']
 
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id, revision_hash__icontains=search):
+            for v in Commit.objects.filter(vcs_system_id=vcs_system_id, revision_hash__icontains=search).only('revision_hash'):
                 if v.revision_hash in response.keys():
                     response[v.revision_hash].append('search')
                 else:

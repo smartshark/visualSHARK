@@ -9,6 +9,7 @@
 - upgraded django to 2.1
 - optimized commit graph creation
 - included backend for new ontdekbaan time based paths view
+[ ] Update CommitViewSet so that it does not fetch code_entity_states (because that is BIG)
 
 0.1.1
 - Successful jobs get acknowledged automatically
