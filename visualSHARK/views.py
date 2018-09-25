@@ -169,7 +169,7 @@ class TagViewSet(MongoReadOnlyModelViewSet):
 class CommitViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for Commits."""
 
-    queryset = Commit.objects.only('id', 'revision_hash', 'vcs_system_id', 'committer_date', 'message', 'committer_id', 'author_id', 'labels', 'linked_issue_ids', 'branches', 'parents')
+    queryset = Commit.objects.only('id', 'revision_hash', 'vcs_system_id', 'committer_date', 'committer_date_offset', 'author_date', 'author_date_offset', 'message', 'committer_id', 'author_id', 'labels', 'linked_issue_ids', 'branches', 'parents')
     serializer_class = CommitSerializer
     filter_fields = ('revision_hash', 'vcs_system_id', 'committer_date__gte', 'committer_date__lt')
     ordering_fields = ('id', 'revision_hash', 'committer_date')
@@ -185,7 +185,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
 
     def retrieve(self, request, id=None):
         """Add additional information the each commit."""
-        commit = self.queryset.get(revision_hash=id)
+        commit = Commit.objects.get(revision_hash=id)
 
         tags = []
         for t in Tag.objects.filter(commit_id=commit.id):
