@@ -169,7 +169,7 @@ class TagViewSet(MongoReadOnlyModelViewSet):
 class CommitViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for Commits."""
 
-    queryset = Commit.objects.all()
+    queryset = Commit.objects.only('id', 'revision_hash', 'vcs_system_id', 'committer_date', 'message', 'committer_id', 'author_id')
     serializer_class = CommitSerializer
     filter_fields = ('revision_hash', 'vcs_system_id', 'committer_date__gte', 'committer_date__lt')
     ordering_fields = ('id', 'revision_hash', 'committer_date')
