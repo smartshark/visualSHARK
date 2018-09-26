@@ -10,6 +10,8 @@
 - optimized commit graph creation
 - included backend for new ontdekbaan time based paths view
 - Update CommitViewSet so that it does not fetch code_entity_states (because that is BIG)
+- fix bug for CodeEntityState Grid that displays hundreds of empty lines if interface is in the grid
+[ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
 
 0.1.1
 - Successful jobs get acknowledged automatically

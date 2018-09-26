@@ -138,11 +138,17 @@ export default {
     }})
   },
   getCodeEntityStates (dat) {
+    // dublicate code with getProductFile
+    // this is a special case, we may have NaN, -Infinity, +Infinity in the Json as python allows this.
+    // JavaScripts parser does not allow this so we simply replace them here with null.
     let req = this.getFilterUrl('codeentitystate/', dat)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
-    }})
+    },
+    responseType: 'text',
+    transformResponse: [function (data) { let tmp = data.replace(/\bNaN\b/g, 'null').replace(/\b-Infinity\b/g, 'null').replace(/\b\+Infinity\b/g, 'null'); return JSON.parse(tmp) }]
+    })
   },
   getIssues (dat) {
     let req = this.getFilterUrl('issue/', dat)
