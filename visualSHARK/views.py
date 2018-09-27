@@ -185,7 +185,10 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
 
     def retrieve(self, request, id=None):
         """Add additional information the each commit."""
-        commit = Commit.objects.get(revision_hash=id)
+        if not id:
+            commit = self.queryset.get(id=id)
+        else:
+            commit = Commit.objects.get(revision_hash=id)
 
         tags = []
         for t in Tag.objects.filter(commit_id=commit.id):
