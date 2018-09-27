@@ -424,6 +424,6 @@ export default {
     content: "last update ";
 }
 .card-light-orange {
-    background-color: #ff9966
+    background-color: #ff9966 !important;
 }
 </style>

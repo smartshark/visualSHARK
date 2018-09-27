@@ -394,7 +394,7 @@ export default {
     },
     hoverNode (node) {
       this.showCommit = true
-      this.$store.dispatch('getCommit', node.revisionHash)
+      this.$store.dispatch('getCommit', this.currentVcs.id, node.revisionHash)
     },
     clickNode (node) {
       if (this.startPathCommit === true) {

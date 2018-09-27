@@ -224,7 +224,7 @@ export default {
         })
     },
     getCommit (id) {
-      this.$store.dispatch('getCommit', this.id)
+      this.$store.dispatch('getCommit', this.currentVcs.id, this.id)
     },
     refreshGridFA (dat) {
       this.triggerRefreshFA = false

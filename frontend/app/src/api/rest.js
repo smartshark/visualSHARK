@@ -109,8 +109,8 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
-  getCommit (id) {
-    let req = this.getUrl('commit/' + id + '/')
+  getCommit (vcsSystemId, id) {
+    let req = this.getUrl('commit/' + vcsSystemId + '/' + id + '/')
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

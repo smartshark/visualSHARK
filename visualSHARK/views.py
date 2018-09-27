@@ -183,12 +183,9 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
             qry = qry.filter(Q(author_id=person_id) or Q(committer_id=person_id))
         return qry
 
-    def retrieve(self, request, id=None):
+    def retrieve(self, request, vcs_system_id=None, id=None):
         """Add additional information the each commit."""
-        if not id:
-            commit = self.queryset.get(id=id)
-        else:
-            commit = Commit.objects.get(revision_hash=id)
+        commit = Commit.objects.get(vcs_system_id=vcs_system_id, revision_hash=id)
 
         tags = []
         for t in Tag.objects.filter(commit_id=commit.id):

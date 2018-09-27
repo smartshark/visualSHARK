@@ -71,7 +71,7 @@ export default {
       this.$store.dispatch('updateGridCommits', dat)
     },
     getCommit (id) {
-      this.$store.dispatch('getCommit', id)
+      this.$store.dispatch('getCommit', this.currentVcs.id, id)
     }
   }
 }
