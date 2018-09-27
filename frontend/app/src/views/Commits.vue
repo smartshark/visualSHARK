@@ -117,7 +117,7 @@ export default {
   },
   methods: {
     getCommit (id) {
-      this.$store.dispatch('getCommit', this.currentVcs.id, this.id)
+      this.$store.dispatch('getCommit', {vcsSystemId: this.currentVcs.id, revisionHash: id})
       this.$store.dispatch('getCommitAnalytics', this.id)
     },
     refreshGrid (dat) {

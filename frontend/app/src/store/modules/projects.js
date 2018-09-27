@@ -202,10 +202,10 @@ const actions = {
         commit(types.PUSH_ERROR, { error })
       })
   },
-  getCommit ({commit}, vcsSystemId, id) {
+  getCommit ({commit}, params) {
     commit(types.PUSH_LOADING)
     commit(types.SET_COMMIT, { response: {data: {}} })
-    rest.getCommit(vcsSystemId, id)
+    rest.getCommit(params.vcsSystemId, params.revisionHash)
       .then(response => {
         commit(types.SET_COMMIT, { response })
         commit(types.POP_LOADING)

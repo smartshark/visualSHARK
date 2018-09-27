@@ -110,7 +110,7 @@ export default {
     }})
   },
   getCommit (vcsSystemId, id) {
-    let req = this.getUrl('commit/' + vcsSystemId + '/' + id + '/')
+    let req = this.getUrl('commit/' + id + '/' + '?vcs_system_id=' + vcsSystemId)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
