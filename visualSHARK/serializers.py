@@ -193,6 +193,11 @@ class IssueSerializer(serializers.DocumentSerializer):
         model = Issue
         fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status')
 
+class IssueLabelSerializer(serializers.DocumentSerializer):
+    class Meta:
+        model = Issue
+        fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution')
+
 
 class MessageSerializer(serializers.DocumentSerializer):
     class Meta:

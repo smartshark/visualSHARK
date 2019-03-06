@@ -14,6 +14,7 @@ import People from '@/views/People'
 import Login from '@/views/Login'
 import Files from '@/views/Files'
 import Messages from '@/views/Messages'
+import Labeling from '@/views/Labeling'
 
 import Analytics from '@/views/Analytics'
 import CommitGraph from '@/views/CommitGraph'
@@ -100,6 +101,11 @@ const router = new Router({
           name: 'Files',
           component: Files,
           props: true
+        },
+        {
+          path: 'labeling',
+          name: 'Manual labels',
+          component: Labeling
         },
         {
           path: 'analytics',

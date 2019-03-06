@@ -20,6 +20,9 @@
         <li class="nav-item">
           <router-link :to="'/people'" class="nav-link"><i class="fa fa-group"></i> People</router-link>
         </li>
+        <li class="nav-item">
+          <router-link :to="'/labeling'" class="nav-link"><i class="fa fa-code"></i> Manual labels</router-link>
+        </li>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled>
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-bar-chart"></i> Analytics</div>
           <ul class="nav-dropdown-items">

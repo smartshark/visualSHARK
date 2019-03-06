@@ -123,6 +123,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getIssueRandom (dat) {
+    let req = this.getFilterUrl('labeling/issue/', dat)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getPerson (id) {
     let req = this.getUrl('people/' + id + '/')
     return axios.get(req, {headers: {
