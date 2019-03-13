@@ -130,6 +130,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  saveManualIssueTypes (dat) {
+    let req = this.getUrl('labeling/issue/save')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getPerson (id) {
     let req = this.getUrl('people/' + id + '/')
     return axios.get(req, {headers: {

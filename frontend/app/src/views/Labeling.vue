@@ -20,7 +20,7 @@
                         <option v-for="item in options" :value="item">{{ item }}</option>
                      </select>
                   </td>
-                  <td> <input type="checkbox"> </td>
+                  <td> <input v-model="issue.checked" type="checkbox"> </td>
                   <td>
                      <a href="http://google.de" target="_blank">
                         <h5>{{ issue.title }}</h5>
@@ -33,7 +33,7 @@
             </tbody>
          </table>
       </div>
-      <button style="float: right; margin-bottom: 20px;" type="button" class="btn btn-success">Absenden</button>
+      <button v-on:click="submitLabels" type="button" class="btn btn-success">Absenden</button>
    </div>
    <div class="animated fadeIn" v-if="currentIts && !currentIts.id">
       <alert type="danger" dismissable>
@@ -68,7 +68,7 @@ export default {
   data () {
     return {
       options: [],
-      issues: [{'name': 'test1', 'description': ''}, {'name': 'test1'}, {'name': 'test1'}, {'name': 'test1'}, {'name': 'test1'}],
+      issues: [],
       triggerRefresh: false,
       triggerRefreshEvents: false
     }
@@ -83,18 +83,7 @@ export default {
     currentIts: 'currentIts'
   }),
   mounted () {
-    var dat = {}
-    if (this.currentIts !== null && this.currentIts.id !== null) {
-      dat.filter = '&issue_system_id=' + this.currentIts.id
-      rest.getIssueRandom(dat)
-        .then(response => {
-          console.log(response.data)
-          if (response.data != null) {
-            this.issues = response.data.issues
-            this.options = response.data.options
-          }
-        })
-    }
+    this.loadRandomIssue()
   },
   watch: {
     currentIts (value) {
@@ -108,7 +97,30 @@ export default {
     }
   },
   methods: {
-
+    submitLabels () {
+      rest.saveManualIssueTypes(this.issues)
+        .then(response => {
+          console.log(response.data)
+          if (response.data != null) {
+            this.loadRandomIssue()
+          }
+        })
+    },
+    loadRandomIssue () {
+      var dat = {}
+      if (this.currentIts !== null && this.currentIts.id !== null) {
+        dat.filter = '&issue_system_id=' + this.currentIts.id
+        dat.filter = dat.filter + '&limit=10'
+        rest.getIssueRandom(dat)
+          .then(response => {
+            console.log(response.data)
+            if (response.data != null) {
+              this.issues = response.data.issues
+              this.options = response.data.options
+            }
+          })
+      }
+    }
   }
 }
 </script>

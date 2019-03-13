@@ -881,19 +881,35 @@ class IssueLabelSet(MongoReadOnlyModelViewSet):
         ret = []
         for d in qry:
             dat = d.to_mongo()
+            dat["id"] = dat["_id"]
             if(d.issue_type == None):
                 dat['resolution'] = "other"
             else:
                 dat['resolution'] = self.TICKET_TYPE_MAPPING.get(d.issue_type.lower().strip())
-
             ret.append(dat)
         return ret
 
     def list(self, request):
         """Again a nested serializer."""
-        qry = self.filter_queryset(self.get_queryset())
+        #pipeline = [
+        #    {"$sample": {"size": 10}}
+        #]
+        qry = self.filter_queryset(self.get_queryset().limit(10))
         serializer = self.serializer_class(self._inject_data(qry), many=True)
         result = {}
         result['options'] = set(list(self.TICKET_TYPE_MAPPING.values()))
         result['issues'] = serializer.data
+        return Response(result)
+
+class IssueSave(APIView):
+
+    def post(self, request):
+        for issue in request.data:
+            if 'checked' in issue and issue['checked'] == True:
+              print(issue['id'])
+              issue_db = Issue.objects.get(id=issue['id'])
+              issue_db.issue_type_manual = { "test" : issue["resolution"]}
+              issue_db.save()
+        result = {}
+        result['status'] = "ok"
         return Response(result)
