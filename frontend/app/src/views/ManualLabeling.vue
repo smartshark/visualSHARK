@@ -108,8 +108,8 @@ export default {
     },
     loadRandomIssue () {
       var dat = {}
-      if (this.currentIts !== null && this.currentIts.id !== null) {
-        dat.filter = '&issue_system_id=' + this.currentIts.id
+      if (this.currentProject !== null && this.currentProject.id !== null) {
+        dat.filter = '&project_id=' + this.currentProject.id
         dat.filter = dat.filter + '&limit=10'
         rest.getIssueRandom(dat)
           .then(response => {

@@ -26,7 +26,7 @@ import django_filters
 from mongoengine.queryset.visitor import Q
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
-from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
+from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -38,7 +38,7 @@ from rest_framework.filters import OrderingFilter
 
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan3 as OntdekBaan, OntdekBaan4 as OntdekBaan2
-from .util.helper import Label
+from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -837,108 +837,46 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 
         return HttpResponse(status=202)
 
-class IssueLabelSet(MongoReadOnlyModelViewSet):
-    queryset = Issue.objects.all()
-    serializer_class = IssueLabelSerializer
-    ordering_fields = ('external_id', 'title', 'created_at', 'updated_at', 'status', 'issue_type')
-    filter_fields = ('issue_system_id', 'external_id', 'title', 'status')
-    mongo_search_fields = ('title',)
+class IssueLabelSet(APIView):
 
-    TICKET_TYPE_MAPPING = {'bug': 'bug',
-                           'new feature': 'improvement',
-                           'new jira project': 'other',
-                           'epic': 'other',
-                           'umbrella': 'other',
-                           'it help': 'other',
-                           'proposal': 'improvement',
-                           'new tlp': 'other',
-                           'improvement': 'improvement',
-                           'technical task': 'task',
-                           'sub-task': 'task',
-                           'task': 'task',
-                           'new git repo': 'other',
-                           'wish': 'improvment',
-                           'brainstorming': 'other',
-                           'planned work': 'improvement',
-                           'project': 'other',
-                           'test': 'test',
-                           'temp': 'other',
-                           'request': 'improvement',
-                           'story': 'other',
-                           'documentation': 'documentation',
-                           'question': 'other',
-                           'dependency upgrade': 'other'}
-
-    def get_queryset(self):
-        """Handle special case for person search."""
-        qry = super().get_queryset()
-        person_id = self.request.query_params.get('person_id', None)
-        if person_id:
-            qry = qry.filter(Q(creator_id=person_id) | Q(assignee_id=person_id) | Q(reporter_id=person_id))
-        return qry
-
-    def _inject_data(self, qry):
-        ret = []
-        for d in qry:
-            dat = d.to_mongo()
-            dat["id"] = dat["_id"]
-            if(d.issue_type == None):
-                dat['resolution'] = "other"
-            else:
-                dat['resolution'] = IssueLabelSet.TICKET_TYPE_MAPPING.get(d.issue_type.lower().strip())
-            ret.append(dat)
-        return ret
-
-    def list(self, request):
-        """Again a nested serializer."""
-        #pipeline = [
-        #    {"$sample": {"size": 10}}
-        #]
-        qry = self.filter_queryset(self.get_queryset().limit(10))
-        serializer = self.serializer_class(self._inject_data(qry), many=True)
+    def get(self, request):
         result = {}
-        result['options'] = set(list(self.TICKET_TYPE_MAPPING.values()))
-        result['issues'] = serializer.data
+        result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
+        result['issues'] = []
+
+        issueCaches = IssueValidation.objects.filter(project_id=request.GET["project_id"],linked=True).order_by('?')[:10]
+        for issueCache in issueCaches:
+            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+            serializer = IssueLabelSerializer(issue, many=False)
+            data = serializer.data
+            if (issue.issue_type == None):
+                data['resolution'] = "other"
+            else:
+                data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
+            result['issues'].append(data)
+
         return Response(result)
 
-class IssueConflictSet(MongoReadOnlyModelViewSet):
-    queryset = Issue.objects.all()
-    serializer_class = IssueLabelConflictSerializer
-    ordering_fields = ('external_id', 'title', 'created_at', 'updated_at', 'status', 'issue_type')
-    filter_fields = ('issue_system_id', 'external_id', 'title', 'status')
-    mongo_search_fields = ('title',)
 
-    def get_queryset(self):
-        """Handle special case for person search."""
-        qry = super().get_queryset()
-        person_id = self.request.query_params.get('person_id', None)
-        if person_id:
-            qry = qry.filter(Q(creator_id=person_id) | Q(assignee_id=person_id) | Q(reporter_id=person_id))
-        # qry = qry.exclude(issue_type_verified="")
-        return qry
+class IssueConflictSet(APIView):
 
-    def _inject_data(self, qry):
-        ret = []
-        for d in qry:
-            dat = d.to_mongo()
-            dat["id"] = dat["_id"]
-            if(d.issue_type == None):
-                dat['resolution'] = "other"
-            else:
-                dat['resolution'] = IssueLabelSet.TICKET_TYPE_MAPPING.get(d.issue_type.lower().strip())
-            ret.append(dat)
-        return ret
-
-    def list(self, request):
-        """Again a nested serializer."""
-        #pipeline = [
-        #    {"$sample": {"size": 10}}
-        #]
-        qry = self.filter_queryset(self.get_queryset().limit(10))
-        serializer = self.serializer_class(self._inject_data(qry), many=True)
+    def get(self, request):
         result = {}
-        result['options'] = set(list(IssueLabelSet.TICKET_TYPE_MAPPING.values()))
-        result['issues'] = serializer.data
+        result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
+        result['issues'] = []
+
+        issueCaches = IssueValidation.objects.filter(project_id=request.GET["project_id"], resolution=False).order_by('?')[
+                      :10]
+        for issueCache in issueCaches:
+            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+            serializer = IssueLabelConflictSerializer(issue, many=False)
+            data = serializer.data
+            if (issue.issue_type == None):
+                data['resolution'] = "other"
+            else:
+                data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
+            result['issues'].append(data)
+
         return Response(result)
 
 class IssueSave(APIView):

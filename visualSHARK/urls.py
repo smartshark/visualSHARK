@@ -29,8 +29,6 @@ router.register(r'codeentitystate', CodeEntityStateViewSet)
 router.register(r'file', FileViewSet)
 router.register(r'product', ProductViewSet)
 router.register(r'hunk', HunkViewSet)
-router.register(r'labeling/issue', IssueLabelSet)
-router.register(r'labeling/issueconflict', IssueConflictSet)
 
 rrouter = rrouters.DefaultRouter()
 rrouter.register(r'commitgraph', CommitGraphViewSet)
@@ -51,6 +49,8 @@ urlpatterns = [
     url(r'^statshistory/', StatsHistoryView.as_view()),
     url(r'^analytics/issuelinkcandidates', IssueLinkCandidatesView.as_view()),
     url(r'^analytics/affectedentities', AffectedEntitiesView.as_view()),
+    url(r'labeling/issueconflict', IssueConflictSet.as_view()),
+    url(r'labeling/issue', IssueLabelSet.as_view()),
     url(r'labeling/issue/save', IssueSave.as_view()),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 
