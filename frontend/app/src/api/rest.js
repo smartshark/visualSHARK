@@ -130,8 +130,22 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getConflictedIssues (dat) {
+    let req = this.getFilterUrl('labeling/issueconflict/', dat)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   saveManualIssueTypes (dat) {
     let req = this.getUrl('labeling/issue/save')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  resolveIssues (dat) {
+    let req = this.getUrl('labeling/issueconflict/save')
     return axios.post(req, dat, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

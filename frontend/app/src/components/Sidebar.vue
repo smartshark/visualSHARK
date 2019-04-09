@@ -20,9 +20,17 @@
         <li class="nav-item">
           <router-link :to="'/people'" class="nav-link"><i class="fa fa-group"></i> People</router-link>
         </li>
-        <li class="nav-item">
-          <router-link :to="'/labeling'" class="nav-link"><i class="fa fa-code"></i> Manual labels</router-link>
-        </li>
+        <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/labeling'}" disabled>
+          <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-code"></i> Labeling</div>
+            <ul class="nav-dropdown-items">
+              <li class="nav-item">
+                <router-link :to="'/labeling/manual'" class="nav-link"><i class="fa fa-code"></i> Manual labels</router-link>
+              </li>
+              <li class="nav-item">
+                <router-link :to="'/labeling/resolution'" class="nav-link"><i class="fa fa-check"></i> Resolution View</router-link>
+              </li>
+            </ul>
+        </router-link>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled>
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-bar-chart"></i> Analytics</div>
           <ul class="nav-dropdown-items">

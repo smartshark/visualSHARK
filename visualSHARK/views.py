@@ -29,7 +29,7 @@ from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, File
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
-from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer
+from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRel
@@ -885,7 +885,7 @@ class IssueLabelSet(MongoReadOnlyModelViewSet):
             if(d.issue_type == None):
                 dat['resolution'] = "other"
             else:
-                dat['resolution'] = self.TICKET_TYPE_MAPPING.get(d.issue_type.lower().strip())
+                dat['resolution'] = IssueLabelSet.TICKET_TYPE_MAPPING.get(d.issue_type.lower().strip())
             ret.append(dat)
         return ret
 
@@ -901,6 +901,46 @@ class IssueLabelSet(MongoReadOnlyModelViewSet):
         result['issues'] = serializer.data
         return Response(result)
 
+class IssueConflictSet(MongoReadOnlyModelViewSet):
+    queryset = Issue.objects.all()
+    serializer_class = IssueLabelConflictSerializer
+    ordering_fields = ('external_id', 'title', 'created_at', 'updated_at', 'status', 'issue_type')
+    filter_fields = ('issue_system_id', 'external_id', 'title', 'status')
+    mongo_search_fields = ('title',)
+
+    def get_queryset(self):
+        """Handle special case for person search."""
+        qry = super().get_queryset()
+        person_id = self.request.query_params.get('person_id', None)
+        if person_id:
+            qry = qry.filter(Q(creator_id=person_id) | Q(assignee_id=person_id) | Q(reporter_id=person_id))
+        # qry = qry.exclude(issue_type_verified="")
+        return qry
+
+    def _inject_data(self, qry):
+        ret = []
+        for d in qry:
+            dat = d.to_mongo()
+            dat["id"] = dat["_id"]
+            if(d.issue_type == None):
+                dat['resolution'] = "other"
+            else:
+                dat['resolution'] = IssueLabelSet.TICKET_TYPE_MAPPING.get(d.issue_type.lower().strip())
+            ret.append(dat)
+        return ret
+
+    def list(self, request):
+        """Again a nested serializer."""
+        #pipeline = [
+        #    {"$sample": {"size": 10}}
+        #]
+        qry = self.filter_queryset(self.get_queryset().limit(10))
+        serializer = self.serializer_class(self._inject_data(qry), many=True)
+        result = {}
+        result['options'] = set(list(IssueLabelSet.TICKET_TYPE_MAPPING.values()))
+        result['issues'] = serializer.data
+        return Response(result)
+
 class IssueSave(APIView):
 
     def post(self, request):
@@ -908,7 +948,24 @@ class IssueSave(APIView):
             if 'checked' in issue and issue['checked'] == True:
               print(issue['id'])
               issue_db = Issue.objects.get(id=issue['id'])
-              issue_db.issue_type_manual = { "test" : issue["resolution"]}
+              if issue_db.issue_type_manual == None:
+                  issue_db.issue_type_manual = {}
+              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
+              issue_db.save()
+        result = {}
+        result['status'] = "ok"
+        return Response(result)
+
+class IssueResolve(APIView):
+
+    def post(self, request):
+        for issue in request.data:
+            if 'checked' in issue and issue['checked'] == True:
+              print(issue['id'])
+              issue_db = Issue.objects.get(id=issue['id'])
+              if issue_db.issue_type_manual == None:
+                  issue_db.issue_type_manual = {}
+              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
               issue_db.save()
         result = {}
         result['status'] = "ok"

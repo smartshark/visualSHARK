@@ -15,6 +15,8 @@ import Login from '@/views/Login'
 import Files from '@/views/Files'
 import Messages from '@/views/Messages'
 import Labeling from '@/views/Labeling'
+import ManualLabeling from '@/views/ManualLabeling'
+import ResolutionView from '@/views/ResolutionView'
 
 import Analytics from '@/views/Analytics'
 import CommitGraph from '@/views/CommitGraph'
@@ -104,8 +106,21 @@ const router = new Router({
         },
         {
           path: 'labeling',
-          name: 'Manual labels',
-          component: Labeling
+          name: 'Labeling',
+          component: Labeling,
+          props: true,
+          children: [
+            {
+              path: 'manual',
+              name: 'Manual labels',
+              component: ManualLabeling
+            },
+            {
+              path: 'resolution',
+              name: 'Resolution View',
+              component: ResolutionView
+            }
+          ]
         },
         {
           path: 'analytics',
