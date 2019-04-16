@@ -179,8 +179,8 @@ class VSJob(models.Model):
             send_to_user(instance.requested_by.profile.channel, {'msg': '{} job finished'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': False, 'success': instance.error_count == 0, 'job_id': instance.pk})
 
 class IssueValidation(models.Model):
-
     project_id = models.CharField(max_length=255)
+    issue_system_id = models.CharField(max_length=255)
     issue_id = models.CharField(max_length=255)
     issue_type = models.TextField()
     issue_type_unified = models.TextField()

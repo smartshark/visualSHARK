@@ -19,7 +19,7 @@
                   <th>
                     <div v-for="manual_issue in issue.issue_type_manual">{{ manual_issue }}</div></th>
                   <td>
-                     <select v-model="issue.resolution" class="form-control">
+                     <select v-model="issue.resolution" class="form-control" size="10">
                         <option v-for="item in options" :value="item">{{ item }}</option>
                      </select>
                   </td>

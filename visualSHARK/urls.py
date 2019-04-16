@@ -10,7 +10,7 @@ from rest_framework.documentation import include_docs_urls
 from .views import Auth, StatsView
 
 from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet, HunkViewSet
-from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView, IssueLabelSet, IssueSave, IssueConflictSet
+from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView, IssueLabelSet, IssueConflictSet
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -49,9 +49,8 @@ urlpatterns = [
     url(r'^statshistory/', StatsHistoryView.as_view()),
     url(r'^analytics/issuelinkcandidates', IssueLinkCandidatesView.as_view()),
     url(r'^analytics/affectedentities', AffectedEntitiesView.as_view()),
-    url(r'labeling/issueconflict', IssueConflictSet.as_view()),
-    url(r'labeling/issue', IssueLabelSet.as_view()),
-    url(r'labeling/issue/save', IssueSave.as_view()),
+    url(r'^labeling/conflict', IssueConflictSet.as_view()),
+    url(r'^labeling/issue', IssueLabelSet.as_view()),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 
 ]

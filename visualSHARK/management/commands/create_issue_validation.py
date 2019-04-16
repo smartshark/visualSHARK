@@ -43,6 +43,7 @@ class Command(BaseCommand):
                         issue_type_unified = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
                     validation, created = IssueValidation.objects.get_or_create(
                         project_id=project.id,
+                        issue_system_id=issue_system.id,
                         issue_id=issue.id,
                         issue_type=issue_type,
                         issue_type_unified=issue_type_unified,

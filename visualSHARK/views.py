@@ -26,7 +26,7 @@ import django_filters
 from mongoengine.queryset.visitor import Q
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
-from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation
+from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -857,6 +857,28 @@ class IssueLabelSet(APIView):
 
         return Response(result)
 
+    def post(self, request):
+        for issue in request.data:
+            if 'checked' in issue and issue['checked'] == True:
+              print(issue['id'])
+              issue_db = Issue.objects.get(id=issue['id'])
+              if issue_db.issue_type_manual == None:
+                  issue_db.issue_type_manual = {}
+              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
+              issue_db.save()
+
+              # Update the cache
+              validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
+              issueValidationUser, created = IssueValidationUser.objects.get_or_create(
+                  user=request.user,
+                  issue_validation=validation,
+                  label=issue["resolution"]
+              )
+              issueValidationUser.save()
+        result = {}
+        result['status'] = "ok"
+        return Response(result)
+
 
 class IssueConflictSet(APIView):
 
@@ -879,32 +901,14 @@ class IssueConflictSet(APIView):
 
         return Response(result)
 
-class IssueSave(APIView):
-
     def post(self, request):
         for issue in request.data:
             if 'checked' in issue and issue['checked'] == True:
               print(issue['id'])
               issue_db = Issue.objects.get(id=issue['id'])
-              if issue_db.issue_type_manual == None:
-                  issue_db.issue_type_manual = {}
-              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
+              issue_db.issue_type_verified = issue["resolution"]
               issue_db.save()
-        result = {}
-        result['status'] = "ok"
-        return Response(result)
 
-class IssueResolve(APIView):
-
-    def post(self, request):
-        for issue in request.data:
-            if 'checked' in issue and issue['checked'] == True:
-              print(issue['id'])
-              issue_db = Issue.objects.get(id=issue['id'])
-              if issue_db.issue_type_manual == None:
-                  issue_db.issue_type_manual = {}
-              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
-              issue_db.save()
         result = {}
         result['status'] = "ok"
         return Response(result)
