@@ -34,17 +34,10 @@ class Command(BaseCommand):
         for issueValidation in IssueValidation.objects.all():
             labeling_count = IssueValidationUser.objects.filter(issue_validation=issueValidation).count()
             if labeling_count > self.n:
-                all_same = True
-                label = None
-                for issueUserValidation in IssueValidationUser.objects.filter(issue_validation=issueValidation):
-                    if label == None:
-                        label = issueUserValidation.label
-                    if issueUserValidation.label != label:
-                        all_same = False
-
-                if all_same:
+                labels = IssueValidationUser.objects.filter(issue_validation=issueValidation).values_list('label', flat=True)
+                if len(set(labels)) == 1:
                     issue_db = Issue.objects.get(id=issueValidation.issue_id)
-                    issue_db.issue_type_verified = label
+                    issue_db.issue_type_verified = set(labels)
                     issue_db.save()
 
         end = timeit.default_timer() - start

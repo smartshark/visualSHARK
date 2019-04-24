@@ -6,7 +6,7 @@ import logging
 import sys
 
 from django.core.management.base import BaseCommand
-from visualSHARK.models import Issue, IssueSystem, Project, Event
+from visualSHARK.models import Issue, IssueSystem, Project
 from visualSHARK.models import IssueValidation, IssueValidationUser
 from visualSHARK.util.helper import TICKET_TYPE_MAPPING
 
@@ -36,7 +36,7 @@ class Command(BaseCommand):
         for project in Project.objects.all():
             for issue_system in IssueSystem.objects.filter(project_id=project.id):
                 for issue in Issue.objects.all():
-                    linked = Event.objects.filter(issue_id=issue.id).count() > 0
+                    linked = len(issue.issue_links) > 0
                     issue_type_unified = ""
                     issue_type = ""
                     if issue.issue_type != None:

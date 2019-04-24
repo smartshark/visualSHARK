@@ -844,17 +844,17 @@ class IssueLabelSet(APIView):
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
         linked = request.GET["linked"] == "true"
-        issueCaches = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"],linked=linked)
-        if (request.GET["issue_type"] != "all"):
-            issueCaches = issueCaches.filter(issue_type_unified=request.GET["issue_type"])
-        if (request.GET["labeled_by_other_user"] == "true"):
-            issueCaches = issueCaches.filter(issuevalidationuser__isnull=False)
-        issueCaches = issueCaches.order_by('?')[:10]
-        for issueCache in issueCaches:
+        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"],linked=linked)
+        if request.GET["issue_type"] != "all":
+            issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+        if request.GET["labeled_by_other_user"] == "true":
+            issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+        issue_query = issue_query.order_by('?')[:10]
+        for issueCache in issue_query:
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelSerializer(issue, many=False)
             data = serializer.data
-            if (issue.issue_type == None):
+            if issue.issue_type == None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
@@ -865,7 +865,6 @@ class IssueLabelSet(APIView):
     def post(self, request):
         for issue in request.data:
             if 'checked' in issue and issue['checked'] == True:
-              print(issue['id'])
               issue_db = Issue.objects.get(id=issue['id'])
               if issue_db.issue_type_manual == None:
                   issue_db.issue_type_manual = {}
@@ -873,7 +872,7 @@ class IssueLabelSet(APIView):
               issue_db.save()
 
               # Update the cache
-              validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
+              validation = IssueValidation.objects.get(issue_id=issue['id'])
               issueValidationUser, created = IssueValidationUser.objects.get_or_create(
                   user=request.user,
                   issue_validation=validation,
@@ -893,31 +892,25 @@ class IssueConflictSet(APIView):
         result['issues'] = []
 
         linked = request.GET["linked"] == "true"
-        issueCaches = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
-        if (request.GET["issue_type"] != "all"):
-            issueCaches = issueCaches.filter(issue_type_unified=request.GET["issue_type"])
+        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
+        if request.GET["issue_type"] != "all":
+            issue_query  = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         # There muss be a validation
-        issueCaches = issueCaches.filter(issuevalidationuser__isnull=False)
-        issueCaches = issueCaches.order_by('?')
+        issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+        issue_query = issue_query.order_by('?')
         i = 0
-        for issueCache in issueCaches:
-            if(i > 10):
+        for issueCache in issue_query:
+            if i > 10:
                 break
             # Check if all the same, then skip
-            all_same = True
-            label = None
-            for issueUserValidation in IssueValidationUser.objects.filter(issue_validation=issueCache):
-                if label == None:
-                        label = issueUserValidation.label
-                if issueUserValidation.label != label:
-                    all_same = False
-            if (all_same):
+            labels = IssueValidationUser.objects.filter(issue_validation=issueCache).values_list('label', flat=True)
+            if len(set(labels)) == 1:
                 continue
 
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelConflictSerializer(issue, many=False)
             data = serializer.data
-            if (issue.issue_type == None):
+            if issue.issue_type == None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
@@ -929,7 +922,6 @@ class IssueConflictSet(APIView):
     def post(self, request):
         for issue in request.data:
             if 'checked' in issue and issue['checked'] == True:
-              print(issue['id'])
               issue_db = Issue.objects.get(id=issue['id'])
               issue_db.issue_type_verified = issue["resolution"]
               issue_db.save()
