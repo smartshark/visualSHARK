@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand
 from visualSHARK.models import Issue, IssueSystem, Project
 from visualSHARK.models import IssueValidation, IssueValidationUser
 from visualSHARK.util.helper import TICKET_TYPE_MAPPING
+from django.contrib.auth.models import User
 
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
@@ -52,6 +53,13 @@ class Command(BaseCommand):
                         resolution=issue.issue_type_verified != None
                     )
                     validation.save()
+                    for key, value in issue.issue_type_manual.items():
+                        validationUser, created = IssueValidationUser.objects.get_or_create(
+                            user=User.objects.get(username=key),
+                            issue_validation=validation,
+                            label=value
+                        )
+                        validationUser.save()
 
 
         end = timeit.default_timer() - start
