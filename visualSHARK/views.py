@@ -844,7 +844,7 @@ class IssueLabelSet(APIView):
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
 
-        issueCaches = IssueValidation.objects.filter(project_id=request.GET["project_id"],linked=True).order_by('?')[:10]
+        issueCaches = IssueValidation.objects.filter(project_id=request.GET["issue_system_id"],linked=True).order_by('?')[:10]
         for issueCache in issueCaches:
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelSerializer(issue, many=False)
