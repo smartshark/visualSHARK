@@ -1,6 +1,13 @@
 <template>
 <div class="wrapper">
    <div class="animated fadeIn" v-if="currentIts && currentIts.id">
+      Linked issues: <input v-model="linked" type="checkbox">
+
+      Issue Type:
+       <select v-model="issueType">
+                        <option value="all">No Filter</option>
+                        <option v-for="item in options" :value="item">{{ item }}</option>
+       </select>
       <div class="card">
          <table class="table table-striped">
             <thead>
@@ -73,7 +80,9 @@ export default {
       options: [],
       issues: [],
       triggerRefresh: false,
-      triggerRefreshEvents: false
+      triggerRefreshEvents: false,
+      linked: true,
+      issueType: 'all'
     }
   },
   components: {
@@ -93,10 +102,11 @@ export default {
       this.triggerRefresh = true
       this.triggerRefreshEvents = true
     },
-    id (value) {
-      if (value !== false && typeof value !== 'undefined') {
-        this.$store.dispatch('getIssue', value)
-      }
+    linked (value) {
+      this.loadConflicted()
+    },
+    issueType (value) {
+      this.loadConflicted()
     }
   },
   methods: {
@@ -113,6 +123,9 @@ export default {
       var dat = {}
       if (this.currentProject !== null && this.currentProject.id !== null) {
         dat.filter = '&project_id=' + this.currentProject.id
+        dat.filter = dat.filter + '&issue_system_id=' + this.currentIts.id
+        dat.filter = dat.filter + '&linked=' + this.linked
+        dat.filter = dat.filter + '&issue_type=' + this.issueType
         dat.filter = dat.filter + '&limit=10'
         rest.getConflictedIssues(dat)
           .then(response => {

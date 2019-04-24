@@ -7,7 +7,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 from visualSHARK.models import Issue, IssueSystem, Project, Event
-from visualSHARK.models import IssueValidation
+from visualSHARK.models import IssueValidation, IssueValidationUser
 from visualSHARK.util.helper import TICKET_TYPE_MAPPING
 
 log = logging.getLogger()
@@ -30,6 +30,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         start = timeit.default_timer()
 
+        IssueValidationUser.objects.all().delete()
         IssueValidation.objects.all().delete()
 
         for project in Project.objects.all():
