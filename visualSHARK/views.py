@@ -26,10 +26,10 @@ import django_filters
 from mongoengine.queryset.visitor import Q
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
-from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType
+from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
-from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer
+from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRel
@@ -38,7 +38,7 @@ from rest_framework.filters import OrderingFilter
 
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan3 as OntdekBaan, OntdekBaan4 as OntdekBaan2
-from .util.helper import Label
+from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -836,3 +836,99 @@ class VSJobViewSet(rviewsets.ModelViewSet):
         print(dat)
 
         return HttpResponse(status=202)
+
+class IssueLabelSet(APIView):
+
+    def get(self, request):
+        result = {}
+        result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
+        result['issues'] = []
+        linked = request.GET["linked"] == "true"
+        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"],linked=linked)
+        if request.GET["issue_type"] != "all":
+            issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+        if request.GET["labeled_by_other_user"] == "true":
+            issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+        issue_query = issue_query.order_by('?')[:10]
+        for issueCache in issue_query:
+            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+            serializer = IssueLabelSerializer(issue, many=False)
+            data = serializer.data
+            if issue.issue_type == None:
+                data['resolution'] = "other"
+            else:
+                data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
+            result['issues'].append(data)
+
+        return Response(result)
+
+    def post(self, request):
+        for issue in request.data:
+            if 'checked' in issue and issue['checked'] == True:
+              issue_db = Issue.objects.get(id=issue['id'])
+              if issue_db.issue_type_manual == None:
+                  issue_db.issue_type_manual = {}
+              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
+              issue_db.save()
+
+              # Update the cache
+              validation = IssueValidation.objects.get(issue_id=issue['id'])
+              issueValidationUser, created = IssueValidationUser.objects.get_or_create(
+                  user=request.user,
+                  issue_validation=validation,
+                  label=issue["resolution"]
+              )
+              issueValidationUser.save()
+        result = {}
+        result['status'] = "ok"
+        return Response(result)
+
+
+class IssueConflictSet(APIView):
+
+    def get(self, request):
+        result = {}
+        result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
+        result['issues'] = []
+
+        linked = request.GET["linked"] == "true"
+        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
+        if request.GET["issue_type"] != "all":
+            issue_query  = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+        # There muss be a validation
+        issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+        issue_query = issue_query.order_by('?')
+        i = 0
+        for issueCache in issue_query:
+            if i > 10:
+                break
+            # Check if all the same, then skip
+            labels = IssueValidationUser.objects.filter(issue_validation=issueCache).values_list('label', flat=True)
+            if len(set(labels)) == 1:
+                continue
+
+            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+            serializer = IssueLabelConflictSerializer(issue, many=False)
+            data = serializer.data
+            if issue.issue_type == None:
+                data['resolution'] = "other"
+            else:
+                data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
+            result['issues'].append(data)
+            i += 1
+
+        return Response(result)
+
+    def post(self, request):
+        for issue in request.data:
+            if 'checked' in issue and issue['checked'] == True:
+              issue_db = Issue.objects.get(id=issue['id'])
+              issue_db.issue_type_verified = issue["resolution"]
+              issue_db.save()
+              validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
+              validation.resolution = True
+              validation.save()
+
+        result = {}
+        result['status'] = "ok"
+        return Response(result)
