@@ -177,3 +177,17 @@ class VSJob(models.Model):
         # on save of the results we can also pass the result to the user
         if not created:
             send_to_user(instance.requested_by.profile.channel, {'msg': '{} job finished'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': False, 'success': instance.error_count == 0, 'job_id': instance.pk})
+
+class IssueValidation(models.Model):
+    project_id = models.CharField(max_length=255)
+    issue_system_id = models.CharField(max_length=255)
+    issue_id = models.CharField(max_length=255)
+    issue_type = models.TextField()
+    issue_type_unified = models.TextField()
+    linked = models.BooleanField()
+    resolution = models.BooleanField()
+
+class IssueValidationUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    issue_validation = models.ForeignKey(IssueValidation, on_delete=models.CASCADE)
+    label = models.TextField()

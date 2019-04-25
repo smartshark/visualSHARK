@@ -14,6 +14,9 @@ import People from '@/views/People'
 import Login from '@/views/Login'
 import Files from '@/views/Files'
 import Messages from '@/views/Messages'
+import Labeling from '@/views/Labeling'
+import ManualLabeling from '@/views/ManualLabeling'
+import ResolutionView from '@/views/ResolutionView'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -101,6 +104,24 @@ const router = new Router({
           name: 'Files',
           component: Files,
           props: true
+        },
+        {
+          path: 'labeling',
+          name: 'Labeling',
+          component: Labeling,
+          props: true,
+          children: [
+            {
+              path: 'manual',
+              name: 'Manual labels',
+              component: ManualLabeling
+            },
+            {
+              path: 'resolution',
+              name: 'Resolution View',
+              component: ResolutionView
+            }
+          ]
         },
         {
           path: 'analytics',

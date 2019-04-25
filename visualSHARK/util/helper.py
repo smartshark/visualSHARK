@@ -693,3 +693,28 @@ class OntdekBaan2(object):
                         # print('[n] append {} to {} because {}'.format(node, path, path[-1]))
                         path.append(node)
         return new_start, paths
+
+TICKET_TYPE_MAPPING = {'bug': 'bug',
+                           'new feature': 'improvement',
+                           'new jira project': 'other',
+                           'epic': 'other',
+                           'umbrella': 'other',
+                           'it help': 'other',
+                           'proposal': 'improvement',
+                           'new tlp': 'other',
+                           'improvement': 'improvement',
+                           'technical task': 'task',
+                           'sub-task': 'task',
+                           'task': 'task',
+                           'new git repo': 'other',
+                           'wish': 'improvment',
+                           'brainstorming': 'other',
+                           'planned work': 'improvement',
+                           'project': 'other',
+                           'test': 'test',
+                           'temp': 'other',
+                           'request': 'improvement',
+                           'story': 'other',
+                           'documentation': 'documentation',
+                           'question': 'other',
+                           'dependency upgrade': 'other'}

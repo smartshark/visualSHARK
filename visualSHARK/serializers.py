@@ -193,6 +193,25 @@ class IssueSerializer(serializers.DocumentSerializer):
         model = Issue
         fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status')
 
+class IssueLabelSerializer(serializers.DocumentSerializer):
+    class Meta:
+        model = Issue
+        fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution')
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['verified'] = 'false'
+        return ret
+
+class IssueLabelConflictSerializer(serializers.DocumentSerializer):
+    class Meta:
+        model = Issue
+        fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution', 'issue_type_manual')
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['verified'] = 'false'
+        return ret
 
 class MessageSerializer(serializers.DocumentSerializer):
     class Meta:
