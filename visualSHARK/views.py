@@ -719,13 +719,16 @@ class ReleaseView(APIView):
 
     def get(self, request):
         vcs_system_id = request.GET.get('vcs_system_id', None)
-        discard_qualifiers = request.GET.get('discard_qualifiers', True)
-        discard_patch = request.GET.get('discard_patch', True)
 
-        discard_qualifiers = discard_qualifiers == 'true'
-        discard_patch = discard_patch == 'true'
+        # its a get request
+        discard_qualifiers = request.GET.get('discard_qualifiers', True) == 'true'
+        discard_patch = request.GET.get('discard_patch', True) == 'true'
+        discard_fliers = request.GET.get('discard_fliers', True) == 'true'
 
-        versions = tag_filter(Tag.objects.filter(vcs_system_id=vcs_system_id), discard_qualifiers=discard_qualifiers, discard_patch=discard_patch)
+        vcs = VCSSystem.objects.get(id=vcs_system_id)
+        project = Project.objects.get(id=vcs.project_id)
+
+        versions = tag_filter(project.name, Tag.objects.filter(vcs_system_id=vcs_system_id), discard_qualifiers=discard_qualifiers, discard_patch=discard_patch, discard_fliers=discard_fliers)
         history = {'count': len(versions), 'results': versions}
         # print(history)
         return Response(history)

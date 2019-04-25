@@ -28,7 +28,9 @@ class Command(BaseCommand):
                     if field['field_name'] == 'labels':
                         for f in field['fields']:
                             if 'CommitLabel' in f['logical_type']:
-                                approach, name = f['field_name'].split('_')
+                                tmp = f['field_name'].split('_')
+                                approach = tmp[0]
+                                name = '_'.join(tmp[1:])
                                 CommitLabelField.objects.get_or_create(approach=approach, name=name, description=f['desc'])
 
         end = timeit.default_timer() - start

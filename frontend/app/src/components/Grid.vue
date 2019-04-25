@@ -72,6 +72,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 
 export default {
   props: {
@@ -82,8 +83,7 @@ export default {
     defaultOrder: [Array, Object],
     count: Number,
     gridColumns: [Array, Object],
-    triggerRefresh: Boolean,
-    loading: Boolean
+    triggerRefresh: Boolean
   },
   data () {
     let sortOrders = {}
@@ -126,6 +126,9 @@ export default {
     this.refresh()
   },
   computed: {
+    ...mapGetters({
+      loading: 'loading'
+    }),
     offset () {
       return this.currentPage * this.perPage
     },
@@ -244,7 +247,7 @@ export default {
       this.refresh()
     },
     refresh () {
-      this.loading = true
+      this.localLoading = true
       let dat = {'limit': Number(this.perPage), 'offset': this.offset, 'filter': this.filter, 'order': this.order.join(), 'search': this.search}
       this.$emit('refresh', dat)
     },

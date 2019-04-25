@@ -24,6 +24,9 @@
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-bar-chart"></i> Analytics</div>
           <ul class="nav-dropdown-items">
             <li class="nav-item">
+              <router-link :to="'/analytics/project'" class="nav-link" exact><i class="fa fa-info"></i> Project</router-link>
+            </li>
+            <li class="nav-item">
               <router-link :to="'/analytics/cgraph'" class="nav-link" exact><i class="fa fa-code"></i> Commit Graph</router-link>
             </li>
             <li class="nav-item">
