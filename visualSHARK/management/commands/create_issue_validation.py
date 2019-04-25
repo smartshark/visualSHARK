@@ -35,7 +35,7 @@ class Command(BaseCommand):
 
         for project in Project.objects.all():
             for issue_system in IssueSystem.objects.filter(project_id=project.id):
-                for issue in Issue.objects.all().timeout(False):
+                for issue in Issue.objects.filter(issue_system_id=issue_system.id).timeout(False):
                     linked = len(issue.issue_links) > 0
                     issue_type_unified = ""
                     issue_type = ""
