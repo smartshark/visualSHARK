@@ -19,6 +19,7 @@ import ManualLabeling from '@/views/ManualLabeling'
 import ResolutionView from '@/views/ResolutionView'
 
 import Analytics from '@/views/Analytics'
+import Project from '@/views/Project'
 import CommitGraph from '@/views/CommitGraph'
 import ProductInformation from '@/views/ProductInformation'
 import Prediction from '@/views/Prediction'
@@ -128,6 +129,11 @@ const router = new Router({
           component: Analytics,
           props: true,
           children: [
+            {
+              path: 'project',
+              name: 'Project',
+              component: Project
+            },
             {
               path: 'cgraph',
               name: 'Commit Graph',
