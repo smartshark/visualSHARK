@@ -910,6 +910,7 @@ class IssueConflictSet(APIView):
         issue_query = issue_query.filter(issuevalidationuser__isnull=False)
         issue_query = issue_query.order_by('?')
         i = 0
+        ids = []
         for issueCache in issue_query:
             if i > 10:
                 break
@@ -918,6 +919,10 @@ class IssueConflictSet(APIView):
             if len(set(labels)) == 1:
                 continue
 
+            if issueCache.id in ids:
+                continue
+
+            ids.append(issueCache.id)
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelConflictSerializer(issue, many=False)
             data = serializer.data
