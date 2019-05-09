@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile
+from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, IssueValidationUser
 
 
 class CommitGraphAdmin(admin.ModelAdmin):
@@ -22,6 +22,14 @@ class VSJobTypeAdmin(admin.ModelAdmin):
 class VSJobAdmin(admin.ModelAdmin):
     list_display = ('job_type', 'requested_by', 'created_at', 'executed_at')
 
+class IssueValidationAdmin(admin.ModelAdmin):
+    list_display = ('project_id', 'issue_system_id', 'issue_id', 'issue_type', 'issue_type_unified', 'linked', 'resolution')
+    list_filter = ('linked', 'resolution', 'issue_type_unified')
+    search_fields = ('project_id', 'issue_system_id')
+
+class IssueValidationUserAdmin(admin.ModelAdmin):
+    list_display = ('user', 'issue_validation', 'label')
+    list_filter = ('user',)
 
 admin.site.register(CommitGraph, CommitGraphAdmin)
 admin.site.register(CommitLabelField, CommitLabelFieldAdmin)
@@ -29,3 +37,5 @@ admin.site.register(ProjectStats, ProjectStatsAdmin)
 admin.site.register(VSJob, VSJobAdmin)
 admin.site.register(VSJobType, VSJobTypeAdmin)
 admin.site.register(UserProfile)
+admin.site.register(IssueValidation, IssueValidationAdmin)
+admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
