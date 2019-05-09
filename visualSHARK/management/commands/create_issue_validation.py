@@ -33,12 +33,16 @@ class Command(BaseCommand):
         IssueValidationUser.objects.all().delete()
         IssueValidation.objects.all().delete()
 
-        for project in Project.objects.timeout(False).all():
-            vcs = VCSSystem.objects.timeout(False).filter(project_id=project.id)[0]
+        # map issue_ids to their linked commits
+        cmap = {}
+        for commit in Commit.objects.timeout(False).filter(linked_issue_ids__0__exists=True).only('id', 'linked_issue_ids'):
+            for l in commit.linked_issue_ids:
+                cmap[l] = commit.id
 
+        for project in Project.objects.timeout(False).all():
             for issue_system in IssueSystem.objects.timeout(False).filter(project_id=project.id):
-                for issue in Issue.objects.filter(issue_system_id=issue_system.id).timeout(False):
-                    linked = Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids=issue.id).timeout(False).count() > 0
+                for issue in Issue.objects.timeout(False).filter(issue_system_id=issue_system.id):
+                    linked = issue.id in cmap.keys()
                     issue_type_unified = ""
                     issue_type = ""
                     if issue.issue_type is not None:
