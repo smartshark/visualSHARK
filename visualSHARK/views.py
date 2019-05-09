@@ -858,7 +858,7 @@ class IssueLabelSet(APIView):
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         if request.GET["labeled_by_other_user"] == "true":
-            issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+            issue_query = issue_query.filter(issuevalidationuser__isnull=False).exclude(issuevalidationuser__user__username=str(request.user))
         issue_query = issue_query.order_by('?')[:10]
         for issueCache in issue_query:
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
