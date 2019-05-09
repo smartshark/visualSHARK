@@ -119,6 +119,7 @@ export default {
         .then(response => {
           this.$store.dispatch('popLoading')
           if (response.data != null) {
+            window.scrollTo(0, 0)
             this.loadRandomIssue()
           }
         })

@@ -905,7 +905,7 @@ class IssueConflictSet(APIView):
         linked = request.GET["linked"] == "true"
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
         if request.GET["issue_type"] != "all":
-            issue_query  = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+            issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         # There muss be a validation
         issue_query = issue_query.filter(issuevalidationuser__isnull=False)
         issue_query = issue_query.order_by('?')
@@ -921,7 +921,7 @@ class IssueConflictSet(APIView):
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelConflictSerializer(issue, many=False)
             data = serializer.data
-            if issue.issue_type == None:
+            if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
@@ -932,13 +932,13 @@ class IssueConflictSet(APIView):
 
     def post(self, request):
         for issue in request.data:
-            if 'checked' in issue and issue['checked'] == True:
-              issue_db = Issue.objects.get(id=issue['id'])
-              issue_db.issue_type_verified = issue["resolution"]
-              issue_db.save()
-              validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
-              validation.resolution = True
-              validation.save()
+            if 'checked' in issue and issue['checked'] is True:
+                issue_db = Issue.objects.get(id=issue['id'])
+                issue_db.issue_type_verified = issue["resolution"]
+                issue_db.save()
+                validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
+                validation.resolution = True
+                validation.save()
 
         result = {}
         result['status'] = "ok"

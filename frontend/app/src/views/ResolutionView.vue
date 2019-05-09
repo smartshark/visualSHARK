@@ -111,15 +111,20 @@ export default {
   },
   methods: {
     submitLabels () {
+      this.$store.dispatch('pushLoading')
       rest.resolveIssues(this.issues)
         .then(response => {
-          console.log(response.data)
+          this.$store.dispatch('popLoading')
           if (response.data != null) {
             this.loadConflicted()
           }
         })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     loadConflicted () {
+      this.$store.dispatch('pushLoading')
       var dat = {}
       if (this.currentProject !== null && this.currentProject.id !== null) {
         dat.filter = '&project_id=' + this.currentProject.id
@@ -129,11 +134,14 @@ export default {
         dat.filter = dat.filter + '&limit=10'
         rest.getConflictedIssues(dat)
           .then(response => {
-            console.log(response.data)
+            this.$store.dispatch('popLoading')
             if (response.data != null) {
               this.issues = response.data.issues
               this.options = response.data.options
             }
+          })
+          .catch(e => {
+            this.$store.dispatch('pushError', e)
           })
       }
     }
