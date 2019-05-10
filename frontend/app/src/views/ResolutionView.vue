@@ -32,7 +32,7 @@
                   </td>
                   <td> <input v-model="issue.checked" type="checkbox"> </td>
                   <td>
-                     <a href="http://google.de" target="_blank">
+                     <a :href="issue.url" target="_blank">
                         <h5>{{ issue.title }}</h5>
                      </a>
                      <pre>
