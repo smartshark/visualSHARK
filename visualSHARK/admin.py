@@ -25,7 +25,7 @@ class VSJobAdmin(admin.ModelAdmin):
 class IssueValidationAdmin(admin.ModelAdmin):
     list_display = ('project_id', 'issue_system_id', 'issue_id', 'issue_type', 'issue_type_unified', 'linked', 'resolution')
     list_filter = ('linked', 'resolution', 'issue_type_unified')
-    search_fields = ('project_id', 'issue_system_id')
+    search_fields = ('issue_id',)
 
 class IssueValidationUserAdmin(admin.ModelAdmin):
     list_display = ('user', 'issue_validation', 'label')
