@@ -848,6 +848,15 @@ class IssueLabelSet(APIView):
         result['issues'] = []
         linked = request.GET["linked"] == "true"
 
+        # we need this to construct the URL
+        issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        if 'jira' in issue_system.url:
+            base_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            base_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not base_url.endswith('/'):
+                base_url += '/'
+
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
