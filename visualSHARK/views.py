@@ -4,6 +4,7 @@
 import json
 import os
 import io
+import logging
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -42,6 +43,8 @@ from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
+
+log = logging.getLogger()
 
 
 class RelatedOrderingFilter(OrderingFilter):
@@ -859,6 +862,8 @@ class IssueLabelSet(APIView):
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         if request.GET["labeled_by_other_user"] == "true":
             issue_query = issue_query.filter(issuevalidationuser__isnull=False).exclude(issuevalidationuser__user__username=str(request.user))
+        else:
+            issue_query = issue_query.filter(issuevalidationuser__isnull=True)
         issue_query = issue_query.order_by('?')[:10]
         for issueCache in issue_query:
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
@@ -890,6 +895,7 @@ class IssueLabelSet(APIView):
                     label=issue["resolution"]
                 )
                 issueValidationUser.save()
+                log.info('[ISSUE LABELING] user {} labeled issue {} as {}'.format(request.user, issue['id'], issue['resolution']))
         result = {}
         result['status'] = "ok"
         return Response(result)
@@ -944,6 +950,7 @@ class IssueConflictSet(APIView):
                 validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
                 validation.resolution = True
                 validation.save()
+                log.info('[ISSUE RESOLUTION] user {} labeled issue {} as {}'.format(request.user, issue['id'], issue['resolution']))
 
         result = {}
         result['status'] = "ok"
