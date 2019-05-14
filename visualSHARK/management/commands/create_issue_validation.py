@@ -6,7 +6,7 @@ import logging
 import sys
 
 from django.core.management.base import BaseCommand
-from visualSHARK.models import Issue, IssueSystem, Project, Commit
+from visualSHARK.models import Issue, IssueSystem, Project, Commit, VCSSystem
 from visualSHARK.models import IssueValidation, IssueValidationUser
 from visualSHARK.util.helper import TICKET_TYPE_MAPPING
 from django.contrib.auth.models import User
@@ -33,10 +33,16 @@ class Command(BaseCommand):
         IssueValidationUser.objects.all().delete()
         IssueValidation.objects.all().delete()
 
-        for project in Project.objects.all():
-            for issue_system in IssueSystem.objects.filter(project_id=project.id):
-                for issue in Issue.objects.filter(issue_system_id=issue_system.id).timeout(False):
-                    linked = Commit.objects.filter(linked_issue_ids__in=[issue.id]).count() > 0
+        # map issue_ids to their linked commits
+        cmap = {}
+        for commit in Commit.objects.timeout(False).filter(linked_issue_ids__0__exists=True).only('id', 'linked_issue_ids'):
+            for l in commit.linked_issue_ids:
+                cmap[l] = commit.id
+
+        for project in Project.objects.timeout(False).all():
+            for issue_system in IssueSystem.objects.timeout(False).filter(project_id=project.id):
+                for issue in Issue.objects.timeout(False).filter(issue_system_id=issue_system.id):
+                    linked = issue.id in cmap.keys()
                     issue_type_unified = ""
                     issue_type = ""
                     if issue.issue_type is not None:

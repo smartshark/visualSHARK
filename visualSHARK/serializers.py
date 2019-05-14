@@ -193,6 +193,7 @@ class IssueSerializer(serializers.DocumentSerializer):
         model = Issue
         fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status')
 
+
 class IssueLabelSerializer(serializers.DocumentSerializer):
     class Meta:
         model = Issue
@@ -203,6 +204,7 @@ class IssueLabelSerializer(serializers.DocumentSerializer):
         ret['verified'] = 'false'
         return ret
 
+
 class IssueLabelConflictSerializer(serializers.DocumentSerializer):
     class Meta:
         model = Issue
@@ -212,6 +214,7 @@ class IssueLabelConflictSerializer(serializers.DocumentSerializer):
         ret = super().to_representation(instance)
         ret['verified'] = 'false'
         return ret
+
 
 class MessageSerializer(serializers.DocumentSerializer):
     class Meta:

@@ -4,6 +4,7 @@
 import json
 import os
 import io
+import logging
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -42,6 +43,8 @@ from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
+
+log = logging.getLogger()
 
 
 class RelatedOrderingFilter(OrderingFilter):
@@ -824,8 +827,6 @@ class VSJobViewSet(rviewsets.ModelViewSet):
         j.data = json.dumps(dat)
         j.save()
 
-        print(dat)
-
         return HttpResponse(status=202)
 
     @list_route(methods=['post'])
@@ -836,9 +837,8 @@ class VSJobViewSet(rviewsets.ModelViewSet):
         j.data = json.dumps(dat)
         j.save()
 
-        print(dat)
-
         return HttpResponse(status=202)
+
 
 class IssueLabelSet(APIView):
 
@@ -847,17 +847,30 @@ class IssueLabelSet(APIView):
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
         linked = request.GET["linked"] == "true"
-        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"],linked=linked)
+
+        # we need this to construct the URL
+        issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        if 'jira' in issue_system.url:
+            base_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            base_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not base_url.endswith('/'):
+                base_url += '/'
+
+        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         if request.GET["labeled_by_other_user"] == "true":
-            issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+            issue_query = issue_query.filter(issuevalidationuser__isnull=False).exclude(issuevalidationuser__user__username=str(request.user))
+        else:
+            issue_query = issue_query.filter(issuevalidationuser__isnull=True)
         issue_query = issue_query.order_by('?')[:10]
         for issueCache in issue_query:
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelSerializer(issue, many=False)
             data = serializer.data
-            if issue.issue_type == None:
+            data['url'] = base_url + issue.external_id
+            if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
@@ -867,21 +880,22 @@ class IssueLabelSet(APIView):
 
     def post(self, request):
         for issue in request.data:
-            if 'checked' in issue and issue['checked'] == True:
-              issue_db = Issue.objects.get(id=issue['id'])
-              if issue_db.issue_type_manual == None:
-                  issue_db.issue_type_manual = {}
-              issue_db.issue_type_manual.update({ str(request.user) : issue["resolution"]})
-              issue_db.save()
+            if 'checked' in issue and issue['checked'] is True:
+                issue_db = Issue.objects.get(id=issue['id'])
+                if issue_db.issue_type_manual is None:
+                    issue_db.issue_type_manual = {}
+                issue_db.issue_type_manual.update({str(request.user): issue["resolution"]})
+                issue_db.save()
 
-              # Update the cache
-              validation = IssueValidation.objects.get(issue_id=issue['id'])
-              issueValidationUser, created = IssueValidationUser.objects.get_or_create(
-                  user=request.user,
-                  issue_validation=validation,
-                  label=issue["resolution"]
-              )
-              issueValidationUser.save()
+                # Update the cache
+                validation = IssueValidation.objects.get(issue_id=issue['id'])
+                issueValidationUser, created = IssueValidationUser.objects.get_or_create(
+                    user=request.user,
+                    issue_validation=validation,
+                    label=issue["resolution"]
+                )
+                issueValidationUser.save()
+                log.info('[ISSUE LABELING] user {} labeled issue {} as {}'.format(request.user, issue['id'], issue['resolution']))
         result = {}
         result['status'] = "ok"
         return Response(result)
@@ -894,14 +908,24 @@ class IssueConflictSet(APIView):
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
 
+        # we need this to construct the URL
+        issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        if 'jira' in issue_system.url:
+            base_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            base_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not base_url.endswith('/'):
+                base_url += '/'
+
         linked = request.GET["linked"] == "true"
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
         if request.GET["issue_type"] != "all":
-            issue_query  = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+            issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         # There muss be a validation
         issue_query = issue_query.filter(issuevalidationuser__isnull=False)
         issue_query = issue_query.order_by('?')
         i = 0
+        ids = []
         for issueCache in issue_query:
             if i > 10:
                 break
@@ -910,10 +934,15 @@ class IssueConflictSet(APIView):
             if len(set(labels)) == 1:
                 continue
 
+            if issueCache.id in ids:
+                continue
+
+            ids.append(issueCache.id)
             issue = Issue.objects.filter(id=issueCache.issue_id).first()
             serializer = IssueLabelConflictSerializer(issue, many=False)
             data = serializer.data
-            if issue.issue_type == None:
+            data['url'] = base_url + issue.external_id
+            if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
@@ -924,13 +953,14 @@ class IssueConflictSet(APIView):
 
     def post(self, request):
         for issue in request.data:
-            if 'checked' in issue and issue['checked'] == True:
-              issue_db = Issue.objects.get(id=issue['id'])
-              issue_db.issue_type_verified = issue["resolution"]
-              issue_db.save()
-              validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
-              validation.resolution = True
-              validation.save()
+            if 'checked' in issue and issue['checked'] is True:
+                issue_db = Issue.objects.get(id=issue['id'])
+                issue_db.issue_type_verified = issue["resolution"]
+                issue_db.save()
+                validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
+                validation.resolution = True
+                validation.save()
+                log.info('[ISSUE RESOLUTION] user {} labeled issue {} as {}'.format(request.user, issue['id'], issue['resolution']))
 
         result = {}
         result['status'] = "ok"

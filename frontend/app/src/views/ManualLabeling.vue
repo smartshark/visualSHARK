@@ -33,12 +33,10 @@
                   </td>
                   <td> <input v-model="issue.checked" type="checkbox"> </td>
                   <td>
-                     <a href="http://google.de" target="_blank">
+                     <a :href="issue.url" target="_blank">
                         <h5>{{ issue.title }}</h5>
                      </a>
-                     <pre>
-                     {{ issue.desc }}
-                     </pre>
+                     <pre>{{ issue.desc }}</pre>
                   </td>
                </tr>
             </tbody>
@@ -116,15 +114,21 @@ export default {
   },
   methods: {
     submitLabels () {
+      this.$store.dispatch('pushLoading')
       rest.saveManualIssueTypes(this.issues)
         .then(response => {
-          console.log(response.data)
+          this.$store.dispatch('popLoading')
           if (response.data != null) {
+            window.scrollTo(0, 0)
             this.loadRandomIssue()
           }
         })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     loadRandomIssue () {
+      this.$store.dispatch('pushLoading')
       var dat = {}
       if (this.currentProject !== null && this.currentProject.id !== null) {
         dat.filter = '&project_id=' + this.currentProject.id
@@ -135,14 +139,22 @@ export default {
         dat.filter = dat.filter + '&limit=10'
         rest.getIssueRandom(dat)
           .then(response => {
-            console.log(response.data)
+            this.$store.dispatch('popLoading')
             if (response.data != null) {
               this.issues = response.data.issues
               this.options = response.data.options
             }
+          })
+          .catch(e => {
+            this.$store.dispatch('pushError', e)
           })
       }
     }
   }
 }
 </script>
+<style>
+pre {
+    white-space: pre-wrap; 
+}
+</style>

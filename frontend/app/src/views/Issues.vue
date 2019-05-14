@@ -13,9 +13,7 @@
                   {{ currentIssue.title }}
                 </div>
                 <div class="card-block">
-                  <pre>
-                    {{ currentIssue.desc }}
-                  </pre>
+                  <pre>{{ currentIssue.desc }}</pre>
                 </div>
               </div>
             </div>
@@ -278,3 +276,8 @@ export default {
   }
 }
 </script>
+<style>
+pre {
+    white-space: pre-wrap; 
+}
+</style>
