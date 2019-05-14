@@ -27,7 +27,6 @@ class Command(BaseCommand):
 
     help = 'Create issue validation objects'
 
-
     def handle(self, *args, **options):
         start = timeit.default_timer()
 
@@ -36,13 +35,18 @@ class Command(BaseCommand):
 
         for project in Project.objects.all():
             for issue_system in IssueSystem.objects.filter(project_id=project.id):
-                for issue in Issue.objects.all():
+                for issue in Issue.objects.filter(issue_system_id=issue_system.id).timeout(False):
                     linked = Commit.objects.filter(linked_issue_ids__in=[issue.id]).count() > 0
                     issue_type_unified = ""
                     issue_type = ""
-                    if issue.issue_type != None:
+                    if issue.issue_type is not None:
                         issue_type = issue.issue_type
+
                         issue_type_unified = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
+                        if not issue_type_unified:
+                            issue_type_unified = 'other'
+                            self.stdout.write(self.style.WARNING('[WARN]') + ' Issue type {} not found in unified mapping, setting to {}'.format(issue.issue_type, issue_type_unified))
+
                     validation, created = IssueValidation.objects.get_or_create(
                         project_id=project.id,
                         issue_system_id=issue_system.id,
@@ -50,7 +54,7 @@ class Command(BaseCommand):
                         issue_type=issue_type,
                         issue_type_unified=issue_type_unified,
                         linked=linked,
-                        resolution=issue.issue_type_verified != None
+                        resolution=issue.issue_type_verified is not None
                     )
                     validation.save()
                     for key, value in issue.issue_type_manual.items():
@@ -60,7 +64,6 @@ class Command(BaseCommand):
                             label=value
                         )
                         validationUser.save()
-
 
         end = timeit.default_timer() - start
         self.stdout.write(self.style.SUCCESS('[OK]') + ' Finished in {:.3f}s '.format(end))

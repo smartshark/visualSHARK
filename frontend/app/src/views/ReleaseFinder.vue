@@ -57,7 +57,8 @@
                 <div class="card-block">
                   Discard qualifiers: <input type="checkbox" v-model="discardQualifiers"/><br/>
                   Discard patch: <input type="checkbox" v-model="discardPatch"/><br/>
-                  <grid :gridColumns="grid.columns" :data="gridReleases.data" :count="gridReleases.count" :defaultPerPage="15" :triggerRefresh="triggerRefresh" @refresh="refreshGrid">
+                  Discard fliers: <input type="checkbox" v-model="discardFliers"/><br/>
+                  <grid :gridColumns="grid.columns" :data="gridReleases.data" :count="gridReleases.count" :defaultPerPage="15" :triggerRefresh="triggerRefresh" @refresh="refreshGrid" :loading="loading">
                     <template slot="revision" slot-scope="props">
                       <td><router-link :to="{ name: 'Commit', params: { id: props.object }}">{{ props.object }}</router-link></td>
                     </template>
@@ -69,7 +70,7 @@
               <div class="card">
                 <div class="card-header">All Tags</div>
                 <div class="card-block">
-                  <grid :gridColumns="gridT.columns" :data="gridTags.data" :count="gridTags.count" :defaultPerPage="15" defaultFilterField="name" :triggerRefresh="triggerRefreshTags" @refresh="refreshGridTags">
+                  <grid :gridColumns="gridT.columns" :data="gridTags.data" :count="gridTags.count" :defaultPerPage="15" defaultFilterField="name" :triggerRefresh="triggerRefreshTags" @refresh="refreshGridTags" :loading="loading">
                     <template slot="commit" slot-scope="props">
                       <td><router-link :to="{ name: 'Commit', params: { id: props.object.revision_hash }}">{{ props.object.revision_hash }}</router-link></td>
                     </template>
@@ -100,7 +101,7 @@ export default {
         columns: [
           {ident: 'revision', name: 'Sha'},
           {ident: 'version', name: 'Filtered Version'},
-          {ident: 'qualifier', name: 'Filtere Qualifier'},
+          {ident: 'qualifier', name: 'Filtered Qualifier'},
           {ident: 'original', name: 'Original Name'}
         ]
       },
@@ -115,6 +116,7 @@ export default {
       triggerRefreshTags: false,
       discardPatch: true,
       discardQualifiers: true,
+      discardFliers: true,
 
       startCommit: null,
       endCommit: null,
@@ -137,7 +139,8 @@ export default {
     currentVcs: 'currentVcs',
     gridReleases: 'gridReleases',
     gridTags: 'gridTags',
-    isSuperuser: 'isSuperuser'
+    isSuperuser: 'isSuperuser',
+    loading: 'loading'
   }),
   watch: {
     currentVcs (value) {
@@ -150,6 +153,9 @@ export default {
       this.triggerRefresh = true
     },
     discardPatch (value) {
+      this.triggerRefresh = true
+    },
+    discardFliers (value) {
       this.triggerRefresh = true
     }
   },
@@ -166,7 +172,7 @@ export default {
     },
     refreshGrid (dat) {
       this.triggerRefresh = false
-      dat.filter = dat.filter + '&vcs_system_id=' + this.currentVcs.id + '&discard_qualifiers=' + this.discardQualifiers + '&discard_patch=' + this.discardPatch
+      dat.filter = dat.filter + '&vcs_system_id=' + this.currentVcs.id + '&discard_qualifiers=' + this.discardQualifiers + '&discard_patch=' + this.discardPatch + '&discard_fliers=' + this.discardFliers
       this.$store.dispatch('updateGridReleases', dat)
     },
     refreshGridTags (dat) {

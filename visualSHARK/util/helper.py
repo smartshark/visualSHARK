@@ -3,13 +3,13 @@
 
 import re
 import math
-import networkx as nx
 import logging
 import timeit
+from collections import deque
 from datetime import datetime, timedelta
 
-from collections import deque
-
+import numpy as np
+import networkx as nx
 from mongoengine.queryset.visitor import Q
 
 from visualSHARK.models import Commit, FileAction, File, Hunk, CodeEntityState, VCSSystem, IssueSystem, Issue
@@ -84,21 +84,34 @@ class Label(object):
                 # adopted for after memeshark run
                 # ces_ids = commit.code_entity_states
                 qry = CodeEntityState.objects.filter(file_id=file.id, id__in=commit.code_entity_states, ce_type__in=['method', 'class', 'interface'])  # we discard attribute and file
-                
+
                 # print('ces: ', len(qry))
                 qry = qry.filter(q_objects)
                 for ces in qry:
                     k = str(ces.id)
                     if k not in entities.keys():
-                        entities[k] = {'hunks': [{'hunk_id': str(hunk.id), 'hunk_start': hunk.new_start, 'hunk_end': hunk.new_start + hunk.new_lines - hunk.old_lines, 'hunk_content': hunk.content}], 'ces_id': str(ces.id), 'path': file.path, 'long_name': ces.long_name, 'type': ces.ce_type, 'start_line': ces.start_line, 'end_line': ces.end_line}
+                        entities[k] = {'hunks': [{'hunk_id': str(hunk.id), 'hunk_start': hunk.new_start, 'hunk_end': hunk.new_start + hunk.new_lines - hunk.old_lines, 'hunk_content': hunk.content}], 'ces_id': str(ces.id), 'path': file.path, 'long_name': ces.long_name, 'type': ces.ce_type, 'start_line': ces.start_line, 'end_line': ces.end_line, 'pmd_linter_current': [], 'pmd_linter_previous': []}
                     else:
                         entities[k]['hunks'].append({'hunk_id': str(hunk.id), 'hunk_start': hunk.new_start, 'hunk_end': hunk.new_start + hunk.new_lines - hunk.old_lines, 'hunk_content': hunk.content})
 
             # files are a special case, they have no line_start and end so we add them according to the changed files of the commit
-            for ces in CodeEntityState.objects.filter(file_id=file.id, id__in=commit.code_entity_states, ce_type='file'):
-                k = str(ces.id)
-                if k not in entities.keys():
-                    entities[k] = {'hunks': [], 'ces_id': str(ces.id), 'path': file.path, 'long_name': ces.long_name, 'type': ces.ce_type, 'start_line': None, 'end_line': None}
+            ces = CodeEntityState.objects.get(file_id=file.id, id__in=commit.code_entity_states, ce_type='file')
+            k = str(file.id)
+            if k not in entities.keys():
+                entities[k] = {'hunks': [], 'ces_id': str(ces.id), 'path': file.path, 'long_name': ces.long_name, 'type': ces.ce_type, 'start_line': None, 'end_line': None, 'pmd_linter_current': ces.linter, 'pmd_linter_previous': []}
+
+            # now this is expensive but we really want to know what we had beforehand
+            # this would be problematic for renamings!
+            for parent_hash in commit.parents:
+                parent = Commit.objects.get(revision_hash=parent_hash, vcs_system_id=commit.vcs_system_id)
+                for ces2 in CodeEntityState.objects.filter(file_id=file.id, id__in=parent.code_entity_states, ce_type='file'):
+                    entities[k]['pmd_linter_previous'] += ces2.linter
+
+            prevs = [prev['l_ty'] for prev in entities[k]['pmd_linter_previous']]
+            currs = [curr['l_ty'] for curr in entities[k]['pmd_linter_current']]
+
+            distance = self._levenshtein(prevs, currs)
+            entities[k]['pmd_linter_distance'] = distance
 
         ret = []
         for k, v in entities.items():
@@ -106,6 +119,38 @@ class Label(object):
 
         return ret
 
+    def _levenshtein(self, prevs, currs):
+        """Levenshtein distance metric implemented with Wagner-Fischer algorithm."""
+
+        # 1. initialize matrix with words including 0 word
+        rows = len(prevs) + 1
+        cols = len(currs) + 1
+        matrix = np.zeros((rows, cols))
+        
+        matrix[0] = range(cols)
+        matrix[:, 0] = range(rows)
+
+        # 2. fill matrix according to levenshtein rules
+        for row in range(1, rows):
+            for col in range(1, cols):
+                # we skip 0 word with range(1, ) need to subtract again from word sequence
+                prev = prevs[row - 1]
+                curr = currs[col - 1]
+
+                # if char is the same use character use previous diagonal element because nothing has changed
+                if prev == curr:
+                    matrix[row, col] = matrix[row - 1, col - 1]
+                
+                # else use minval of upper, leftmost and previous diagonal element + 1
+                else:
+                    # but we do not necessarily know which one
+                    # matrix[row, col - 1] insertions
+                    # matrix[row - 1, col] deletion
+                    # matrix[row - 1, col - 1] substitution
+                    minval = min(matrix[row, col - 1], matrix[row - 1, col], matrix[row - 1, col - 1]) + 1
+                    matrix[row, col] = minval
+        # print(matrix)
+        return matrix[rows - 1, cols - 1]
     def _get_commit_utc(self, commit):
 
         # add/subtract offset to get utc
@@ -207,7 +252,7 @@ class Label(object):
         return links
 
 
-def tag_filter(tags, discard_qualifiers=True, discard_patch=False):
+def tag_filter(project_name, tags, discard_qualifiers=True, discard_patch=False, discard_fliers=False):
     versions = []
 
     # qualifiers are expected at the end of the tag and they may have a number attached
@@ -242,7 +287,8 @@ def tag_filter(tags, discard_qualifiers=True, discard_patch=False):
             tmp = tmp.split(remove_qualifier)[0]
 
         # we only want numbers and separators
-        version = re.sub('[a-z]', '', tmp)
+        version = re.sub(project_name, '', tmp)
+        version = re.sub('[a-z]', '', version)
 
         # the best separator is the one separating the most numbers
         best = -1
@@ -300,13 +346,22 @@ def tag_filter(tags, discard_qualifiers=True, discard_patch=False):
     iqr = x_075 - x_025
     flyer_lim = 1.5 * iqr
 
-    ret = []
+    # then we want to know if we have any fliers
+    ret1 = []
     for version in versions:
         major = int(version['version'][0])
 
-        # no fliers in final list
+        tmp = version.copy()
+
+        # # no fliers in final list
         if major > (x_075 + flyer_lim) or major < (x_025 - flyer_lim):
-            print('exclude: {} because {} is not between {} and {}'.format(version['version'], major, (x_025 - flyer_lim), (x_075 + flyer_lim)))
+            tmp['flier'] = True
+
+        ret1.append(tmp)
+
+    ret = []
+    for version in ret1:
+        if discard_fliers and 'flier' in version.keys():
             continue
 
         if discard_qualifiers and 'qualifier' in version.keys():
@@ -640,26 +695,26 @@ class OntdekBaan2(object):
         return new_start, paths
 
 TICKET_TYPE_MAPPING = {'bug': 'bug',
-                           'new feature': 'improvement',
-                           'new jira project': 'other',
-                           'epic': 'other',
-                           'umbrella': 'other',
-                           'it help': 'other',
-                           'proposal': 'improvement',
-                           'new tlp': 'other',
-                           'improvement': 'improvement',
-                           'technical task': 'task',
-                           'sub-task': 'task',
-                           'task': 'task',
-                           'new git repo': 'other',
-                           'wish': 'improvment',
-                           'brainstorming': 'other',
-                           'planned work': 'improvement',
-                           'project': 'other',
-                           'test': 'test',
-                           'temp': 'other',
-                           'request': 'improvement',
-                           'story': 'other',
-                           'documentation': 'documentation',
-                           'question': 'other',
-                           'dependency upgrade': 'other'}
+                       'new feature': 'improvement',
+                       'new jira project': 'other',
+                       'epic': 'other',
+                       'umbrella': 'other',
+                       'it help': 'other',
+                       'proposal': 'improvement',
+                       'new tlp': 'other',
+                       'improvement': 'improvement',
+                       'technical task': 'task',
+                       'sub-task': 'task',
+                       'task': 'task',
+                       'new git repo': 'other',
+                       'wish': 'improvment',
+                       'brainstorming': 'other',
+                       'planned work': 'improvement',
+                       'project': 'other',
+                       'test': 'test',
+                       'temp': 'other',
+                       'request': 'improvement',
+                       'story': 'other',
+                       'documentation': 'documentation',
+                       'question': 'other',
+                       'dependency upgrade': 'other'}

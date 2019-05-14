@@ -2,7 +2,12 @@
   <div class="wrapper">
     <div class="animated fadeIn">
       <div class="card">
-        <div class="card-header"><i class="fa fa-link"></i> Current Commit {{ commit.revision_hash }}</div>
+        <div class="card-header">
+          <i class="fa fa-link"></i> Current Commit {{ commit.revision_hash }}, parents: 
+          <template v-for="p in currentCommit.parents">
+            {{ p }}&nbsp;
+          </template>
+        </div>
         <div class="card-block">
           <div class="row">
             <div class="col-sm-4">
@@ -80,32 +85,6 @@
                   </table>
                 </div>
               </div>
-              <div class="card">
-                <div class="card-header">
-                  <i class="fa fa-bar-chart"></i> Affected Entities 
-                </div>
-                <div class="card-block">
-                  <table class="table" v-if="entitiesLoaded">
-                    <tr>
-                      <th>Path</th>
-                      <th>Long name</th>
-                      <th>Type</th>
-                      <th>Content</th>
-                    </tr>
-                    <tr v-for="e in entities">
-                      <td>{{e.path}}</td>
-                      <td>{{e.long_name}}</td>
-                      <td>{{e.type}}</td>
-                      <td>entitiy: {{e.start_line}} - {{e.end_line}}<br/>
-                        <template v-for="h in e.hunks">
-                          hunk:{{h.hunk_start}} - {{h.hunk_end}}<br/>
-                          <pre>{{h.hunk_content}}</pre>
-                        </template>
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
             </div>
           </div>
           <div class="row">
@@ -134,6 +113,48 @@
                       <td><pre>{{props.object}}</pre></td>
                     </template>
                   </grid>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <i class="fa fa-bar-chart"></i> Affected Entities 
+                </div>
+                <div class="card-block">
+                  <table class="table" v-if="entitiesLoaded">
+                    <tr>
+                      <th>Path</th>
+                      <th>Long name</th>
+                      <th>Type</th>
+                      <th>Content</th>
+                    </tr>
+                    <tr v-for="e in entities">
+                      <td>{{e.path}}</td>
+                      <td>{{e.long_name}}</td>
+                      <td>{{e.type}}</td>
+                      <td v-if="e.type != 'file'">entitiy: {{e.start_line}} - {{e.end_line}}<br/>
+                        <template v-for="h in e.hunks">
+                          hunk:{{h.hunk_start}} - {{h.hunk_end}}<br/>
+                          <pre>{{h.hunk_content}}</pre>
+                        </template>
+                      </td>
+                      <td v-if="e.type == 'file'">
+                        <strong>Distance: {{e.pmd_linter_distance}}</strong><br/>
+                        <template v-for="l in e.pmd_linter_current">
+                          Type: {{l.l_ty}} (Line: {{l.ln}})<br/>
+                          {{l.msg}}<br/>
+                        </template>
+                        --<br/>
+                        <template v-for="l in e.pmd_linter_previous">
+                          Type: {{l.l_ty}} (Line: {{l.ln}})<br/>
+                          {{l.msg}}<br/>
+                        </template>
+                      </td>
+                    </tr>
+                  </table>
                 </div>
               </div>
             </div>
