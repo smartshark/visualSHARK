@@ -932,3 +932,44 @@ class IssueConflictSet(APIView):
         result = {}
         result['status'] = "ok"
         return Response(result)
+
+
+
+class IssueLinkSet(APIView):
+
+    def get(self, request):
+        result = {}
+        result['commits'] = []
+        limit = int(request.GET["limit"])
+        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links'))
+        counter = 0
+        for commit in commits:
+            if counter > limit:
+                break
+            if len(commit.linked_issue_ids) > 0:
+                result_commit = {}
+                result_commit["id"] = str(commit.id)
+                result_commit["message"] = commit.message
+                issues = Issue.objects.filter(id__in=commit.linked_issue_ids)
+                result_commit["links"] = [issue.external_id for issue in issues]
+                result_commit["selected_links"] = [issue.external_id for issue in issues]
+                result['commits'].append(result_commit)
+                counter = counter + 1
+
+        return Response(result)
+
+    def post(self, request):
+        for commit in request.data:
+            commit_db = Commit.objects.get(id=commit["id"])
+            issues = Issue.objects.filter(external_id__in=commit["selected_links"])
+            linked_ids = [issue.id for issue in issues]
+            commit_db.fixed_issue_ids = linked_ids
+            if commit_db.validations is None:
+                commit_db.validations = ["issue_links"]
+            else:
+                commit_db.validations.append("issue_links")
+            commit_db.save()
+
+        result = {}
+        result['status'] = "ok"
+        return Response(result)

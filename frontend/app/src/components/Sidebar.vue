@@ -29,6 +29,9 @@
               <li class="nav-item">
                 <router-link :to="'/labeling/resolution'" class="nav-link"><i class="fa fa-check"></i> Resolution View</router-link>
               </li>
+              <li class="nav-item">
+                <router-link :to="'/labeling/links'" class="nav-link"><i class="fa fa-link"></i> Issue Links</router-link>
+              </li>
             </ul>
         </router-link>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled>
