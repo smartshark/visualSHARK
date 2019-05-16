@@ -151,6 +151,20 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getCommitWithLinksRandom (dat) {
+    let req = this.getFilterUrl('labeling/links/', dat)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  saveIssueLinks (dat) {
+    let req = this.getUrl('labeling/links')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getPerson (id) {
     let req = this.getUrl('people/' + id + '/')
     return axios.get(req, {headers: {

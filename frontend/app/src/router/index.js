@@ -17,6 +17,7 @@ import Messages from '@/views/Messages'
 import Labeling from '@/views/Labeling'
 import ManualLabeling from '@/views/ManualLabeling'
 import ResolutionView from '@/views/ResolutionView'
+import IssueLinkLabeling from '@/views/IssueLinkLabeling'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -120,6 +121,11 @@ const router = new Router({
               path: 'resolution',
               name: 'Resolution View',
               component: ResolutionView
+            },
+            {
+              path: 'links',
+              name: 'Issue Links',
+              component: IssueLinkLabeling
             }
           ]
         },
