@@ -78,8 +78,6 @@ export default {
     return {
       options: [],
       issues: [],
-      triggerRefresh: false,
-      triggerRefreshEvents: false,
       linked: true,
       issueType: 'all',
       labeledByOtherUser: false
@@ -99,8 +97,7 @@ export default {
   },
   watch: {
     currentIts (value) {
-      this.triggerRefresh = true
-      this.triggerRefreshEvents = true
+      this.loadRandomIssue()
     },
     linked (value) {
       this.loadRandomIssue()
