@@ -32,7 +32,7 @@ class Command(BaseCommand):
 
         for issueValidation in IssueValidation.objects.all():
             labeling_count = IssueValidationUser.objects.filter(issue_validation=issueValidation).count()
-            if labeling_count > self.n:
+            if labeling_count >= self.n:
                 labels = IssueValidationUser.objects.filter(issue_validation=issueValidation).values_list('label', flat=True)
                 if len(set(labels)) == 1:
                     issue_db = Issue.objects.get(id=issueValidation.issue_id)
