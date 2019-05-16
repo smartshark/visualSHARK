@@ -973,11 +973,8 @@ class IssueLinkSet(APIView):
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
-        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(labels__issueonly_bugfix=True).only('id', 'message', 'linked_issue_ids', 'labels')
-        counter = 0
+        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(labels__issueonly_bugfix=True).only('id', 'message', 'linked_issue_ids', 'labels').order_by('?')[:limit]
         for commit in commits:
-            if counter > limit:
-                break
             if len(commit.linked_issue_ids) > 0:
                 result_commit = {}
                 result_commit["id"] = str(commit.id)
@@ -986,7 +983,6 @@ class IssueLinkSet(APIView):
                 result_commit["links"] = [issue.external_id for issue in issues]
                 result_commit["selected_links"] = [issue.external_id for issue in issues]
                 result['commits'].append(result_commit)
-                counter = counter + 1
 
         return Response(result)
 
