@@ -974,13 +974,23 @@ class IssueLinkSet(APIView):
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
-        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(labels__issueonly_bugfix=True).only('id', 'message', 'linked_issue_ids', 'labels').order_by('?')[:limit]
+        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels').order_by('?')[:limit]
         for commit in commits:
             if len(commit.linked_issue_ids) > 0:
                 result_commit = {}
                 result_commit["id"] = str(commit.id)
                 result_commit["message"] = commit.message
-                issues = Issue.objects.filter(id__in=commit.linked_issue_ids)
+
+                search = []
+                if commit.linked_issue_ids:
+                    for issue_id in commit.linked_issue_ids:
+                        search.append(issue_id)
+                if commit.szz_issue_ids:
+                    for issue_id in commit.szz_issue_ids:
+                        if issue_id not in search:
+                            search.append(issue_id)
+
+                issues = Issue.objects.filter(id__in=search)
                 result_commit["links"] = [issue.external_id for issue in issues]
                 result_commit["selected_links"] = [issue.external_id for issue in issues]
                 result['commits'].append(result_commit)
