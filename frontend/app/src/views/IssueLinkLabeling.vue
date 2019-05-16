@@ -102,6 +102,9 @@ export default {
             this.loadRandomIssueLinks()
           }
         })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     loadRandomIssueLinks () {
       this.$store.dispatch('pushLoading')
@@ -116,6 +119,9 @@ export default {
             if (response.data != null) {
               this.commits = response.data.commits
             }
+          })
+          .catch(e => {
+            this.$store.dispatch('pushError', e)
           })
       }
     }
