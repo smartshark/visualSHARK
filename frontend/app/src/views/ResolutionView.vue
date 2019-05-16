@@ -96,6 +96,9 @@ export default {
     this.loadConflicted()
   },
   watch: {
+    currentProject (value) {
+      this.loadRandomIssue()
+    },
     currentIts (value) {
       this.loadConflicted()
     },

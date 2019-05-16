@@ -61,8 +61,6 @@ export default {
   data () {
     return {
       commits: [],
-      triggerRefresh: false,
-      triggerRefreshEvents: false,
       linked: true,
       issueType: 'all'
     }
@@ -80,9 +78,8 @@ export default {
     this.loadRandomIssueLinks()
   },
   watch: {
-    currentVcs (value) {
-      this.triggerRefresh = true
-      this.triggerRefreshEvents = true
+    currentProject (value) {
+      this.loadRandomIssue()
     },
     linked (value) {
       this.loadRandomIssueLinks()

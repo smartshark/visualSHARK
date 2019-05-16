@@ -99,6 +99,9 @@ export default {
     currentIts (value) {
       this.loadRandomIssue()
     },
+    currentProject (value) {
+      this.loadRandomIssue()
+    },
     linked (value) {
       this.loadRandomIssue()
     },
