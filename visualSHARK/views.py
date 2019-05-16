@@ -976,7 +976,7 @@ class IssueLinkSet(APIView):
         limit = int(request.GET["limit"])
         commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids').order_by('?')[:limit]
         for commit in commits:
-            if len(commit.linked_issue_ids) > 0:
+            if len(commit.linked_issue_ids) > 0 or len(commit.szz_issue_ids) > 0:
                 result_commit = {}
                 result_commit["id"] = str(commit.id)
                 result_commit["message"] = commit.message
