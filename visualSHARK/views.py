@@ -955,6 +955,7 @@ class IssueConflictSet(APIView):
         for issue in request.data:
             if 'checked' in issue and issue['checked'] is True:
                 issue_db = Issue.objects.get(id=issue['id'])
+                issue_db.issue_type_manual['committee'] = issue['resolution']
                 issue_db.issue_type_verified = issue["resolution"]
                 issue_db.save()
                 validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
