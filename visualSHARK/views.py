@@ -866,7 +866,7 @@ class IssueLabelSet(APIView):
             issue_query = issue_query.filter(issuevalidationuser__isnull=True)
         issue_query = issue_query.order_by('?')[:10]
         for issueCache in issue_query:
-            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+            issue = Issue.objects.get(id=issueCache.issue_id)
             serializer = IssueLabelSerializer(issue, many=False)
             data = serializer.data
             data['url'] = base_url + issue.external_id
