@@ -967,14 +967,13 @@ class IssueConflictSet(APIView):
         return Response(result)
 
 
-
 class IssueLinkSet(APIView):
 
     def get(self, request):
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
-        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links'))
+        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(labels__issueonly_bugfix=True).only('id', 'message', 'linked_issue_ids', 'labels')
         counter = 0
         for commit in commits:
             if counter > limit:
