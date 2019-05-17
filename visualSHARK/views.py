@@ -857,6 +857,11 @@ class IssueLabelSet(APIView):
             if not base_url.endswith('/'):
                 base_url += '/'
 
+        # we need this for the commit urls
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+        vcs_url = vcs_url.replace('//', '/')
+
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
@@ -865,11 +870,30 @@ class IssueLabelSet(APIView):
         else:
             issue_query = issue_query.filter(issuevalidationuser__isnull=True)
         issue_query = issue_query.order_by('?')[:10]
-        for issueCache in issue_query:
-            issue = Issue.objects.get(id=issueCache.issue_id)
+
+        issue_ids = []
+        for iv in issue_query:
+            issue_ids.append(iv.issue_id)
+
+        issue_id_links = {}
+        for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):
+            for iid in c.linked_issue_ids:
+                key = str(iid)
+                if key not in issue_id_links.keys():
+                    issue_id_links[key] = []
+
+                issue_id_links[key].append({'link': '{}{}'.format(vcs_url, c.revision_hash), 'name': c.revision_hash[:7]})
+
+        for issue_id in issue_ids:
+            issue = Issue.objects.get(id=issue_id)
             serializer = IssueLabelSerializer(issue, many=False)
             data = serializer.data
             data['url'] = base_url + issue.external_id
+
+            if str(issue_id) not in issue_id_links.keys():
+                data['links'] = []
+            else:
+                data['links'] = issue_id_links[str(issue_id)]
             if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
