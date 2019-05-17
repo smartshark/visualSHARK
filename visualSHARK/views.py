@@ -860,7 +860,6 @@ class IssueLabelSet(APIView):
         # we need this for the commit urls
         vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
         vcs_url = vcs.url.replace('.git', '') + '/commit/'
-        # vcs_url = vcs_url.replace('//', '/')
 
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked)
         if request.GET["issue_type"] != "all":
