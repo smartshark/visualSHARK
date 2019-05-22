@@ -36,7 +36,10 @@
                      <a :href="issue.url" target="_blank">
                         <h5>{{ issue.title }}</h5>
                      </a>
-                     <pre>{{ issue.desc }}</pre>
+                     <pre>{{ issue.desc }}</pre><br/>
+                     <template v-for="link in issue.links">
+                        <a :href="link.link" target="_blank">{{ link.name }}</a>&nbsp;
+                     </template>
                   </td>
                </tr>
             </tbody>
@@ -78,8 +81,6 @@ export default {
     return {
       options: [],
       issues: [],
-      triggerRefresh: false,
-      triggerRefreshEvents: false,
       linked: true,
       issueType: 'all',
       labeledByOtherUser: false
@@ -99,8 +100,10 @@ export default {
   },
   watch: {
     currentIts (value) {
-      this.triggerRefresh = true
-      this.triggerRefreshEvents = true
+      this.loadRandomIssue()
+    },
+    currentProject (value) {
+      this.loadRandomIssue()
     },
     linked (value) {
       this.loadRandomIssue()

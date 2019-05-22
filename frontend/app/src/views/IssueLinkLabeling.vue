@@ -61,8 +61,6 @@ export default {
   data () {
     return {
       commits: [],
-      triggerRefresh: false,
-      triggerRefreshEvents: false,
       linked: true,
       issueType: 'all'
     }
@@ -80,9 +78,8 @@ export default {
     this.loadRandomIssueLinks()
   },
   watch: {
-    currentVcs (value) {
-      this.triggerRefresh = true
-      this.triggerRefreshEvents = true
+    currentProject (value) {
+      this.loadRandomIssue()
     },
     linked (value) {
       this.loadRandomIssueLinks()
@@ -102,6 +99,9 @@ export default {
             this.loadRandomIssueLinks()
           }
         })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        })
     },
     loadRandomIssueLinks () {
       this.$store.dispatch('pushLoading')
@@ -116,6 +116,9 @@ export default {
             if (response.data != null) {
               this.commits = response.data.commits
             }
+          })
+          .catch(e => {
+            this.$store.dispatch('pushError', e)
           })
       }
     }

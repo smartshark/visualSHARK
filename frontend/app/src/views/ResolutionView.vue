@@ -79,8 +79,6 @@ export default {
     return {
       options: [],
       issues: [],
-      triggerRefresh: false,
-      triggerRefreshEvents: false,
       linked: true,
       issueType: 'all'
     }
@@ -98,9 +96,11 @@ export default {
     this.loadConflicted()
   },
   watch: {
+    currentProject (value) {
+      this.loadRandomIssue()
+    },
     currentIts (value) {
-      this.triggerRefresh = true
-      this.triggerRefreshEvents = true
+      this.loadConflicted()
     },
     linked (value) {
       this.loadConflicted()

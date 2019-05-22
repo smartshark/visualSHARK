@@ -857,6 +857,10 @@ class IssueLabelSet(APIView):
             if not base_url.endswith('/'):
                 base_url += '/'
 
+        # we need this for the commit urls
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
@@ -865,11 +869,30 @@ class IssueLabelSet(APIView):
         else:
             issue_query = issue_query.filter(issuevalidationuser__isnull=True)
         issue_query = issue_query.order_by('?')[:10]
-        for issueCache in issue_query:
-            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+
+        issue_ids = []
+        for iv in issue_query:
+            issue_ids.append(iv.issue_id)
+
+        issue_id_links = {}
+        for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):
+            for iid in c.linked_issue_ids:
+                key = str(iid)
+                if key not in issue_id_links.keys():
+                    issue_id_links[key] = []
+
+                issue_id_links[key].append({'link': '{}{}'.format(vcs_url, c.revision_hash), 'name': c.revision_hash[:7]})
+
+        for issue_id in issue_ids:
+            issue = Issue.objects.get(id=issue_id)
             serializer = IssueLabelSerializer(issue, many=False)
             data = serializer.data
             data['url'] = base_url + issue.external_id
+
+            if str(issue_id) not in issue_id_links.keys():
+                data['links'] = []
+            else:
+                data['links'] = issue_id_links[str(issue_id)]
             if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
@@ -955,6 +978,7 @@ class IssueConflictSet(APIView):
         for issue in request.data:
             if 'checked' in issue and issue['checked'] is True:
                 issue_db = Issue.objects.get(id=issue['id'])
+                issue_db.issue_type_manual['committee'] = issue['resolution']
                 issue_db.issue_type_verified = issue["resolution"]
                 issue_db.save()
                 validation = IssueValidation.objects.filter(issue_id=issue['id'])[0]
@@ -967,27 +991,32 @@ class IssueConflictSet(APIView):
         return Response(result)
 
 
-
 class IssueLinkSet(APIView):
 
     def get(self, request):
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
-        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links'))
-        counter = 0
+        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids').order_by('?')[:limit]
         for commit in commits:
-            if counter > limit:
-                break
-            if len(commit.linked_issue_ids) > 0:
+            if (commit.linked_issue_ids is not None and len(commit.linked_issue_ids)) > 0 or (commit.szz_issue_ids is not None and len(commit.szz_issue_ids) > 0):
                 result_commit = {}
                 result_commit["id"] = str(commit.id)
                 result_commit["message"] = commit.message
-                issues = Issue.objects.filter(id__in=commit.linked_issue_ids)
+
+                search = []
+                if commit.linked_issue_ids:
+                    for issue_id in commit.linked_issue_ids:
+                        search.append(issue_id)
+                if commit.szz_issue_ids:
+                    for issue_id in commit.szz_issue_ids:
+                        if issue_id not in search:
+                            search.append(issue_id)
+
+                issues = Issue.objects.filter(id__in=search)
                 result_commit["links"] = [issue.external_id for issue in issues]
                 result_commit["selected_links"] = [issue.external_id for issue in issues]
                 result['commits'].append(result_commit)
-                counter = counter + 1
 
         return Response(result)
 
