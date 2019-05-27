@@ -15,9 +15,9 @@ import Login from '@/views/Login'
 import Files from '@/views/Files'
 import Messages from '@/views/Messages'
 import Labeling from '@/views/Labeling'
-import ManualLabeling from '@/views/ManualLabeling'
-import ResolutionView from '@/views/ResolutionView'
-import IssueLinkLabeling from '@/views/IssueLinkLabeling'
+import IssueTypeLabeling from '@/views/IssueTypeLabeling'
+import IssueTypeConflicts from '@/views/IssueTypeConflicts'
+import CommitIssueLinks from '@/views/CommitIssueLinks'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -113,19 +113,19 @@ const router = new Router({
           props: true,
           children: [
             {
-              path: 'manual',
-              name: 'Manual labels',
-              component: ManualLabeling
+              path: 'issuetype',
+              name: 'Issue Type Labeling',
+              component: IssueTypeLabeling
             },
             {
-              path: 'resolution',
-              name: 'Resolution View',
-              component: ResolutionView
+              path: 'issuetypeconflicts',
+              name: 'Issue Type Conflicts',
+              component: IssueTypeConflicts
             },
             {
-              path: 'links',
-              name: 'Issue Links',
-              component: IssueLinkLabeling
+              path: 'commitissuelinks',
+              name: 'Commit->Issue Links',
+              component: CommitIssueLinks
             }
           ]
         },

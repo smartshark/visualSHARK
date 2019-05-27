@@ -75,7 +75,7 @@ import Grid from '@/components/Grid.vue'
 import rest from '../api/rest'
 
 export default {
-  name: 'manuallabeling',
+  name: 'issueTypeLabeling',
   props: {id: false},
   data () {
     return {

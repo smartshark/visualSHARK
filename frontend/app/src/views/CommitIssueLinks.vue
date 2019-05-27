@@ -56,7 +56,7 @@ import rest from '../api/rest'
 import Multiselect from 'vue-multiselect'
 
 export default {
-  name: 'issuelinklabeling',
+  name: 'commitIssueLinks',
   props: {id: false},
   data () {
     return {

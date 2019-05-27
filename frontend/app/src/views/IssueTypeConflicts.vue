@@ -73,7 +73,7 @@ import Grid from '@/components/Grid.vue'
 import rest from '../api/rest'
 
 export default {
-  name: 'resolutionview',
+  name: 'issueTypeConflicts',
   props: {id: false},
   data () {
     return {
