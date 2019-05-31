@@ -868,7 +868,10 @@ class IssueLabelSet(APIView):
             issue_query = issue_query.filter(issuevalidationuser__isnull=False).exclude(issuevalidationuser__user__username=str(request.user))
         else:
             issue_query = issue_query.filter(issuevalidationuser__isnull=True)
+
+        result['max'] = issue_query.count()
         issue_query = issue_query.order_by('?')[:10]
+
 
         issue_ids = []
         for iv in issue_query:
@@ -946,6 +949,7 @@ class IssueConflictSet(APIView):
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         # There muss be a validation
         issue_query = issue_query.filter(issuevalidationuser__isnull=False)
+        result['max'] = issue_query.count()
         issue_query = issue_query.order_by('?')
         i = 0
         ids = []
@@ -997,7 +1001,9 @@ class IssueLinkSet(APIView):
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
-        commits = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids').order_by('?')[:limit]
+        query = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
+        result['max'] = query.count()
+        commits = query.order_by('?')[:limit]
         for commit in commits:
             if (commit.linked_issue_ids is not None and len(commit.linked_issue_ids)) > 0 or (commit.szz_issue_ids is not None and len(commit.szz_issue_ids) > 0):
                 result_commit = {}

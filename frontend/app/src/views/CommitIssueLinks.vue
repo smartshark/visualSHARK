@@ -1,6 +1,7 @@
 <template>
 <div class="wrapper">
    <div class="animated fadeIn" v-if="currentVcs && currentVcs.id">
+      {{ commits.length }} from {{ max }} entries <br>
 
       <div class="card">
 
@@ -62,7 +63,8 @@ export default {
     return {
       commits: [],
       linked: true,
-      issueType: 'all'
+      issueType: 'all',
+      max: 0
     }
   },
   components: {
@@ -115,6 +117,7 @@ export default {
             this.$store.dispatch('popLoading')
             if (response.data != null) {
               this.commits = response.data.commits
+              this.max = response.data.max
             }
           })
           .catch(e => {

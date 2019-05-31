@@ -1,6 +1,8 @@
 <template>
 <div class="wrapper">
    <div class="animated fadeIn" v-if="currentIts && currentIts.id">
+      {{ issues.length }} from {{ max }} entries <br>
+
       Linked issues: <input v-model="linked" type="checkbox">
 
       Issue Type:
@@ -80,7 +82,8 @@ export default {
       options: [],
       issues: [],
       linked: true,
-      issueType: 'all'
+      issueType: 'all',
+      max: 0
     }
   },
   components: {
@@ -138,6 +141,7 @@ export default {
             if (response.data != null) {
               this.issues = response.data.issues
               this.options = response.data.options
+              this.max = response.data.max
             }
           })
           .catch(e => {
