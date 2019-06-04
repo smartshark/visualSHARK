@@ -203,6 +203,11 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
             i = Issue.objects.get(id=li)
             issue_links.append({'name': i.external_id, 'id': i.id})
 
+        validated_issue_links = []
+        for li in commit.fixed_issue_ids:
+            i = Issue.objects.get(id=li)
+            validated_issue_links.append({'name': i.external_id, 'id': i.id})
+
         labels = []
         for l, v in commit.labels.items():
             labels.append({'name': l, 'value': v})
@@ -212,6 +217,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
         dat['committer'] = People.objects.get(id=commit.committer_id)
         dat['tags'] = tags
         dat['issue_links'] = issue_links
+        dat['validated_issue_links'] = validated_issue_links
         dat['labels'] = labels
         serializer = SingleCommitSerializer(dat)
         return Response(serializer.data)

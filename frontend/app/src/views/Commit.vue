@@ -77,10 +77,17 @@
                 <div class="card-block">
                   <table class="table">
                     <tr>
+                      <th>Manual Validations</th>
                       <th>Labels</th>
                       <th>Issue links</th>
+                      <th>Validated Links</th>
                     </tr>
                     <tr>
+                      <td>
+                        <ul class="commit-label-list">
+                          <li v-for="validation in currentCommit.validations">{{ validation }}</li>
+                        </ul>
+                      </td>
                       <td>
                         <ul class="commit-label-list">
                           <li v-for="label in currentCommit.labels">{{ label.name }} : {{ label.value }}</li>
@@ -89,6 +96,11 @@
                       <td>
                         <ul class="commit-link-list">
                           <li v-for="il in currentCommit.issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link></li>
+                        </ul>
+                      </td>
+                      <td>
+                        <ul class="commit-link-list">
+                          <li v-for="il in currentCommit.validated_issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link></li>
                         </ul>
                       </td>
                     </tr>

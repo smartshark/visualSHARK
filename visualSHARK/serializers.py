@@ -86,11 +86,12 @@ class SingleCommitSerializer(serializers.DocumentSerializer):
     commit_id = ObjectIdField(source='_id')
     tags = TagListSerializer(many=True)
     issue_links = IssueListSerializer(many=True)
+    validated_issue_links = IssueListSerializer(many=True)
     labels = LabelListSerializer(many=True)
 
     class Meta:
         model = Commit
-        fields = ('commit_id', 'parents', 'revision_hash', 'vcs_system_id', 'revision_hash', 'committer_date', 'author_date', 'message', 'branches', 'author_id', 'committer_id', 'author', 'committer', 'committer_date_offset', 'author_date_offset', 'tags', 'issue_links', 'labels')
+        fields = ('commit_id', 'validations', 'parents', 'revision_hash', 'vcs_system_id', 'revision_hash', 'committer_date', 'author_date', 'message', 'branches', 'author_id', 'committer_id', 'author', 'committer', 'committer_date_offset', 'author_date_offset', 'tags', 'issue_links', 'validated_issue_links', 'labels')
 
 
 class RecSingleMessageSerializer(serializers.DocumentSerializer):
