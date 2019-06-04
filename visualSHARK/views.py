@@ -316,7 +316,7 @@ class FileViewSet(MongoReadOnlyModelViewSet):
 
 
 class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Project.objects.all()
+    queryset = Project.objects.all().order_by('name')
     serializer_class = ProjectSerializer
 
 
@@ -965,6 +965,7 @@ class IssueConflictSet(APIView):
             # Check if all the same, then skip
             labels = IssueValidationUser.objects.filter(issue_validation=issueCache).values_list('label', flat=True)
             if len(set(labels)) == 1:
+                result['max'] -= 1
                 continue
 
             if issueCache.id in ids:
