@@ -1,6 +1,8 @@
 <template>
 <div class="wrapper">
    <div class="animated fadeIn" v-if="currentIts && currentIts.id">
+     {{ issues.length }} from {{ max }} entries <br>
+
      Linked issues: <input v-model="linked" type="checkbox">
 
       Issue Type:
@@ -11,8 +13,6 @@
       Labeled by other users: <input v-model="labeledByOtherUser" type="checkbox">
 
       <div class="card">
-
-
          <table class="table table-striped">
             <thead>
                <tr>
@@ -75,7 +75,7 @@ import Grid from '@/components/Grid.vue'
 import rest from '../api/rest'
 
 export default {
-  name: 'manuallabeling',
+  name: 'issueTypeLabeling',
   props: {id: false},
   data () {
     return {
@@ -83,7 +83,8 @@ export default {
       issues: [],
       linked: true,
       issueType: 'all',
-      labeledByOtherUser: false
+      labeledByOtherUser: false,
+      max: 0
     }
   },
   components: {
@@ -146,6 +147,7 @@ export default {
             if (response.data != null) {
               this.issues = response.data.issues
               this.options = response.data.options
+              this.max = response.data.max
             }
           })
           .catch(e => {

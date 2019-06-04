@@ -1,6 +1,7 @@
 <template>
 <div class="wrapper">
    <div class="animated fadeIn" v-if="currentVcs && currentVcs.id">
+      {{ commits.length }} from {{ max }} entries <br>
 
       <div class="card">
 
@@ -56,13 +57,14 @@ import rest from '../api/rest'
 import Multiselect from 'vue-multiselect'
 
 export default {
-  name: 'issuelinklabeling',
+  name: 'commitIssueLinks',
   props: {id: false},
   data () {
     return {
       commits: [],
       linked: true,
-      issueType: 'all'
+      issueType: 'all',
+      max: 0
     }
   },
   components: {
@@ -115,6 +117,7 @@ export default {
             this.$store.dispatch('popLoading')
             if (response.data != null) {
               this.commits = response.data.commits
+              this.max = response.data.max
             }
           })
           .catch(e => {

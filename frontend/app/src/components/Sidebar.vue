@@ -24,13 +24,13 @@
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-code"></i> Labeling</div>
             <ul class="nav-dropdown-items">
               <li class="nav-item">
-                <router-link :to="'/labeling/manual'" class="nav-link"><i class="fa fa-code"></i> Manual labels</router-link>
+                <router-link :to="'/labeling/issuetype'" class="nav-link"><i class="fa fa-code"></i> Issue Type Labeling</router-link>
               </li>
               <li class="nav-item">
-                <router-link :to="'/labeling/resolution'" class="nav-link"><i class="fa fa-check"></i> Resolution View</router-link>
+                <router-link :to="'/labeling/issuetypeconflicts'" class="nav-link"><i class="fa fa-check"></i> Issue Type Conflicts</router-link>
               </li>
               <li class="nav-item">
-                <router-link :to="'/labeling/links'" class="nav-link"><i class="fa fa-link"></i> Issue Links</router-link>
+                <router-link :to="'/labeling/commitissuelinks'" class="nav-link"><i class="fa fa-link"></i> Commit->Issue Links</router-link>
               </li>
             </ul>
         </router-link>
