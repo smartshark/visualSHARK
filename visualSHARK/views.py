@@ -878,7 +878,6 @@ class IssueLabelSet(APIView):
         result['max'] = issue_query.count()
         issue_query = issue_query.order_by('?')[:10]
 
-
         issue_ids = []
         for iv in issue_query:
             issue_ids.append(iv.issue_id)
@@ -933,6 +932,11 @@ class IssueLabelSet(APIView):
         return Response(result)
 
 
+# todo:
+# - kein sampling
+# - links zu den commits
+# - einrückung falsch
+
 class IssueConflictSet(APIView):
 
     def get(self, request):
@@ -949,39 +953,57 @@ class IssueConflictSet(APIView):
             if not base_url.endswith('/'):
                 base_url += '/'
 
+        # we need this for the commit urls
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
         linked = request.GET["linked"] == "true"
+
+        # query construction
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+
         # There muss be a validation
         issue_query = issue_query.filter(issuevalidationuser__isnull=False)
         result['max'] = issue_query.count()
-        issue_query = issue_query.order_by('?')
-        i = 0
-        ids = []
-        for issueCache in issue_query:
-            if i > 10:
-                break
+        # issue_query = issue_query.order_by('?')
+
+        issue_ids = []
+        for iv in issue_query:
             # Check if all the same, then skip
-            labels = IssueValidationUser.objects.filter(issue_validation=issueCache).values_list('label', flat=True)
+            labels = IssueValidationUser.objects.filter(issue_validation=iv).values_list('label', flat=True)
             if len(set(labels)) == 1:
                 result['max'] -= 1
                 continue
 
-            if issueCache.id in ids:
-                continue
+            issue_ids.append(iv.issue_id)
 
-            ids.append(issueCache.id)
-            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+        issue_id_links = {}
+        for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):
+            for iid in c.linked_issue_ids:
+                key = str(iid)
+                if key not in issue_id_links.keys():
+                    issue_id_links[key] = []
+
+                issue_id_links[key].append({'link': '{}{}'.format(vcs_url, c.revision_hash), 'name': c.revision_hash[:7]})
+
+        for issue_id in issue_ids[:10]:
+            issue = Issue.objects.filter(id=issue_id).first()
             serializer = IssueLabelConflictSerializer(issue, many=False)
             data = serializer.data
             data['url'] = base_url + issue.external_id
+
+            if str(issue_id) not in issue_id_links.keys():
+                data['links'] = []
+            else:
+                data['links'] = issue_id_links[str(issue_id)]
+
             if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
             result['issues'].append(data)
-            i += 1
 
         return Response(result)
 

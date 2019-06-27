@@ -37,9 +37,10 @@
                      <a :href="issue.url" target="_blank">
                         <h5>{{ issue.title }}</h5>
                      </a>
-                     <pre>
-                     {{ issue.desc }}
-                     </pre>
+                     <pre>{{ issue.desc }}</pre><br/>
+                    <template v-for="link in issue.links">
+                        <a :href="link.link" target="_blank">{{ link.name }}</a>&nbsp;
+                     </template>
                   </td>
                </tr>
             </tbody>
