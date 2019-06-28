@@ -16,7 +16,7 @@
                       <multiselect v-model="commit.selected_links" :options="commit.links" :multiple="true"></multiselect>
                   </td>
                   <td>
-                     {{ commit.message }}
+                     <pre>{{ commit.message }}</pre>
                   </td>
                </tr>
             </tbody>
