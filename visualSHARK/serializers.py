@@ -146,10 +146,11 @@ class FileRSerializer(rserializers.Serializer):
 class FileActionSerializer(serializers.DocumentSerializer):
     file = FileRSerializer()
     old_file = FileRSerializer()
+    induced_by = rserializers.CharField()
 
     class Meta:
         model = FileAction
-        fields = ('commit_id', 'id', 'file_id', 'old_file_id', 'mode', 'size_at_commit', 'lines_added', 'lines_deleted', 'is_binary', 'file', 'old_file')
+        fields = ('commit_id', 'id', 'file_id', 'old_file_id', 'mode', 'size_at_commit', 'lines_added', 'lines_deleted', 'is_binary', 'file', 'old_file', 'induced_by')
 
 
 class CodeEntityStateSerializer(serializers.DocumentSerializer):

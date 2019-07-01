@@ -25,6 +25,7 @@ from rest_framework import filters
 import django_filters
 
 from mongoengine.queryset.visitor import Q
+from bson.objectid import ObjectId
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
@@ -259,6 +260,16 @@ class FileActionViewSet(MongoReadOnlyModelViewSet):
                 dat['old_file'] = File.objects.get(id=d.old_file_id)
             else:
                 dat['old_file'] = None
+
+            dat['induced_by'] = []
+            for inducing_fa in FileAction.objects.filter(induces__match={'change_file_action_id': d.id}):
+                for ind in inducing_fa.induces:
+
+                    if ind['change_file_action_id'] == d.id:
+                        blame_commit = Commit.objects.get(id=inducing_fa.commit_id)
+
+                        if blame_commit.revision_hash not in dat['induced_by']:
+                            dat['induced_by'].append(blame_commit.revision_hash)
             ret.append(dat)
         return ret
 
@@ -977,7 +988,10 @@ class IssueConflictSet(APIView):
                 result['max'] -= 1
                 continue
 
-            issue_ids.append(iv.issue_id)
+            if iv.issue_id not in issue_ids:
+                issue_ids.append(iv.issue_id)
+            else:
+                result['max'] -= 1
 
         issue_id_links = {}
         for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):

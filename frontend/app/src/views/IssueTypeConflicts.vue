@@ -120,6 +120,7 @@ export default {
         .then(response => {
           this.$store.dispatch('popLoading')
           if (response.data != null) {
+            window.scrollTo(0, 0)
             this.loadConflicted()
           }
         })
@@ -153,3 +154,8 @@ export default {
   }
 }
 </script>
+<style>
+pre {
+    white-space: pre-wrap; 
+}
+</style>

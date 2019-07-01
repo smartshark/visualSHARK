@@ -161,6 +161,7 @@ export default {
         columns: [
           {ident: 'file', name: 'File'},
           {ident: 'mode', sortIdent: 'mode', name: 'Mode'},
+          {ident: 'induced_by', name: 'Induced by'},
           {ident: 'size_at_commit', name: 'Size'},
           {ident: 'lines_added', sortIdent: 'lines_added', name: 'Added'},
           {ident: 'lines_deleted', sortIdent: 'lines_deleted', name: 'Deleted'}
