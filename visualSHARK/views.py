@@ -39,7 +39,7 @@ from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRe
 from rest_framework.filters import OrderingFilter
 
 from .util import prediction
-from .util.helper import tag_filter, OntdekBaan3 as OntdekBaan, OntdekBaan4 as OntdekBaan2
+from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
@@ -583,21 +583,16 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         c = Commit.objects.get(revision_hash=commit)
 
-        previous1 = c.committer_date.date() - relativedelta(months=6)
         after1 = c.committer_date.date() + relativedelta(months=6)
 
         def break_condition1(commit):
             c = Commit.objects.get(revision_hash=commit)
             return c.committer_date.date() > after1
 
-        def break_condition2(commit):
-            c = Commit.objects.get(revision_hash=commit)
-            return c.committer_date.date() < previous1
+        o = OntdekBaan(dg)
+        o.set_path(commit, 'backward')
 
-        o = OntdekBaan2(dg)
-        o.set_path(commit, 'backward', break_condition2)
-
-        o2 = OntdekBaan2(dg)
+        o2 = OntdekBaan(dg)
         o2.set_path(commit, 'forward', break_condition1)
 
         paths = []
@@ -607,30 +602,6 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         for path in o2.all_paths():
             paths.append(path)
 
-            # nodes = nodes.union(set(p))
-        # path = nx.shortest_path(dg, start_commit, end_commit)
-        # nodes = set(path)
-
-        return Response({'paths': paths})
-
-    @detail_route(methods=['get'])
-    def path(self, request, vcs_system_id=None):
-        cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
-
-        start_commit = request.query_params.get('start_commit', None)
-        end_commit = request.query_params.get('end_commit', None)
-
-        if not start_commit or not end_commit:
-            raise Exception('need commits')
-
-        dg = nx.read_gpickle(cg.directed_pickle.path)
-
-        nodes = set()
-
-        o = OntdekBaan(dg)
-        paths = []
-        for p in o.get_all_paths(start_commit, end_commit):
-            paths.append(p)
             # nodes = nodes.union(set(p))
         # path = nx.shortest_path(dg, start_commit, end_commit)
         # nodes = set(path)
@@ -1037,7 +1008,7 @@ class IssueConflictSet(APIView):
         result['status'] = "ok"
         return Response(result)
 
-
+# issue link means bug link in this case
 class IssueLinkSet(APIView):
 
     def get(self, request):
