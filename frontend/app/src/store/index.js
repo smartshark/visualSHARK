@@ -14,6 +14,7 @@ const persist = (store) => {
   const username = l.getSession('cd')
   const isSuperuser = l.getSession('is')
   const channel = l.getSession('re')
+  const permissions = l.getSession('permissions')
 
   const projects = l.getLocal('projects')
   const vcs = l.getLocal('vcs')
@@ -45,9 +46,9 @@ const persist = (store) => {
   }
 
   // fill token from session storage if we have it (store is clean on page reload)
-  if (token !== null && username !== null && isSuperuser !== null && channel !== null) {
+  if (token !== null && username !== null && isSuperuser !== null && channel !== null && permissions !== null) {
     // console.log('relogin', token, username)
-    store.commit('LOGIN', { token, username, isSuperuser, channel })
+    store.commit('LOGIN', { token, username, isSuperuser, channel, permissions })
 
     if (typeof projects !== 'undefined' && projects !== null) {
       store.dispatch('getAllProjects')
@@ -153,6 +154,7 @@ const persist = (store) => {
       l.setSession('cd', mutation.payload.username)
       l.setSession('is', mutation.payload.isSuperuser)
       l.setSession('re', mutation.payload.channel)
+      l.setSession('permissions', mutation.payload.permissions)
       // connect websocket after login
       Vue.connectChannel()
     }
@@ -162,6 +164,7 @@ const persist = (store) => {
       l.setSession('cd', null)
       l.setSession('is', null)
       l.setSession('re', null)
+      l.setSession('permissions', null)
 
       // disconnect websocket after logout
       Vue.discoChannel()

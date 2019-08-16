@@ -14,6 +14,8 @@ import networkx as nx
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.models import Permission
+
 
 from rest_framework.views import APIView
 from rest_framework import exceptions
@@ -106,6 +108,7 @@ class Auth(APIView):
         tmp = ass.data
         tmp[0]['is_superuser'] = user.is_superuser
         tmp[0]['channel'] = user.profile.channel
+        tmp[0]['permissions'] = [x.codename for x in Permission.objects.filter(user=user)]
         return Response(tmp)
 
 
@@ -831,6 +834,8 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 class IssueLabelSet(APIView):
 
     def get(self, request):
+        if (not request.user.has_perm('visualSHARK.view_issue_labels')):
+            return HttpResponse('Unauthorized', status=401)
         result = {}
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
@@ -892,6 +897,8 @@ class IssueLabelSet(APIView):
         return Response(result)
 
     def post(self, request):
+        if (not request.user.has_perm('visualSHARK.edit_issue_labels')):
+            return HttpResponse('Unauthorized', status=401)
         for issue in request.data:
             if 'checked' in issue and issue['checked'] is True:
                 issue_db = Issue.objects.get(id=issue['id'])
@@ -922,6 +929,8 @@ class IssueLabelSet(APIView):
 class IssueConflictSet(APIView):
 
     def get(self, request):
+        if (not request.user.has_perm('visualSHARK.view_issue_conflicts')):
+            return HttpResponse('Unauthorized', status=401)
         result = {}
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
@@ -993,6 +1002,8 @@ class IssueConflictSet(APIView):
         return Response(result)
 
     def post(self, request):
+        if (not request.user.has_perm('visualSHARK.edit_issue_conflicts')):
+            return HttpResponse('Unauthorized', status=401)
         for issue in request.data:
             if 'checked' in issue and issue['checked'] is True:
                 issue_db = Issue.objects.get(id=issue['id'])
@@ -1012,6 +1023,9 @@ class IssueConflictSet(APIView):
 class IssueLinkSet(APIView):
 
     def get(self, request):
+        if( not request.user.has_perm('visualSHARK.view_issue_link')):
+            return HttpResponse('Unauthorized', status=401)
+
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
@@ -1041,6 +1055,9 @@ class IssueLinkSet(APIView):
         return Response(result)
 
     def post(self, request):
+        if (not request.user.has_perm('visualSHARK.edit_issue_link')):
+            return HttpResponse('Unauthorized', status=401)
+
         for commit in request.data:
             commit_db = Commit.objects.get(id=commit["id"])
             issues = Issue.objects.filter(external_id__in=commit["selected_links"])
