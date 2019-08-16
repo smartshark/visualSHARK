@@ -2,10 +2,7 @@
 <div class="wrapper">
    <div class="animated fadeIn" v-if="currentVcs && currentVcs.id">
       {{ commits.length }} from {{ max }} entries <br>
-
       <div class="card">
-
-
          <table class="table table-striped">
             <thead>
                <tr>
@@ -19,7 +16,7 @@
                       <multiselect v-model="commit.selected_links" :options="commit.links" :multiple="true"></multiselect>
                   </td>
                   <td>
-                     {{ commit.message }}
+                     <pre>{{ commit.message }}</pre>
                   </td>
                </tr>
             </tbody>
@@ -51,7 +48,6 @@
 <script>
 
 import { mapGetters } from 'vuex'
-import Grid from '@/components/Grid.vue'
 import rest from '../api/rest'
 
 import Multiselect from 'vue-multiselect'
@@ -68,10 +64,9 @@ export default {
     }
   },
   components: {
-    Grid, Multiselect
+    Multiselect
   },
   computed: mapGetters({
-    gridIssues: 'gridIssues',
     currentProject: 'currentProject',
     currentIssue: 'currentIssue',
     currentVcs: 'currentVcs'
@@ -80,8 +75,8 @@ export default {
     this.loadRandomIssueLinks()
   },
   watch: {
-    currentProject (value) {
-      this.loadRandomIssue()
+    currentVcs (value) {
+      this.loadRandomIssueLinks()
     },
     linked (value) {
       this.loadRandomIssueLinks()

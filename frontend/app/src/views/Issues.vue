@@ -31,6 +31,11 @@
                       <td>{{ currentIssue.issue_type }}</td>
                     </tr>
                     <tr>
+                      <th>Verified Type</th>
+                      <td v-if="currentIssue.issue_type_verified">{{ currentIssue.issue_type_verified }}</td>
+                      <td v-else>Not yet verified</td>
+                    </tr>
+                    <tr>
                       <th>Priority</th>
                       <td>{{ currentIssue.priority }}</td>
                     </tr>

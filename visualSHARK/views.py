@@ -25,6 +25,7 @@ from rest_framework import filters
 import django_filters
 
 from mongoengine.queryset.visitor import Q
+from bson.objectid import ObjectId
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
@@ -38,7 +39,7 @@ from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRe
 from rest_framework.filters import OrderingFilter
 
 from .util import prediction
-from .util.helper import tag_filter, OntdekBaan3 as OntdekBaan, OntdekBaan4 as OntdekBaan2
+from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
@@ -203,6 +204,11 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
             i = Issue.objects.get(id=li)
             issue_links.append({'name': i.external_id, 'id': i.id})
 
+        validated_issue_links = []
+        for li in commit.fixed_issue_ids:
+            i = Issue.objects.get(id=li)
+            validated_issue_links.append({'name': i.external_id, 'id': i.id})
+
         labels = []
         for l, v in commit.labels.items():
             labels.append({'name': l, 'value': v})
@@ -212,6 +218,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
         dat['committer'] = People.objects.get(id=commit.committer_id)
         dat['tags'] = tags
         dat['issue_links'] = issue_links
+        dat['validated_issue_links'] = validated_issue_links
         dat['labels'] = labels
         serializer = SingleCommitSerializer(dat)
         return Response(serializer.data)
@@ -253,6 +260,16 @@ class FileActionViewSet(MongoReadOnlyModelViewSet):
                 dat['old_file'] = File.objects.get(id=d.old_file_id)
             else:
                 dat['old_file'] = None
+
+            dat['induced_by'] = []
+            for inducing_fa in FileAction.objects.filter(induces__match={'change_file_action_id': d.id}):
+                for ind in inducing_fa.induces:
+
+                    if ind['change_file_action_id'] == d.id:
+                        blame_commit = Commit.objects.get(id=inducing_fa.commit_id)
+
+                        if blame_commit.revision_hash not in dat['induced_by']:
+                            dat['induced_by'].append(blame_commit.revision_hash)
             ret.append(dat)
         return ret
 
@@ -310,7 +327,7 @@ class FileViewSet(MongoReadOnlyModelViewSet):
 
 
 class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Project.objects.all()
+    queryset = Project.objects.all().order_by('name')
     serializer_class = ProjectSerializer
 
 
@@ -566,21 +583,16 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         c = Commit.objects.get(revision_hash=commit)
 
-        previous1 = c.committer_date.date() - relativedelta(months=6)
         after1 = c.committer_date.date() + relativedelta(months=6)
 
         def break_condition1(commit):
             c = Commit.objects.get(revision_hash=commit)
             return c.committer_date.date() > after1
 
-        def break_condition2(commit):
-            c = Commit.objects.get(revision_hash=commit)
-            return c.committer_date.date() < previous1
+        o = OntdekBaan(dg)
+        o.set_path(commit, 'backward')
 
-        o = OntdekBaan2(dg)
-        o.set_path(commit, 'backward', break_condition2)
-
-        o2 = OntdekBaan2(dg)
+        o2 = OntdekBaan(dg)
         o2.set_path(commit, 'forward', break_condition1)
 
         paths = []
@@ -590,30 +602,6 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
         for path in o2.all_paths():
             paths.append(path)
 
-            # nodes = nodes.union(set(p))
-        # path = nx.shortest_path(dg, start_commit, end_commit)
-        # nodes = set(path)
-
-        return Response({'paths': paths})
-
-    @detail_route(methods=['get'])
-    def path(self, request, vcs_system_id=None):
-        cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
-
-        start_commit = request.query_params.get('start_commit', None)
-        end_commit = request.query_params.get('end_commit', None)
-
-        if not start_commit or not end_commit:
-            raise Exception('need commits')
-
-        dg = nx.read_gpickle(cg.directed_pickle.path)
-
-        nodes = set()
-
-        o = OntdekBaan(dg)
-        paths = []
-        for p in o.get_all_paths(start_commit, end_commit):
-            paths.append(p)
             # nodes = nodes.union(set(p))
         # path = nx.shortest_path(dg, start_commit, end_commit)
         # nodes = set(path)
@@ -872,7 +860,6 @@ class IssueLabelSet(APIView):
         result['max'] = issue_query.count()
         issue_query = issue_query.order_by('?')[:10]
 
-
         issue_ids = []
         for iv in issue_query:
             issue_ids.append(iv.issue_id)
@@ -927,6 +914,11 @@ class IssueLabelSet(APIView):
         return Response(result)
 
 
+# todo:
+# - kein sampling
+# - links zu den commits
+# - einrückung falsch
+
 class IssueConflictSet(APIView):
 
     def get(self, request):
@@ -943,38 +935,60 @@ class IssueConflictSet(APIView):
             if not base_url.endswith('/'):
                 base_url += '/'
 
+        # we need this for the commit urls
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
         linked = request.GET["linked"] == "true"
+
+        # query construction
         issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
+
         # There muss be a validation
         issue_query = issue_query.filter(issuevalidationuser__isnull=False)
         result['max'] = issue_query.count()
-        issue_query = issue_query.order_by('?')
-        i = 0
-        ids = []
-        for issueCache in issue_query:
-            if i > 10:
-                break
+        # issue_query = issue_query.order_by('?')
+
+        issue_ids = []
+        for iv in issue_query:
             # Check if all the same, then skip
-            labels = IssueValidationUser.objects.filter(issue_validation=issueCache).values_list('label', flat=True)
+            labels = IssueValidationUser.objects.filter(issue_validation=iv).values_list('label', flat=True)
             if len(set(labels)) == 1:
+                result['max'] -= 1
                 continue
 
-            if issueCache.id in ids:
-                continue
+            if iv.issue_id not in issue_ids:
+                issue_ids.append(iv.issue_id)
+            else:
+                result['max'] -= 1
 
-            ids.append(issueCache.id)
-            issue = Issue.objects.filter(id=issueCache.issue_id).first()
+        issue_id_links = {}
+        for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):
+            for iid in c.linked_issue_ids:
+                key = str(iid)
+                if key not in issue_id_links.keys():
+                    issue_id_links[key] = []
+
+                issue_id_links[key].append({'link': '{}{}'.format(vcs_url, c.revision_hash), 'name': c.revision_hash[:7]})
+
+        for issue_id in issue_ids[:10]:
+            issue = Issue.objects.filter(id=issue_id).first()
             serializer = IssueLabelConflictSerializer(issue, many=False)
             data = serializer.data
             data['url'] = base_url + issue.external_id
+
+            if str(issue_id) not in issue_id_links.keys():
+                data['links'] = []
+            else:
+                data['links'] = issue_id_links[str(issue_id)]
+
             if issue.issue_type is None:
                 data['resolution'] = "other"
             else:
                 data['resolution'] = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
             result['issues'].append(data)
-            i += 1
 
         return Response(result)
 
@@ -994,7 +1008,7 @@ class IssueConflictSet(APIView):
         result['status'] = "ok"
         return Response(result)
 
-
+# issue link means bug link in this case
 class IssueLinkSet(APIView):
 
     def get(self, request):

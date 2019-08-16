@@ -37,9 +37,10 @@
                      <a :href="issue.url" target="_blank">
                         <h5>{{ issue.title }}</h5>
                      </a>
-                     <pre>
-                     {{ issue.desc }}
-                     </pre>
+                     <pre>{{ issue.desc }}</pre><br/>
+                    <template v-for="link in issue.links">
+                        <a :href="link.link" target="_blank">{{ link.name }}</a>&nbsp;
+                     </template>
                   </td>
                </tr>
             </tbody>
@@ -119,6 +120,7 @@ export default {
         .then(response => {
           this.$store.dispatch('popLoading')
           if (response.data != null) {
+            window.scrollTo(0, 0)
             this.loadConflicted()
           }
         })
@@ -152,3 +154,8 @@ export default {
   }
 }
 </script>
+<style>
+pre {
+    white-space: pre-wrap; 
+}
+</style>
