@@ -10,11 +10,11 @@ Vue.use(Vuex)
 
 const persist = (store) => {
   // const projectData = getLocal('projectData')
-  const token = l.getSession('ab')
+  const token = l.getLocal('ab')
   const username = l.getSession('cd')
-  const isSuperuser = l.getSession('is')
+  const isSuperuser = l.getLocal('superuser') === 'true'
   const channel = l.getSession('re')
-  const permissions = l.getSession('permissions')
+  const permissions = l.getLocal('permissions')
 
   const projects = l.getLocal('projects')
   const vcs = l.getLocal('vcs')
@@ -47,7 +47,6 @@ const persist = (store) => {
 
   // fill token from session storage if we have it (store is clean on page reload)
   if (token !== null && username !== null && isSuperuser !== null && channel !== null && permissions !== null) {
-    // console.log('relogin', token, username)
     store.commit('LOGIN', { token, username, isSuperuser, channel, permissions })
 
     if (typeof projects !== 'undefined' && projects !== null) {
@@ -150,11 +149,11 @@ const persist = (store) => {
     const type = mutation.type
     if (type === 'LOGIN') {
       // console.log('initial login', mutation.payload.token, mutation.payload.username)
-      l.setSession('ab', mutation.payload.token)
+      l.setLocal('ab', mutation.payload.token)
       l.setSession('cd', mutation.payload.username)
-      l.setSession('is', mutation.payload.isSuperuser)
+      l.setLocal('superuser', mutation.payload.isSuperuser)
       l.setSession('re', mutation.payload.channel)
-      l.setSession('permissions', mutation.payload.permissions)
+      l.setLocal('permissions', mutation.payload.permissions)
       // connect websocket after login
       Vue.connectChannel()
     }

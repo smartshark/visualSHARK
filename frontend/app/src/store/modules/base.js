@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import rest from '../../api/rest'
 import * as types from '../mutation-types'
 
@@ -103,7 +104,7 @@ const mutations = {
     state.channel = channel
     state.loginSuccess = true
     state.loginMessage = ''
-    state.permissions = permissions
+    Vue.set(state, 'permissions', permissions)
     rest.setToken(token)
   },
   [types.LOGOUT] (state) {
