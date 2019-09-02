@@ -207,3 +207,12 @@ class RightsSupport(models.Model):
             ('view_issue_conflicts', 'View issue label conflict right'),
             ('edit_issue_conflicts', 'View issue label conflict right'),
         )
+
+class ProjectAttributes(models.Model):
+    """Contains additional project attributes."""
+
+    project_name = models.CharField(max_length=255)
+    visible_stuff_only = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.project_name

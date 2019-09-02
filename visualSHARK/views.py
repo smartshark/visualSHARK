@@ -29,7 +29,8 @@ import django_filters
 from mongoengine.queryset.visitor import Q
 from bson.objectid import ObjectId
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, \
+    Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
@@ -329,9 +330,23 @@ class FileViewSet(MongoReadOnlyModelViewSet):
     mongo_search_fields = ('path',)
 
 
-class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
+class ProjectViewSet(MongoReadOnlyModelViewSet):
     queryset = Project.objects.all().order_by('name')
     serializer_class = ProjectSerializer
+
+    def list(self, request):
+        superuser = request.user.is_superuser
+        projects = []
+        query = ProjectAttributes.objects.filter(visible_stuff_only=superuser)
+        if(superuser):
+            query = ProjectAttributes.objects.all()
+        for pro in query.order_by('project_name'):
+            projects.append(Project.objects.get(name=pro.project_name))
+
+        serializer = self.serializer_class(projects, many=True)
+        response = {}
+        response["results"] = serializer.data
+        return Response(response)
 
 
 class VcsViewSet(viewsets.ReadOnlyModelViewSet):

@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, IssueValidationUser
+from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
+    IssueValidationUser, ProjectAttributes
 
 
 class CommitGraphAdmin(admin.ModelAdmin):
@@ -39,3 +40,4 @@ admin.site.register(VSJobType, VSJobTypeAdmin)
 admin.site.register(UserProfile)
 admin.site.register(IssueValidation, IssueValidationAdmin)
 admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
+admin.site.register(ProjectAttributes)
