@@ -335,10 +335,10 @@ class ProjectViewSet(MongoReadOnlyModelViewSet):
     serializer_class = ProjectSerializer
 
     def list(self, request):
-        superuser = request.user.is_superuser
+        is_superuser = request.user.is_superuser
         projects = []
-        query = ProjectAttributes.objects.filter(visible_stuff_only=superuser)
-        if(superuser):
+        query = ProjectAttributes.objects.filter(is_visible=is_superuser)
+        if(is_superuser):
             query = ProjectAttributes.objects.all()
         for pro in query.order_by('project_name'):
             projects.append(Project.objects.get(name=pro.project_name))
