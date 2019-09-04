@@ -1038,7 +1038,7 @@ class IssueConflictSet(APIView):
 class IssueLinkSet(APIView):
 
     def get(self, request):
-        if( not request.user.has_perm('visualSHARK.view_issue_link')):
+        if( not request.user.has_perm('visualSHARK.view_issue_links')):
             return HttpResponse('Unauthorized', status=401)
 
         result = {}
@@ -1070,7 +1070,7 @@ class IssueLinkSet(APIView):
         return Response(result)
 
     def post(self, request):
-        if (not request.user.has_perm('visualSHARK.edit_issue_link')):
+        if (not request.user.has_perm('visualSHARK.edit_issue_links')):
             return HttpResponse('Unauthorized', status=401)
 
         for commit in request.data:

@@ -15,7 +15,7 @@ const state = {
   userMessages: [],
   conWorker: null,
   conRemote: null,
-  permissions: ''
+  permissions: []
 }
 
 const getters = {

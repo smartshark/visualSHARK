@@ -200,8 +200,14 @@ class RightsSupport(models.Model):
                          # operations will be performed for this model.
 
         permissions = (
-            ('view_issue_link', 'View issue links rights'),
-            ('edit_issue_link', 'Edit issue links rights'),
+            ('view_commits', 'View commits'),
+            ('view_issues', 'View issues'),
+            ('view_people', 'View people'),
+            ('view_files', 'View files'),
+            ('view_messages', 'View messages'),
+            ('view_analytics', 'View Analytics'),
+            ('view_issue_links', 'View issue links rights'),
+            ('edit_issue_links', 'Edit issue links rights'),
             ('view_issue_labels', 'View issue labels rights'),
             ('edit_issue_labels', 'Edit issue labels rights'),
             ('view_issue_conflicts', 'View issue label conflict right'),

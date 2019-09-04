@@ -5,19 +5,19 @@
         <li class="nav-item">
           <router-link :to="'/dashboard'" class="nav-link"><i class="icon-speedometer"></i> Dashboard</router-link>
         </li>
-        <li class="nav-item" v-if="isSuperuser">
+        <li class="nav-item" v-if="isSuperuser || permissions.includes('view_commits')">
           <router-link :to="'/commits'" class="nav-link"><i class="fa fa-code"></i> Commits</router-link>
         </li>
-        <li class="nav-item" v-if="isSuperuser">
+        <li class="nav-item" v-if="isSuperuser || permissions.includes('view_issues')">
           <router-link :to="'/issues'" class="nav-link"><i class="fa fa-bug"></i> Issues</router-link>
         </li>
-        <li class="nav-item" v-if="isSuperuser">
+        <li class="nav-item" v-if="isSuperuser || permissions.includes('view_files')">
           <router-link :to="'/files'" class="nav-link"><i class="fa fa-files-o"></i> Files</router-link>
         </li>
-        <li class="nav-item" v-if="isSuperuser">
+        <li class="nav-item" v-if="isSuperuser || permissions.includes('view_messages')">
           <router-link :to="'/messages'" class="nav-link"><i class="fa fa-envelope"></i> Messages</router-link>
         </li>
-        <li class="nav-item" v-if="isSuperuser">
+        <li class="nav-item" v-if="isSuperuser || permissions.includes('view_people')">
           <router-link :to="'/people'" class="nav-link"><i class="fa fa-group"></i> People</router-link>
         </li>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/labeling'}" disabled>
@@ -34,7 +34,7 @@
               </li>
             </ul>
         </router-link>
-        <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled v-if="isSuperuser">
+        <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled v-if="isSuperuser || permissions.includes('view_analytics')">
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-bar-chart"></i> Analytics</div>
           <ul class="nav-dropdown-items">
             <li class="nav-item">
