@@ -109,7 +109,10 @@ class Auth(APIView):
         tmp = ass.data
         tmp[0]['is_superuser'] = user.is_superuser
         tmp[0]['channel'] = user.profile.channel
-        tmp[0]['permissions'] = [x.codename for x in Permission.objects.filter(user=user)]
+        if user.is_superuser:
+            tmp[0]['permissions'] = [x.codename for x in Permission.objects.filter(user=user)]
+        else:
+            tmp[0]['permissions'] = [x.codename for x in Permission.objects.all()]
         return Response(tmp)
 
 
@@ -848,9 +851,9 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 
 class IssueLabelSet(APIView):
 
+    permission_classes = ['visualSHARK.view_issue_labels']
+
     def get(self, request):
-        if (not request.user.has_perm('visualSHARK.view_issue_labels')):
-            return HttpResponse('Unauthorized', status=401)
         result = {}
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
         result['issues'] = []
@@ -1036,6 +1039,7 @@ class IssueConflictSet(APIView):
 
 # issue link means bug link in this case
 class IssueLinkSet(APIView):
+    permission_classes = ['visualSHARK.view_issue_links']
 
     def get(self, request):
         if( not request.user.has_perm('visualSHARK.view_issue_links')):

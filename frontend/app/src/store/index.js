@@ -11,7 +11,7 @@ Vue.use(Vuex)
 const persist = (store) => {
   // const projectData = getLocal('projectData')
   const token = l.getLocal('ab')
-  const username = l.getSession('cd')
+  const username = l.getLocal('cd')
   const isSuperuser = l.getLocal('superuser') === 'true'
   const channel = l.getSession('re')
   const permissions = l.getLocal('permissions')
@@ -150,7 +150,7 @@ const persist = (store) => {
     if (type === 'LOGIN') {
       // console.log('initial login', mutation.payload.token, mutation.payload.username)
       l.setLocal('ab', mutation.payload.token)
-      l.setSession('cd', mutation.payload.username)
+      l.setLocal('cd', mutation.payload.username)
       l.setLocal('superuser', mutation.payload.isSuperuser)
       l.setSession('re', mutation.payload.channel)
       l.setLocal('permissions', mutation.payload.permissions)
@@ -159,11 +159,12 @@ const persist = (store) => {
     }
     if (type === 'LOGOUT') {
       // console.log('clearing session store')
-      l.setSession('ab', null)
-      l.setSession('cd', null)
+      l.removeLocal('ab')
+      l.removeLocal('cd')
       l.setSession('is', null)
       l.setSession('re', null)
-      l.setSession('permissions', null)
+      l.removeLocal('permissions')
+      l.removeLocal('superuser')
 
       // disconnect websocket after logout
       Vue.discoChannel()
