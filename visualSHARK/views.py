@@ -151,7 +151,7 @@ class MongoReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
 
 class TagViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for Tags."""
-    read_perm = 'view_files'
+    read_perm = 'view_commits'
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     ordering_fields = ('name', 'date')
@@ -336,7 +336,7 @@ class FileViewSet(MongoReadOnlyModelViewSet):
 
 
 class ProjectViewSet(MongoReadOnlyModelViewSet):
-    read_perm = 'view_files'
+    read_perm = 'view_projects'
     queryset = Project.objects.all().order_by('name')
     serializer_class = ProjectSerializer
 
@@ -356,7 +356,7 @@ class ProjectViewSet(MongoReadOnlyModelViewSet):
 
 
 class VcsViewSet(viewsets.ReadOnlyModelViewSet):
-    read_perm = 'view_files'
+    read_perm = 'view_commits'
     queryset = VCSSystem.objects.all()
     serializer_class = VcsSerializer
     filter_fields = ('project_id')
@@ -376,7 +376,7 @@ class MailingListViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class BranchViewSet(viewsets.ReadOnlyModelViewSet):
-    read_perm = 'view_files'
+    read_perm = 'view_commits'
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
     filter_fields = ('vcs_system_id')
@@ -496,7 +496,6 @@ class CommitLabelFieldViewSet(rviewsets.ReadOnlyModelViewSet):
 
 
 class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
-    read_perm = 'view_commits'
 
     """Commit Graph ReST endpoint.
 
@@ -504,6 +503,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
     generated during execution of the create_commit_graph command and returns it for the commit graph SVG.
     """
 
+    read_perm = 'view_commits'
     queryset = CommitGraph.objects.all()
     serializer_class = CommitGraphSerializer
     lookup_field = ('vcs_system_id')
@@ -720,7 +720,7 @@ class PredictionView(APIView):
 class StatsView(APIView):
     # TODO: update to serializer
 
-    read_perm = 'view_analytics'
+    read_perm = 'view_stats'
 
     def get(self, request):
         projects = {}
@@ -737,7 +737,7 @@ class StatsView(APIView):
 class StatsHistoryView(APIView):
     # TODO: update to serializer
 
-    read_perm = 'view_analytics'
+    read_perm = 'view_stats'
 
     def get(self, request):
         history = []

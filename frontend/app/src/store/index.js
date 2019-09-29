@@ -161,7 +161,7 @@ const persist = (store) => {
       // console.log('clearing session store')
       l.removeLocal('ab')
       l.removeLocal('cd')
-      l.setSession('is', null)
+      l.removeLocal('is')
       l.setSession('re', null)
       l.removeLocal('permissions')
       l.removeLocal('superuser')
