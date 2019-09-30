@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import rest from '../../api/rest'
 import * as types from '../mutation-types'
 
@@ -13,7 +14,8 @@ const state = {
   loginMessage: '',
   userMessages: [],
   conWorker: null,
-  conRemote: null
+  conRemote: null,
+  permissions: []
 }
 
 const getters = {
@@ -28,7 +30,8 @@ const getters = {
   channel: state => state.channel,
   userMessages: state => state.userMessages,
   conWorker: state => state.conWorker,
-  conRemote: state => state.conRemote
+  conRemote: state => state.conRemote,
+  permissions: state => state.permissions
 }
 
 const actions = {
@@ -39,7 +42,8 @@ const actions = {
         const username = dat.user
         const isSuperuser = response.data[0].is_superuser
         const channel = response.data[0].channel
-        commit(types.LOGIN, { token, username, isSuperuser, channel })
+        const permissions = response.data[0].permissions
+        commit(types.LOGIN, { token, username, isSuperuser, channel, permissions })
 
         rest.setToken(token)
       })
@@ -93,13 +97,14 @@ const actions = {
 }
 
 const mutations = {
-  [types.LOGIN] (state, { token, username, isSuperuser, channel }) {
+  [types.LOGIN] (state, { token, username, isSuperuser, channel, permissions }) {
     state.token = token
     state.user = username
     state.isSuperuser = isSuperuser
     state.channel = channel
     state.loginSuccess = true
     state.loginMessage = ''
+    Vue.set(state, 'permissions', permissions)
     rest.setToken(token)
   },
   [types.LOGOUT] (state) {

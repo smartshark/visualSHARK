@@ -10,10 +10,11 @@ Vue.use(Vuex)
 
 const persist = (store) => {
   // const projectData = getLocal('projectData')
-  const token = l.getSession('ab')
-  const username = l.getSession('cd')
-  const isSuperuser = l.getSession('is')
+  const token = l.getLocal('ab')
+  const username = l.getLocal('cd')
+  const isSuperuser = l.getLocal('superuser') === 'true'
   const channel = l.getSession('re')
+  const permissions = l.getLocal('permissions')
 
   const projects = l.getLocal('projects')
   const vcs = l.getLocal('vcs')
@@ -45,9 +46,8 @@ const persist = (store) => {
   }
 
   // fill token from session storage if we have it (store is clean on page reload)
-  if (token !== null && username !== null && isSuperuser !== null && channel !== null) {
-    // console.log('relogin', token, username)
-    store.commit('LOGIN', { token, username, isSuperuser, channel })
+  if (token !== null && username !== null && isSuperuser !== null && channel !== null && permissions !== null) {
+    store.commit('LOGIN', { token, username, isSuperuser, channel, permissions })
 
     if (typeof projects !== 'undefined' && projects !== null) {
       store.dispatch('getAllProjects')
@@ -149,19 +149,22 @@ const persist = (store) => {
     const type = mutation.type
     if (type === 'LOGIN') {
       // console.log('initial login', mutation.payload.token, mutation.payload.username)
-      l.setSession('ab', mutation.payload.token)
-      l.setSession('cd', mutation.payload.username)
-      l.setSession('is', mutation.payload.isSuperuser)
+      l.setLocal('ab', mutation.payload.token)
+      l.setLocal('cd', mutation.payload.username)
+      l.setLocal('superuser', mutation.payload.isSuperuser)
       l.setSession('re', mutation.payload.channel)
+      l.setLocal('permissions', mutation.payload.permissions)
       // connect websocket after login
       Vue.connectChannel()
     }
     if (type === 'LOGOUT') {
       // console.log('clearing session store')
-      l.setSession('ab', null)
-      l.setSession('cd', null)
-      l.setSession('is', null)
+      l.removeLocal('ab')
+      l.removeLocal('cd')
+      l.removeLocal('is')
       l.setSession('re', null)
+      l.removeLocal('permissions')
+      l.removeLocal('superuser')
 
       // disconnect websocket after logout
       Vue.discoChannel()

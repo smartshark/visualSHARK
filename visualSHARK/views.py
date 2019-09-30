@@ -14,6 +14,8 @@ import networkx as nx
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.models import Permission
+
 
 from rest_framework.views import APIView
 from rest_framework import exceptions
@@ -27,7 +29,8 @@ import django_filters
 from mongoengine.queryset.visitor import Q
 from bson.objectid import ObjectId
 
-from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk
+from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, \
+    Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
@@ -106,6 +109,10 @@ class Auth(APIView):
         tmp = ass.data
         tmp[0]['is_superuser'] = user.is_superuser
         tmp[0]['channel'] = user.profile.channel
+        if user.is_superuser:
+            tmp[0]['permissions'] = [x.codename for x in Permission.objects.all()]
+        else:
+            tmp[0]['permissions'] = [x.codename for x in Permission.objects.filter(user=user)]
         return Response(tmp)
 
 
@@ -144,7 +151,7 @@ class MongoReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
 
 class TagViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for Tags."""
-
+    read_perm = 'view_commits'
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     ordering_fields = ('name', 'date')
@@ -172,7 +179,7 @@ class TagViewSet(MongoReadOnlyModelViewSet):
 
 class CommitViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for Commits."""
-
+    read_perm = 'view_commits'
     queryset = Commit.objects.only('id', 'revision_hash', 'vcs_system_id', 'committer_date', 'committer_date_offset', 'author_date', 'author_date_offset', 'message', 'committer_id', 'author_id', 'labels', 'linked_issue_ids', 'branches', 'parents')
     serializer_class = CommitSerializer
     filter_fields = ('revision_hash', 'vcs_system_id', 'committer_date__gte', 'committer_date__lt')
@@ -226,7 +233,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
 
 class FileActionViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for FileActions."""
-
+    read_perm = 'view_files'
     queryset = FileAction.objects.all()
     serializer_class = FileActionSerializer
     ordering_fields = ('mode', 'lines_added', 'lines_deleted', 'size_at_commit')
@@ -286,7 +293,7 @@ class FileActionViewSet(MongoReadOnlyModelViewSet):
 
 class CodeEntityStateViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for CodeEntityStates."""
-
+    read_perm = 'view_files'
     queryset = CodeEntityState.objects.all()
     serializer_class = CodeEntityStateSerializer
     ordering_fields = ('ce_type', 'long_name')
@@ -312,6 +319,7 @@ class CodeEntityStateViewSet(MongoReadOnlyModelViewSet):
 
 
 class HunkViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_files'
     queryset = Hunk.objects.all()
     serializer_class = HunkSerializer
     filter_fields = ('file_action_id', 'id')
@@ -319,6 +327,7 @@ class HunkViewSet(MongoReadOnlyModelViewSet):
 
 
 class FileViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_files'
     queryset = File.objects.all()
     serializer_class = FileSerializer
     ordering_fields = ('path',)
@@ -326,18 +335,35 @@ class FileViewSet(MongoReadOnlyModelViewSet):
     mongo_search_fields = ('path',)
 
 
-class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
+class ProjectViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_projects'
     queryset = Project.objects.all().order_by('name')
     serializer_class = ProjectSerializer
 
+    def list(self, request):
+        is_superuser = request.user.is_superuser
+        projects = []
+        query = ProjectAttributes.objects.filter(is_visible=is_superuser)
+        if(is_superuser):
+            query = ProjectAttributes.objects.all()
+        for pro in query.order_by('project_name'):
+            projects.append(Project.objects.get(name=pro.project_name))
+
+        serializer = self.serializer_class(projects, many=True)
+        response = {}
+        response["results"] = serializer.data
+        return Response(response)
+
 
 class VcsViewSet(viewsets.ReadOnlyModelViewSet):
+    read_perm = 'view_commits'
     queryset = VCSSystem.objects.all()
     serializer_class = VcsSerializer
     filter_fields = ('project_id')
 
 
 class IssueSystemViewSet(viewsets.ReadOnlyModelViewSet):
+    read_perm = 'view_issues'
     queryset = IssueSystem.objects.all()
     serializer_class = IssueSystemSerializer
     filter_fields = ('project_id')
@@ -350,12 +376,14 @@ class MailingListViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class BranchViewSet(viewsets.ReadOnlyModelViewSet):
+    read_perm = 'view_commits'
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
     filter_fields = ('vcs_system_id')
 
 
 class IssueViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_issues'
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
     ordering_fields = ('external_id', 'title', 'created_at', 'updated_at', 'status')
@@ -399,6 +427,8 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
 
 
 class PeopleViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_people'
+
     queryset = People.objects.all()
     serializer_class = PeopleSerializer
     ordering_fields = ('name', 'username', 'email')
@@ -407,6 +437,8 @@ class PeopleViewSet(MongoReadOnlyModelViewSet):
 
 
 class MessageViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_messages'
+
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     filter_fields = ('mailing_list_id',)
@@ -457,17 +489,21 @@ class MessageViewSet(MongoReadOnlyModelViewSet):
 
 
 class CommitLabelFieldViewSet(rviewsets.ReadOnlyModelViewSet):
+    read_perm = 'view_commits'
+
     queryset = CommitLabelField.objects.all()
     serializer_class = CommitLabelFieldSerializer
 
 
 class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
+
     """Commit Graph ReST endpoint.
 
     This endpoint reads the commit graph nodes and their positions (according to graphviz) from the file
     generated during execution of the create_commit_graph command and returns it for the commit graph SVG.
     """
 
+    read_perm = 'view_commits'
     queryset = CommitGraph.objects.all()
     serializer_class = CommitGraphSerializer
     lookup_field = ('vcs_system_id')
@@ -610,6 +646,9 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
 
 class ProductViewSet(MongoReadOnlyModelViewSet):
+
+    read_perm = 'view_analytics'
+
     """Product data from mynbouSHARK."""
     queryset = MynbouData.objects.all()
     serializer_class = ProductSerializer
@@ -632,6 +671,8 @@ class ProductViewSet(MongoReadOnlyModelViewSet):
 
 class PredictionEvaluationView(APIView):
 
+    read_perm = 'view_analytics'
+
     def get(self, request):
         training = request.query_params.get('training', None)
         test = request.query_params.get('test', None)
@@ -653,6 +694,8 @@ class PredictionEvaluationView(APIView):
 
 
 class PredictionView(APIView):
+
+    read_perm = 'view_analytics'
 
     def get(self, request):
         training = request.query_params.get('training', None)
@@ -677,6 +720,8 @@ class PredictionView(APIView):
 class StatsView(APIView):
     # TODO: update to serializer
 
+    read_perm = 'view_stats'
+
     def get(self, request):
         projects = {}
         for pro in ProjectStats.objects.filter(stats_date=date.today()):
@@ -691,6 +736,8 @@ class StatsView(APIView):
 
 class StatsHistoryView(APIView):
     # TODO: update to serializer
+
+    read_perm = 'view_stats'
 
     def get(self, request):
         history = []
@@ -707,6 +754,8 @@ class StatsHistoryView(APIView):
 
 
 class ReleaseView(APIView):
+
+    read_perm = 'view_analytics'
 
     def get(self, request):
         vcs_system_id = request.GET.get('vcs_system_id', None)
@@ -728,6 +777,8 @@ class ReleaseView(APIView):
 class IssueLinkCandidatesView(APIView):
     """Get list of Candidates for issue linking for one commit id."""
 
+    read_perm = 'view_analytics'
+
     def get(self, request):
         commit_id = request.GET.get('commit_id', None)
         commit = Commit.objects.get(id=commit_id)
@@ -739,6 +790,8 @@ class IssueLinkCandidatesView(APIView):
 
 class AffectedEntitiesView(APIView):
     """Get list of Candidates for issue linking for one commit id."""
+
+    read_perm = 'view_analytics'
 
     def get(self, request):
         commit_id = request.GET.get('commit_id', None)
@@ -830,6 +883,9 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 
 class IssueLabelSet(APIView):
 
+    read_perm = 'view_issue_labels'
+    write_perm = 'edit_issue_labels'
+
     def get(self, request):
         result = {}
         result['options'] = set(list(TICKET_TYPE_MAPPING.values()))
@@ -920,6 +976,8 @@ class IssueLabelSet(APIView):
 # - einrückung falsch
 
 class IssueConflictSet(APIView):
+    read_perm = 'view_issue_conflicts'
+    write_perm = 'edit_issue_conflicts'
 
     def get(self, request):
         result = {}
@@ -1010,6 +1068,7 @@ class IssueConflictSet(APIView):
 
 # issue link means bug link in this case
 class IssueLinkSet(APIView):
+    read_perm = 'view_issue_links'
 
     def get(self, request):
         result = {}

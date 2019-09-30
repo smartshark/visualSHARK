@@ -191,3 +191,34 @@ class IssueValidationUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     issue_validation = models.ForeignKey(IssueValidation, on_delete=models.CASCADE)
     label = models.TextField()
+
+class RightsSupport(models.Model):
+
+    class Meta:
+
+        managed = False  # No database table creation or deletion  \
+                         # operations will be performed for this model.
+
+        permissions = (
+            ('view_commits', 'View commits'),
+            ('view_issues', 'View issues'),
+            ('view_people', 'View people'),
+            ('view_files', 'View files'),
+            ('view_messages', 'View messages'),
+            ('view_analytics', 'View Analytics'),
+            ('view_issue_links', 'View issue links rights'),
+            ('edit_issue_links', 'Edit issue links rights'),
+            ('view_issue_labels', 'View issue labels rights'),
+            ('edit_issue_labels', 'Edit issue labels rights'),
+            ('view_issue_conflicts', 'View issue label conflict right'),
+            ('edit_issue_conflicts', 'View issue label conflict right'),
+        )
+
+class ProjectAttributes(models.Model):
+    """Contains additional project attributes."""
+
+    project_name = models.CharField(max_length=255)
+    is_visible = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.project_name
