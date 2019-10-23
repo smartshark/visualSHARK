@@ -10,12 +10,11 @@ const state = {
   currentMl: null,
   currentJob: null,
   vcs: [],
-  is: [],
+  its: [],
   ml: [],
   allVcsBranches: [],
   currentVcsBranches: [],
-  dashboard: {projects: 0, commits: 0, issues: 0, emails: 0, files: 0, people: 0},
-  dashboardStats: {},
+  dashboardStats: {num_projects: 0, num_commits: 0, num_issues: 0, num_emails: 0, num_files: 0, num_people: 0, projects: {}},
   dashboardStatsHistory: [],
   currentCommit: {},
   currentCommitAnalytics: {},
@@ -36,12 +35,11 @@ const state = {
 }
 
 const getters = {
-  dashboard: state => state.dashboard,
   dashboardStats: state => state.dashboardStats,
   dashboardStatsHistory: state => state.dashboardStatsHistory,
   allProjects: state => state.projects,
   allVcs: state => state.vcs,
-  allIS: state => state.is,
+  allIS: state => state.its,
   allML: state => state.ml,
   allVcsBranches: state => state.allVcsBranches,
   currentProject: state => state.currentProject,
@@ -66,7 +64,7 @@ const getters = {
   },
   projectsIts: state => {
     let pvcs = []
-    state.is.forEach(item => {
+    state.its.forEach(item => {
       if (state.currentProject !== null && item.project_id === state.currentProject.id) {
         pvcs.push(item)
       }
@@ -84,19 +82,27 @@ const getters = {
   },
   allProjectData: state => {
     let pwvcs = []
-    state.vcs.forEach(item => {
-      let project = state.projects.filter(pr => pr.id === item.project_id)
-      if (project.length > 0) {
-        // we also want issue system
-        let issues = state.is.filter(is => is.project_id === project[0].id)
-        let is = null
-        if (issues.length > 0) {
-          is = issues[0].id
-        }
-        let mailinglist = state.ml.filter(ml => ml.project_id === project[0].id)
-        pwvcs.push({vcs_id: item.id, vcs: item, issue_id: is, is: issues[0], iss: issues, name: project[0].name, ml: mailinglist, id: item.project_id})
+    state.projects.forEach(item => {
+      let vcs = state.vcs.filter(vcs => vcs.project_id === item.id)
+      let its = state.its.filter(its => its.project_id === item.id)
+      let ml = state.ml.filter(ml => ml.project_id === item.id)
+
+      let vcsId = null
+      let itsId = null
+      let mlId = null
+      if (vcs.length > 0) {
+        vcsId = vcs[0].id
       }
+      if (its.length > 0) {
+        itsId = its[0].id
+      }
+      if (ml.length > 0) {
+        mlId = ml[0].id
+      }
+
+      pwvcs.push({vcs: vcs, its: its, ml: ml, id: item.id, name: item.name, vcs_id: vcsId, its_id: itsId, ml_id: mlId})
     })
+
     return pwvcs
   },
   currentCommit: state => state.currentCommit,
@@ -132,69 +138,6 @@ const actions = {
     rest.getStatsHistory()
       .then(response => {
         commit(types.SET_DASHBOARD_STATS_HISTORY, { response })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-  },
-  updateDashboard ({commit}) {
-    commit(types.PUSH_LOADING)
-    commit(types.PUSH_LOADING)
-    commit(types.PUSH_LOADING)
-    commit(types.PUSH_LOADING)
-    commit(types.PUSH_LOADING)
-    commit(types.PUSH_LOADING)
-    let dat = {'limit': 1}
-    rest.getCommits(dat)
-      .then(response => {
-        commit(types.SET_DASHBOARD_COMMITS, { count: response.data.count })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-    rest.getIssues(dat)
-      .then(response => {
-        commit(types.SET_DASHBOARD_ISSUES, { count: response.data.count })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-    rest.getMessages(dat)
-      .then(response => {
-        commit(types.SET_DASHBOARD_EMAILS, { count: response.data.count })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-    rest.getFiles(dat)
-      .then(response => {
-        commit(types.SET_DASHBOARD_FILES, { count: response.data.count })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-    rest.getPeople(dat)
-      .then(response => {
-        commit(types.SET_DASHBOARD_PEOPLE, { count: response.data.count })
-        commit(types.POP_LOADING)
-      })
-      .catch(error => {
-        commit(types.POP_LOADING)
-        commit(types.PUSH_ERROR, { error })
-      })
-    rest.getProjects(dat)
-      .then(response => {
-        commit(types.SET_DASHBOARD_PROJECTS, { count: response.data.count })
         commit(types.POP_LOADING)
       })
       .catch(error => {
@@ -517,9 +460,6 @@ const mutations = {
   [types.CLEAR_CURRENT_COMMIT] (state) {
     state.currentCommit = {}
   },
-  [types.UPDATE_DASHBOARD] (state, { dashboard }) {
-    state.dashboard = dashboard
-  },
   [types.SET_DASHBOARD_STATS] (state, { response }) {
     state.dashboardStats = response.data
   },
@@ -619,7 +559,7 @@ const mutations = {
     state.vcs = response.data.results
   },
   [types.RECEIVE_IS] (state, { response }) {
-    state.is = response.data.results
+    state.its = response.data.results
   },
   [types.RECEIVE_ML] (state, { response }) {
     state.ml = response.data.results

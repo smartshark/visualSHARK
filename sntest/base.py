@@ -146,6 +146,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
         'visualSHARK.permissions.CustomPermission',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
@@ -153,7 +154,7 @@ REST_FRAMEWORK = {
     'STRICT_JSON': False
 }
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 COMPUTED_FILES = 'computed_files/'
 

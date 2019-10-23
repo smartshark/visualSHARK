@@ -36,7 +36,6 @@ export default {
 
     Vue.connectChannel = function () {
       const channel = store.getters.channel
-      console.log('connect to channel ' + channel)
       Vue.prototype.$stomp.subscribe('/topic/' + channel, message => {
         const data = JSON.parse(message.body)
         store.dispatch('pushUserMessage', data)

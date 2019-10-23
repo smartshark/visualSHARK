@@ -178,6 +178,7 @@ class VSJob(models.Model):
         if not created:
             send_to_user(instance.requested_by.profile.channel, {'msg': '{} job finished'.format(instance.job_type.name), 'job_type': instance.job_type.ident, 'created': False, 'success': instance.error_count == 0, 'job_id': instance.pk})
 
+
 class IssueValidation(models.Model):
     project_id = models.CharField(max_length=255)
     issue_system_id = models.CharField(max_length=255)
@@ -187,10 +188,12 @@ class IssueValidation(models.Model):
     linked = models.BooleanField()
     resolution = models.BooleanField()
 
+
 class IssueValidationUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     issue_validation = models.ForeignKey(IssueValidation, on_delete=models.CASCADE)
     label = models.TextField()
+
 
 class RightsSupport(models.Model):
 
@@ -200,19 +203,24 @@ class RightsSupport(models.Model):
                          # operations will be performed for this model.
 
         permissions = (
-            ('view_commits', 'View commits'),
-            ('view_issues', 'View issues'),
-            ('view_people', 'View people'),
-            ('view_files', 'View files'),
-            ('view_messages', 'View messages'),
-            ('view_analytics', 'View Analytics'),
-            ('view_issue_links', 'View issue links rights'),
-            ('edit_issue_links', 'Edit issue links rights'),
-            ('view_issue_labels', 'View issue labels rights'),
-            ('edit_issue_labels', 'Edit issue labels rights'),
-            ('view_issue_conflicts', 'View issue label conflict right'),
-            ('edit_issue_conflicts', 'View issue label conflict right'),
+                    ('view_stats', 'View stats'),
+                    ('view_commits', 'View commits'),
+                    ('view_issues', 'View issues'),
+                    ('view_people', 'View people'),
+                    ('view_files', 'View files'),
+                    ('view_projects', 'View projects'),
+                    ('view_messages', 'View messages'),
+                    ('view_analytics', 'View analytics'),
+                    ('view_issue_links', 'View issue links'),
+                    ('edit_issue_links', 'Edit issue links'),
+                    ('view_issue_labels', 'View issue labels'),
+                    ('edit_issue_labels', 'Edit issue labels'),
+                    ('view_issue_conflicts', 'View issue label conflicts'),
+                    ('edit_issue_conflicts', 'Edit issue label conflicts'),
+                    ('view_jobs', 'View jobs'),
+                    ('edit_jobs', 'Edit jobs'),
         )
+
 
 class ProjectAttributes(models.Model):
     """Contains additional project attributes."""

@@ -4,7 +4,7 @@ import * as types from '../mutation-types'
 
 // Contains basic store
 const state = {
-  token: false,
+  token: null,
   user: '',
   isSuperuser: false,
   channel: '',
@@ -35,7 +35,7 @@ const getters = {
 }
 
 const actions = {
-  login ({commit}, dat) {
+  login ({commit, dispatch}, dat) {
     rest.login(dat)
       .then(response => {
         const token = response.data[0].key
@@ -46,10 +46,41 @@ const actions = {
         commit(types.LOGIN, { token, username, isSuperuser, channel, permissions })
 
         rest.setToken(token)
+
+        dispatch('getAllProjects')
+        if (permissions.includes('view_vcs')) {
+          dispatch('getAllVcs')
+        }
+        if (permissions.includes('view_issues')) {
+          dispatch('getAllIssueSystems')
+        }
+        if (permissions.includes('view_messages')) {
+          dispatch('getAllMailingLists')
+        }
+        if (permissions.includes('view_vcs')) {
+          dispatch('getAllVcsBranches')
+        }
       })
       .catch(error => {
         commit(types.LOGIN_ERROR, { error })
       })
+  },
+  sessionLogin ({commit, dispatch}, dat) {
+    commit(types.SESSIONLOGIN, dat)
+    rest.setToken(dat.token)
+    dispatch('getAllProjects')
+    if (dat.permissions.includes('view_vcs')) {
+      dispatch('getAllVcs')
+    }
+    if (dat.permissions.includes('view_issues')) {
+      dispatch('getAllIssueSystems')
+    }
+    if (dat.permissions.includes('view_messages')) {
+      dispatch('getAllMailingLists')
+    }
+    if (dat.permissions.includes('view_vcs')) {
+      dispatch('getAllVcsBranches')
+    }
   },
   testConnectionWorker ({commit}, dat) {
     commit(types.PUSH_LOADING)
@@ -105,7 +136,6 @@ const mutations = {
     state.loginSuccess = true
     state.loginMessage = ''
     Vue.set(state, 'permissions', permissions)
-    rest.setToken(token)
   },
   [types.LOGOUT] (state) {
     state.loginSuccess = false
@@ -113,6 +143,13 @@ const mutations = {
     state.token = null
     state.channel = ''
     state.isSuperuser = false
+  },
+  [types.SESSIONLOGIN] (state, { token, username, isSuperuser, channel, permissions }) {
+    state.token = token
+    state.user = username
+    state.isSuperuser = isSuperuser
+    state.channel = channel
+    Vue.set(state, 'permissions', permissions)
   },
   [types.PUSH_LOADING] (state) {
     state.loading.push(true)
