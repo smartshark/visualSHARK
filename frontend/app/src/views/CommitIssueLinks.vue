@@ -22,7 +22,7 @@
             </tbody>
          </table>
       </div>
-      <button v-on:click="submitLabels" type="button" class="btn btn-success">Absenden</button>
+      <button v-on:click="submitLabels" type="button" :class="{'btn': true, 'btn-success': true, 'disabled': !permissions.includes('edit_issue_links')}">Submit</button>
    </div>
     <div class="animated fadeIn" v-if="!currentProject">
       <alert type="danger" dismissable>
@@ -60,7 +60,8 @@ export default {
   computed: mapGetters({
     currentProject: 'currentProject',
     currentIssue: 'currentIssue',
-    currentVcs: 'currentVcs'
+    currentVcs: 'currentVcs',
+    permissions: 'permissions'
   }),
   mounted () {
     this.loadRandomIssueLinks()

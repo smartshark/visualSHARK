@@ -46,7 +46,7 @@
             </tbody>
          </table>
       </div>
-      <button v-on:click="submitLabels" type="button" class="btn btn-success">Absenden</button>
+      <button v-on:click="submitLabels" type="button" :class="{'btn': true, 'btn-success': true, 'disabled': !permissions.includes('edit_issue_conflicts')}">Submit</button>
    </div>
     <div class="animated fadeIn" v-if="!currentProject">
       <alert type="danger" dismissable>
@@ -85,7 +85,8 @@ export default {
     gridIssues: 'gridIssues',
     currentProject: 'currentProject',
     currentIssue: 'currentIssue',
-    currentIts: 'currentIts'
+    currentIts: 'currentIts',
+    permissions: 'permissions'
   }),
   mounted () {
     this.loadConflicted()
