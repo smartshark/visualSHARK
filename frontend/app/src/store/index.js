@@ -159,6 +159,7 @@ const persist = (store) => {
       l.setLocal('superuser', mutation.payload.isSuperuser)
       l.setLocal('re', mutation.payload.channel)
       l.setLocal('permissions', mutation.payload.permissions)
+      console.log('got permissions on login', mutation.payload.permissions)
       // connect websocket after login
       Vue.connectChannel()
     }

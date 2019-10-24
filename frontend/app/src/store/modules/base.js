@@ -48,7 +48,7 @@ const actions = {
         rest.setToken(token)
 
         dispatch('getAllProjects')
-        if (permissions.includes('view_vcs')) {
+        if (permissions.includes('view_commits')) {
           dispatch('getAllVcs')
         }
         if (permissions.includes('view_issues')) {
@@ -57,7 +57,7 @@ const actions = {
         if (permissions.includes('view_messages')) {
           dispatch('getAllMailingLists')
         }
-        if (permissions.includes('view_vcs')) {
+        if (permissions.includes('view_commits')) {
           dispatch('getAllVcsBranches')
         }
       })
@@ -69,7 +69,7 @@ const actions = {
     commit(types.SESSIONLOGIN, dat)
     rest.setToken(dat.token)
     dispatch('getAllProjects')
-    if (dat.permissions.includes('view_vcs')) {
+    if (dat.permissions.includes('view_commits')) {
       dispatch('getAllVcs')
     }
     if (dat.permissions.includes('view_issues')) {
@@ -78,7 +78,7 @@ const actions = {
     if (dat.permissions.includes('view_messages')) {
       dispatch('getAllMailingLists')
     }
-    if (dat.permissions.includes('view_vcs')) {
+    if (dat.permissions.includes('view_commits')) {
       dispatch('getAllVcsBranches')
     }
   },

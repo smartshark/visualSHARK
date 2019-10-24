@@ -38,8 +38,10 @@
               <i class="fa fa-bug"></i> Issues
             </div>
             <div class="card-block">
-             Buggy Issues<br/>
-             Non linked buggy issues which are also closed
+             Buggy Issues [TODO]<br/>
+             Non linked buggy issues which are also closed [TODO]
+
+             <MonacoEditor class="editor" v-model="code" language="javascript" />
             </div>
           </div>
         </div>
@@ -54,15 +56,18 @@
 <script>
 import { mapGetters } from 'vuex'
 import { alert } from 'vue-strap'
+import MonacoEditor from 'vue-monaco'
 
 export default {
   name: 'project',
   data () {
     return {
+      code: 'const noop = () => {}'
     }
   },
   components: {
-    alert
+    alert,
+    MonacoEditor
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -80,5 +85,9 @@ export default {
 }
 .updated:before {
     content: "last update ";
+}
+.editor {
+  width: 600px;
+  height: 800px;
 }
 </style>

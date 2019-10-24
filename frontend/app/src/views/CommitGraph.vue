@@ -3,7 +3,7 @@
     <div class="animated fadeIn" v-if="currentProject && currentVcs">
       <div class="row">
         <div class="col-sm-12">
-          <div class="card">
+          <div class="card" style="height: 85vh;">
             <div class="card-header">
               <i class="fa fa-code"></i> Commit Graph for {{currentProject.name}}
               <div class="card-actions">
@@ -112,7 +112,7 @@
               </div>
             </div>
             <div class="card-block" style="overflow: scroll" @mousemove.prevent="dragster" @mousedown.prevent="resetOffsets" @wheel.prevent="zoom" id="svg-container">
-              <svg width="100%" height="600" id="svg-graph" v-if="currentCommitGraph.directed_graph">
+              <svg width="100%" height="100%" id="svg-graph" v-if="currentCommitGraph.directed_graph">
                 <Graph :nodes="currentCommitGraph.directed_graph.nodes" :edges="currentCommitGraph.directed_graph.edges" :minX="currentCommitGraph.directed_graph.min_x" :maxX="currentCommitGraph.directed_graph.max_x" :minY="currentCommitGraph.directed_graph.min_y" :maxY="currentCommitGraph.directed_graph.max_y" :scaleFactor="scaleFactor" :nodeRadius="nodeRadius" :options="graphOptions" @hoverNode="hoverNode" @clickNode="clickNode" :possiblePaths="possiblePaths" :productPaths="productPaths" :showBugFixing="showBugFixing" :bugFixingNodes="bugFixingNodes" :markNodes="markNodes" :articulationPoints="articulationPoints"></Graph>
               </svg>
             </div>

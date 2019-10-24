@@ -1,5 +1,7 @@
 0.1.3 (in progress)
-- add very basic rights management
+- add VERY basic rights management
+- update all dependencies
+- make commit graph (almost) use the full available size
 [ ] fix warning for loading attribute of grid
 [ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
 
