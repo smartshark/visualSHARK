@@ -3,12 +3,7 @@ import axios from 'axios'
 export default {
   token: null,
   getUrl (base) {
-    if (process.env.NODE_ENV === 'development') {
-      return 'http://localhost:8000/vs/' + base
-    }
-    if (process.env.NODE_ENV === 'production') {
-      return process.env.VS_API_URL + base
-    }
+    return process.env.VUE_APP_API_URL + base
   },
   getFilterUrl (base, dat) {
     let req = this.getUrl(base + '?')
