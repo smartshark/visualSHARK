@@ -136,7 +136,7 @@ class SingleIssueSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = Issue
-        fields = ('external_id', 'creator', 'reporter', 'assignee', 'title', 'desc', 'issue_type', 'priority', 'status', 'affects_versions', 'components', 'labels', 'resolution', 'fix_versions', 'events')
+        fields = ('external_id', 'creator', 'reporter', 'assignee', 'title', 'desc', 'issue_type', 'priority', 'status', 'affects_versions', 'components', 'labels', 'resolution', 'fix_versions', 'events', 'issue_type_verified')
 
 
 class FileRSerializer(rserializers.Serializer):

@@ -246,10 +246,12 @@ export default {
   },
   watch: {
     currentProject (value) {
+      this.id = false
       this.triggerRefresh = true
       this.triggerRefreshEvents = true
     },
     currentIts (value) {
+      this.id = false
       this.triggerRefresh = true
       this.triggerRefreshEvents = true
     },

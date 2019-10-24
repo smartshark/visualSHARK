@@ -415,10 +415,6 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
         if r.assignee_id:
             dat['assignee'] = People.objects.get(id=r.assignee_id)
 
-        # this is an example of technical dept:
-        # I want the full Author object but we have to pass this in in this way
-
-        # dat['events'] = Event.objects.filter(issue_id=r.id)  # .values_list('created_at', 'author_id', 'status', 'old_value', 'new_value')
         dat['events'] = []
         for e in Event.objects.filter(issue_id=r.id).order_by('created_at'):
             ev = {'created_at': e.created_at, 'author_id': e.author_id, 'status': e.status, 'old_value': e.old_value, 'new_value': e.new_value}
