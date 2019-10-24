@@ -9,7 +9,7 @@ import l from '../api/local'
 Vue.use(Vuex)
 
 const persist = (store) => {
-  const token = l.getSession('ab')
+  let token = l.getSession('ab')
   const username = l.getLocal('cd')
   const isSuperuser = l.getLocal('superuser') === 'true'
   const channel = l.getLocal('re')

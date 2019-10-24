@@ -101,7 +101,7 @@ cp env.production.local .env.production.local
 nano .env.production.local
 
 # run frontend in dev mode
-# npm run dev
+# npm run serve
 
 # build prod version
 npm run build
