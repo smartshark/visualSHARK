@@ -44,7 +44,7 @@ NPM
 ---
 ```bash
 cd ~
-curl -sL https://deb.nodesource.com/setup_6.x -o nodesource_setup.sh
+curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
 nano nodesource_setup.sh
 bash nodesource_setup.sh
 apt-get install nodejs
