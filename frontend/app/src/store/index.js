@@ -37,6 +37,12 @@ const persist = (store) => {
     store.commit('LOGOUT')
   }
 
+  // if we have an active session but empty local store, we clear the token to perform a new login
+  if (typeof token !== 'undefined' && token !== null && store.getters.token === null && permissions === null) {
+    token = null
+    store.dispatch('logout')
+  }
+
   // we have an active session but an empty store
   if (typeof token !== 'undefined' && token !== null && store.getters.token === null) {
     console.log('session found but empty store, performing login', token, username, isSuperuser, channel, permissions)
