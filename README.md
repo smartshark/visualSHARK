@@ -96,8 +96,8 @@ cd /srv/www/visualSHARK/frontend/app
 # install dependencies
 npm install
 
-# change local production settings, endpoints for RabbitMQ, Websocket
-cp env.production.local .env.prooduction.local
+# change local production settings, endpoints for RabbitMQ (websocket) and visualSHARK backend
+cp env.production.local .env.production.local
 nano .env.production.local
 
 # run frontend in dev mode
