@@ -33,7 +33,6 @@ const persist = (store) => {
   // otherwise we would be in an inconsistent state with some information in the local store and
   // missing information in a clean vuex store
   if (typeof token === 'undefined' || token === null) {
-    console.log('lost session, logging out')
     store.commit('LOGOUT')
   }
 
@@ -45,7 +44,14 @@ const persist = (store) => {
 
   // we have an active session but an empty store
   if (typeof token !== 'undefined' && token !== null && store.getters.token === null) {
-    console.log('session found but empty store, performing login', token, username, isSuperuser, channel, permissions)
+    l.removeLocal('projects')
+    l.removeLocal('vcs')
+    l.removeLocal('is')
+    l.removeLocal('ml')
+    l.removeLocal('currentProject')
+    l.removeLocal('currentVcs')
+    l.removeLocal('currentIts')
+    l.removeLocal('currentMl')
     store.dispatch('sessionLogin', {token, username, isSuperuser, channel, permissions})
   }
 
@@ -154,7 +160,6 @@ const persist = (store) => {
   store.subscribe((mutation, state) => {
     const type = mutation.type
     if (type === 'SESSIONLOGIN') {
-      console.log('caught sessionlogin connecting')
       Vue.discoChannel()
       Vue.connectChannel()
     }
@@ -165,12 +170,10 @@ const persist = (store) => {
       l.setLocal('superuser', mutation.payload.isSuperuser)
       l.setLocal('re', mutation.payload.channel)
       l.setLocal('permissions', mutation.payload.permissions)
-      console.log('got permissions on login', mutation.payload.permissions)
       // connect websocket after login
       Vue.connectChannel()
     }
     if (type === 'LOGOUT') {
-      console.log('clearing session store')
       l.setSession('ab', null)
       l.removeLocal('cd')
       l.removeLocal('is')

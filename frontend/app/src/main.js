@@ -34,7 +34,6 @@ Vue.config.productionTip = false
 
 Vue.use(Vuex)
 
-console.log('environment', process.env.NODE_ENV, process.env)
 if (process.env.NODE_ENV === 'development') {
   Vue.use(VueStomp, { uri: process.env.VUE_APP_WS_URL, user: process.env.VUE_APP_WS_USER, pw: process.env.VUE_APP_WS_PW })
 }
