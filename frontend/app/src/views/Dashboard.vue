@@ -337,11 +337,11 @@ export default {
       let i = 1
       Object.keys(this.dashboardStats.projects).forEach(key => {
         labels.push(key)
-        commits.push(this.dashboardStats[key].commits)
-        issues.push(this.dashboardStats[key].issues)
-        files.push(this.dashboardStats[key].files)
-        emails.push(this.dashboardStats[key].messages)
-        people.push(this.dashboardStats[key].people)
+        commits.push(this.dashboardStats.projects[key].commits)
+        issues.push(this.dashboardStats.projects[key].issues)
+        files.push(this.dashboardStats.projects[key].files)
+        emails.push(this.dashboardStats.projects[key].messages)
+        people.push(this.dashboardStats.projects[key].people)
         backgroundColor.push(this.color(i))
         i += 1
       })
