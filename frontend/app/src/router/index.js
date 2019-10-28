@@ -11,6 +11,7 @@ import Dashboard from '@/views/Dashboard'
 import Commits from '@/views/Commits'
 import Issues from '@/views/Issues'
 import People from '@/views/People'
+import CodeEditor from '@/views/CodeEditor'
 import Login from '@/views/Login'
 import Files from '@/views/Files'
 import Messages from '@/views/Messages'
@@ -79,7 +80,12 @@ const router = new Router({
         {
           path: 'people',
           name: 'People',
-          component: People,
+          component: People
+        },
+        {
+          path: 'codeeditor',
+          name: 'Code Editor',
+          component: CodeEditor,
           props: true,
           children: [
             {
