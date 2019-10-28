@@ -1,6 +1,6 @@
 <template>
 <div class="wrapper">
-   <div class="animated fadeIn" v-if="currentIts && currentIts.id">
+   <div class="animated fadeIn" v-if="currentProject && currentProject.id">
      {{ issues.length }} from {{ max }} entries <br>
 
      Linked issues: <input v-model="linked" type="checkbox">
@@ -45,23 +45,14 @@
             </tbody>
          </table>
       </div>
-      <button v-on:click="submitLabels" type="button" class="btn btn-success">Absenden</button>
+      <button v-on:click="submitLabels" type="button" :class="{'btn': true, 'btn-success': true, 'disabled': !permissions.includes('edit_issue_labels')}">Submit</button>
    </div>
-   <div class="animated fadeIn" v-if="currentIts && !currentIts.id">
+    <div class="animated fadeIn" v-if="!currentProject">
       <alert type="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
-        <strong>No Issue System</strong>
+        <strong>No project Selected</strong>
         <p>
-          No Issue System set for Project {{ currentProject.name }}
-        </p>
-      </alert>
-    </div>
-    <div class="animated fadeIn" v-if="!currentIts">
-      <alert type="danger" dismissable>
-        <span class="icon-info-circled alert-icon-float-left"></span>
-        <strong>No ITS Selected</strong>
-        <p>
-          Select a ITS first
+          Select a project first
         </p>
       </alert>
     </div>
@@ -93,8 +84,8 @@ export default {
   computed: mapGetters({
     gridIssues: 'gridIssues',
     currentProject: 'currentProject',
-    currentIssue: 'currentIssue',
-    currentIts: 'currentIts'
+    currentIts: 'currentIts',
+    permissions: 'permissions'
   }),
   mounted () {
     this.loadRandomIssue()
@@ -136,7 +127,9 @@ export default {
       var dat = {}
       if (this.currentProject !== null && this.currentProject.id !== null) {
         dat.filter = '&project_id=' + this.currentProject.id
-        dat.filter = dat.filter + '&issue_system_id=' + this.currentIts.id
+        if (this.currentIts !== null) {
+          dat.filter = dat.filter + '&issue_system_id=' + this.currentIts.id
+        }
         dat.filter = dat.filter + '&linked=' + this.linked
         dat.filter = dat.filter + '&issue_type=' + this.issueType
         dat.filter = dat.filter + '&labeled_by_other_user=' + this.labeledByOtherUser

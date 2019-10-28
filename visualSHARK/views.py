@@ -106,13 +106,13 @@ class Auth(APIView):
 
         token = Token.objects.filter(user=user)
         ass = AuthSerializer(token, many=True)
+        perms = user.get_group_permissions().union(user.get_all_permissions())  # union of group and user perms, as strings
+
         tmp = ass.data
         tmp[0]['is_superuser'] = user.is_superuser
         tmp[0]['channel'] = user.profile.channel
-        if user.is_superuser:
-            tmp[0]['permissions'] = [x.codename for x in Permission.objects.all()]
-        else:
-            tmp[0]['permissions'] = [x.codename for x in Permission.objects.filter(user=user)]
+        tmp[0]['permissions'] = [p.split('.')[-1] for p in perms]  # remove applabel, i.e., visualSHARK.edit_issue_labels -> edit_issue_labels
+
         return Response(tmp)
 
 
@@ -233,7 +233,7 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
 
 class FileActionViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for FileActions."""
-    read_perm = 'view_files'
+    read_perm = 'view_commits'
     queryset = FileAction.objects.all()
     serializer_class = FileActionSerializer
     ordering_fields = ('mode', 'lines_added', 'lines_deleted', 'size_at_commit')
@@ -293,7 +293,7 @@ class FileActionViewSet(MongoReadOnlyModelViewSet):
 
 class CodeEntityStateViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for CodeEntityStates."""
-    read_perm = 'view_files'
+    read_perm = 'view_commits'
     queryset = CodeEntityState.objects.all()
     serializer_class = CodeEntityStateSerializer
     ordering_fields = ('ce_type', 'long_name')
@@ -319,7 +319,7 @@ class CodeEntityStateViewSet(MongoReadOnlyModelViewSet):
 
 
 class HunkViewSet(MongoReadOnlyModelViewSet):
-    read_perm = 'view_files'
+    read_perm = 'view_commits'
     queryset = Hunk.objects.all()
     serializer_class = HunkSerializer
     filter_fields = ('file_action_id', 'id')
@@ -341,11 +341,12 @@ class ProjectViewSet(MongoReadOnlyModelViewSet):
     serializer_class = ProjectSerializer
 
     def list(self, request):
-        is_superuser = request.user.is_superuser
         projects = []
-        query = ProjectAttributes.objects.filter(is_visible=is_superuser)
-        if(is_superuser):
+        query = ProjectAttributes.objects.filter(is_visible=True)
+
+        if request.user.is_superuser:
             query = ProjectAttributes.objects.all()
+
         for pro in query.order_by('project_name'):
             projects.append(Project.objects.get(name=pro.project_name))
 
@@ -370,6 +371,7 @@ class IssueSystemViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MailingListViewSet(viewsets.ReadOnlyModelViewSet):
+    read_perm = 'view_messages'
     queryset = MailingList.objects.all()
     serializer_class = MailingListSerializer
     filter_fields = ('project_id')
@@ -413,10 +415,6 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
         if r.assignee_id:
             dat['assignee'] = People.objects.get(id=r.assignee_id)
 
-        # this is an example of technical dept:
-        # I want the full Author object but we have to pass this in in this way
-
-        # dat['events'] = Event.objects.filter(issue_id=r.id)  # .values_list('created_at', 'author_id', 'status', 'old_value', 'new_value')
         dat['events'] = []
         for e in Event.objects.filter(issue_id=r.id).order_by('created_at'):
             ev = {'created_at': e.created_at, 'author_id': e.author_id, 'status': e.status, 'old_value': e.old_value, 'new_value': e.new_value}
@@ -646,7 +644,6 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
 
 class ProductViewSet(MongoReadOnlyModelViewSet):
-
     read_perm = 'view_analytics'
 
     """Product data from mynbouSHARK."""
@@ -670,7 +667,6 @@ class ProductViewSet(MongoReadOnlyModelViewSet):
 
 
 class PredictionEvaluationView(APIView):
-
     read_perm = 'view_analytics'
 
     def get(self, request):
@@ -694,7 +690,6 @@ class PredictionEvaluationView(APIView):
 
 
 class PredictionView(APIView):
-
     read_perm = 'view_analytics'
 
     def get(self, request):
@@ -723,9 +718,16 @@ class StatsView(APIView):
     read_perm = 'view_stats'
 
     def get(self, request):
-        projects = {}
+        projects = {'projects': {}}
+        projects['num_projects'] = Project.objects.count()
+        projects['num_commits'] = Commit.objects.count()
+        projects['num_issues'] = Issue.objects.count()
+        projects['num_emails'] = Message.objects.count()
+        projects['num_files'] = File.objects.count()
+        projects['num_people'] = People.objects.count()
+
         for pro in ProjectStats.objects.filter(stats_date=date.today()):
-            projects[pro.project_name] = {
+            projects['projects'][pro.project_name] = {
                 'commits': pro.number_commits,
                 'issues': pro.number_issues,
                 'files': pro.number_files,
@@ -893,7 +895,11 @@ class IssueLabelSet(APIView):
         linked = request.GET["linked"] == "true"
 
         # we need this to construct the URL
-        issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        if 'issue_system_id' in request.GET.keys():
+            issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        else:
+            issue_system = IssueSystem.objects.get(project_id=request.GET['project_id'])
+
         if 'jira' in issue_system.url:
             base_url = 'https://issues.apache.org/jira/browse/'
         elif 'github' in issue_system.url:
@@ -905,7 +911,7 @@ class IssueLabelSet(APIView):
         vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
         vcs_url = vcs.url.replace('.git', '') + '/commit/'
 
-        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked)
+        issue_query = IssueValidation.objects.filter(issue_system_id=issue_system.id, linked=linked)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         if request.GET["labeled_by_other_user"] == "true":
@@ -970,11 +976,6 @@ class IssueLabelSet(APIView):
         return Response(result)
 
 
-# todo:
-# - kein sampling
-# - links zu den commits
-# - einrückung falsch
-
 class IssueConflictSet(APIView):
     read_perm = 'view_issue_conflicts'
     write_perm = 'edit_issue_conflicts'
@@ -985,7 +986,11 @@ class IssueConflictSet(APIView):
         result['issues'] = []
 
         # we need this to construct the URL
-        issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        if 'issue_system_id' in request.GET.keys():
+            issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
+        else:
+            issue_system = IssueSystem.objects.get(project_id=request.GET['project_id'])
+
         if 'jira' in issue_system.url:
             base_url = 'https://issues.apache.org/jira/browse/'
         elif 'github' in issue_system.url:
@@ -1000,7 +1005,7 @@ class IssueConflictSet(APIView):
         linked = request.GET["linked"] == "true"
 
         # query construction
-        issue_query = IssueValidation.objects.filter(issue_system_id=request.GET["issue_system_id"], linked=linked, resolution=False)
+        issue_query = IssueValidation.objects.filter(issue_system_id=issue_system.id, linked=linked, resolution=False)
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
 
@@ -1066,15 +1071,18 @@ class IssueConflictSet(APIView):
         result['status'] = "ok"
         return Response(result)
 
+
 # issue link means bug link in this case
 class IssueLinkSet(APIView):
     read_perm = 'view_issue_links'
+    write_perm = 'edit_issue_links'
 
     def get(self, request):
         result = {}
         result['commits'] = []
         limit = int(request.GET["limit"])
-        query = Commit.objects.filter(Q(vcs_system_id=request.GET["vcs_system_id"])).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
+        vcs_system = VCSSystem.objects.get(project_id=request.GET['project_id'])
+        query = Commit.objects.filter(Q(vcs_system_id=vcs_system.id)).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
         result['max'] = query.count()
         commits = query.order_by('?')[:limit]
         for commit in commits:

@@ -9,11 +9,10 @@ import l from '../api/local'
 Vue.use(Vuex)
 
 const persist = (store) => {
-  // const projectData = getLocal('projectData')
-  const token = l.getLocal('ab')
+  let token = l.getSession('ab')
   const username = l.getLocal('cd')
   const isSuperuser = l.getLocal('superuser') === 'true'
-  const channel = l.getSession('re')
+  const channel = l.getLocal('re')
   const permissions = l.getLocal('permissions')
 
   const projects = l.getLocal('projects')
@@ -30,6 +29,32 @@ const persist = (store) => {
     msgs = []
   }
 
+  // if we have lost our session we also need to reset everything
+  // otherwise we would be in an inconsistent state with some information in the local store and
+  // missing information in a clean vuex store
+  if (typeof token === 'undefined' || token === null) {
+    store.commit('LOGOUT')
+  }
+
+  // if we have an active session but empty local store, we clear the token to perform a new login
+  if (typeof token !== 'undefined' && token !== null && store.getters.token === null && permissions === null) {
+    token = null
+    store.dispatch('logout')
+  }
+
+  // we have an active session but an empty store
+  if (typeof token !== 'undefined' && token !== null && store.getters.token === null) {
+    l.removeLocal('projects')
+    l.removeLocal('vcs')
+    l.removeLocal('is')
+    l.removeLocal('ml')
+    l.removeLocal('currentProject')
+    l.removeLocal('currentVcs')
+    l.removeLocal('currentIts')
+    l.removeLocal('currentMl')
+    store.dispatch('sessionLogin', {token, username, isSuperuser, channel, permissions})
+  }
+
   if (typeof msgs !== 'undefined' && msgs !== null) {
     try {
       msgs = JSON.parse(msgs) // otherwise it will be an object list
@@ -44,19 +69,6 @@ const persist = (store) => {
       // console.log('error loading user messages from persist', e)
     }
   }
-
-  // fill token from session storage if we have it (store is clean on page reload)
-  if (token !== null && username !== null && isSuperuser !== null && channel !== null && permissions !== null) {
-    store.commit('LOGIN', { token, username, isSuperuser, channel, permissions })
-
-    if (typeof projects !== 'undefined' && projects !== null) {
-      store.dispatch('getAllProjects')
-      store.dispatch('getAllVcs')
-      store.dispatch('getAllIssueSystems')
-      store.dispatch('getAllMailingLists')
-    }
-  }
-
   if (typeof projects !== 'undefined' && projects !== null) {
     try {
       let response = {
@@ -147,24 +159,39 @@ const persist = (store) => {
   }
   store.subscribe((mutation, state) => {
     const type = mutation.type
+    if (type === 'SESSIONLOGIN') {
+      Vue.discoChannel()
+      Vue.connectChannel()
+    }
     if (type === 'LOGIN') {
       // console.log('initial login', mutation.payload.token, mutation.payload.username)
-      l.setLocal('ab', mutation.payload.token)
+      l.setSession('ab', mutation.payload.token)
       l.setLocal('cd', mutation.payload.username)
       l.setLocal('superuser', mutation.payload.isSuperuser)
-      l.setSession('re', mutation.payload.channel)
+      l.setLocal('re', mutation.payload.channel)
       l.setLocal('permissions', mutation.payload.permissions)
       // connect websocket after login
       Vue.connectChannel()
     }
     if (type === 'LOGOUT') {
-      // console.log('clearing session store')
-      l.removeLocal('ab')
+      l.setSession('ab', null)
       l.removeLocal('cd')
       l.removeLocal('is')
-      l.setSession('re', null)
+      l.removeLocal('re')
       l.removeLocal('permissions')
       l.removeLocal('superuser')
+
+      l.removeLocal('projects')
+      l.removeLocal('vcs')
+      l.removeLocal('is')
+      l.removeLocal('ml')
+      l.removeLocal('currentProject')
+      l.removeLocal('currentVcs')
+      l.removeLocal('currentIts')
+      l.removeLocal('currentMl')
+
+      // clearing vuex store
+      // TODO!
 
       // disconnect websocket after logout
       Vue.discoChannel()

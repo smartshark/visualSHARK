@@ -1,6 +1,6 @@
 <template>
 <div class="wrapper">
-   <div class="animated fadeIn" v-if="currentVcs && currentVcs.id">
+   <div class="animated fadeIn" v-if="currentProject && currentProject.id">
       {{ commits.length }} from {{ max }} entries <br>
       <div class="card">
          <table class="table table-striped">
@@ -22,23 +22,14 @@
             </tbody>
          </table>
       </div>
-      <button v-on:click="submitLabels" type="button" class="btn btn-success">Absenden</button>
+      <button v-on:click="submitLabels" type="button" :class="{'btn': true, 'btn-success': true, 'disabled': !permissions.includes('edit_issue_links')}">Submit</button>
    </div>
-   <div class="animated fadeIn" v-if="currentVcs && !currentVcs.id">
+    <div class="animated fadeIn" v-if="!currentProject">
       <alert type="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
-        <strong>No VCS System</strong>
+        <strong>No project Selected</strong>
         <p>
-          No VCS System set for Project {{ currentProject.name }}
-        </p>
-      </alert>
-    </div>
-    <div class="animated fadeIn" v-if="!currentVcs">
-      <alert type="danger" dismissable>
-        <span class="icon-info-circled alert-icon-float-left"></span>
-        <strong>No VCS Selected</strong>
-        <p>
-          Select a VCS first
+          Select a project first
         </p>
       </alert>
     </div>
@@ -69,12 +60,16 @@ export default {
   computed: mapGetters({
     currentProject: 'currentProject',
     currentIssue: 'currentIssue',
-    currentVcs: 'currentVcs'
+    currentVcs: 'currentVcs',
+    permissions: 'permissions'
   }),
   mounted () {
     this.loadRandomIssueLinks()
   },
   watch: {
+    currentProject (value) {
+      this.loadRandomIssueLinks()
+    },
     currentVcs (value) {
       this.loadRandomIssueLinks()
     },
@@ -105,7 +100,9 @@ export default {
       var dat = {}
       if (this.currentProject !== null && this.currentProject.id !== null) {
         dat.filter = '&project_id=' + this.currentProject.id
-        dat.filter = dat.filter + '&vcs_system_id=' + this.currentVcs.id
+        if (this.currentVcs !== null) {
+          dat.filter = dat.filter + '&vcs_system_id=' + this.currentVcs.id
+        }
         dat.filter = dat.filter + '&limit=10'
         rest.getCommitWithLinksRandom(dat)
           .then(response => {

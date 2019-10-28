@@ -1,4 +1,11 @@
-0.1.2 (in progress)
+0.1.3 (in progress)
+- add VERY basic rights management
+- update all dependencies
+- make commit graph (almost) use the full available size
+[ ] fix warning for loading attribute of grid
+[ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
+
+0.1.2
 - Grid does now switch to first page if entries to display is changed
 - Grid does now show if the data is not yet loaded (translucency for now)
 - added first line of commit message to commit list views
@@ -15,8 +22,9 @@
 - now only request single commits with vcs_system_id not just revision_hash
 - add PMD warnings to analytics/defect links view
 - add options to disable flier filtering in release finder
-[ ] fix warning for loading attribute of grid
-[ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
+- add endpoint manual labelling for commit-issue links
+- add endpoint manual labelling for issue types
+- add endpoint for conflict resolution for manual labelling conflicts
 
 0.1.1
 - Successful jobs get acknowledged automatically

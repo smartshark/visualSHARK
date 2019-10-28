@@ -44,7 +44,7 @@ NPM
 ---
 ```bash
 cd ~
-curl -sL https://deb.nodesource.com/setup_6.x -o nodesource_setup.sh
+curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
 nano nodesource_setup.sh
 bash nodesource_setup.sh
 apt-get install nodejs
@@ -96,12 +96,12 @@ cd /srv/www/visualSHARK/frontend/app
 # install dependencies
 npm install
 
-# change local production settings, endpoints for RabbitMQ, Websocket
-cp ./config/prod.local.env.js ./config/prod.env.js
-nano ./config/prod.env.js
+# change local production settings, endpoints for RabbitMQ (websocket) and visualSHARK backend
+cp env.production.local .env.production.local
+nano .env.production.local
 
 # run frontend in dev mode
-# npm run dev
+# npm run serve
 
 # build prod version
 npm run build

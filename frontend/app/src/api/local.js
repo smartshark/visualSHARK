@@ -7,6 +7,9 @@ export default {
   setLocal (key, value) {
     window.localStorage.setItem(key, value)
   },
+  removeLocal (key) {
+    window.localStorage.removeItem(key)
+  },
   getSession (key) {
     let tok = null
     document.cookie.split(';').forEach(item => {

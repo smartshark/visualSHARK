@@ -35,10 +35,10 @@ Vue.config.productionTip = false
 Vue.use(Vuex)
 
 if (process.env.NODE_ENV === 'development') {
-  Vue.use(VueStomp, { uri: 'ws://localhost:15674/ws', user: 'guest', pw: 'guest' })
+  Vue.use(VueStomp, { uri: process.env.VUE_APP_WS_URL, user: process.env.VUE_APP_WS_USER, pw: process.env.VUE_APP_WS_PW })
 }
 if (process.env.NODE_ENV === 'production') {
-  Vue.use(VueStomp, { uri: process.env.VS_WS_URL, user: process.env.VS_WS_USER, pw: process.env.VS_WS_PW })
+  Vue.use(VueStomp, { uri: process.env.VUE_APP_WS_URL, user: process.env.VUE_APP_WS_USER, pw: process.env.VUE_APP_WS_PW })
 }
 
 // register custom fields

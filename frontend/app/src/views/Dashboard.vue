@@ -8,7 +8,7 @@
                         <i class="fa fa-tasks"></i>
                     </div>
                     <div class="h4 mb-0">
-                      <template v-if="dashboard.projects > 0">{{ dashboard.projects }}</template>
+                      <template v-if="dashboardStats.num_projects > 0">{{ dashboardStats.num_projects }}</template>
                       <template v-else>...loading</template>
                     </div>
                     <div class="text-muted text-uppercase font-weight-bold">Projects</div>
@@ -22,7 +22,7 @@
                         <i class="fa fa-code"></i>
                     </div>
                     <div class="h4 mb-0">
-                      <template v-if="dashboard.commits > 0">{{ dashboard.commits }}</template>
+                      <template v-if="dashboardStats.num_commits > 0">{{ dashboardStats.num_commits }}</template>
                       <template v-else>...loading</template>
                     </div>
                     <div class="text-muted text-uppercase font-weight-bold">Commits</div>
@@ -36,7 +36,7 @@
                         <i class="fa fa-bug"></i>
                     </div>
                     <div class="h4 mb-0">
-                      <template v-if="dashboard.issues > 0">{{ dashboard.issues }}</template>
+                      <template v-if="dashboardStats.num_issues > 0">{{ dashboardStats.num_issues }}</template>
                       <template v-else>...loading</template>
                     </div>
                     <div class="text-muted text-uppercase font-weight-bold">Issues</div>
@@ -50,7 +50,7 @@
                         <i class="fa fa-files-o"></i>
                     </div>
                     <div class="h4 mb-0">
-                      <template v-if="dashboard.files > 0">{{ dashboard.files }}</template>
+                      <template v-if="dashboardStats.num_files > 0">{{ dashboardStats.num_files }}</template>
                       <template v-else>...loading</template>
                     </div>
                     <div class="text-muted text-uppercase font-weight-bold">Files</div>
@@ -64,7 +64,7 @@
                         <i class="fa fa-envelope"></i>
                     </div>
                     <div class="h4 mb-0">
-                      <template v-if="dashboard.emails > 0">{{ dashboard.emails }}</template>
+                      <template v-if="dashboardStats.num_emails > 0">{{ dashboardStats.num_emails }}</template>
                       <template v-else>...loading</template>
                     </div>
                     <div class="text-muted text-uppercase font-weight-bold">E-Mails</div>
@@ -78,7 +78,7 @@
                         <i class="fa fa-group"></i>
                     </div>
                     <div class="h4 mb-0">
-                      <template v-if="dashboard.people > 0">{{ dashboard.people }}</template>
+                      <template v-if="dashboardStats.num_people > 0">{{ dashboardStats.num_people }}</template>
                       <template v-else>...loading</template>
                     </div>
                     <div class="text-muted text-uppercase font-weight-bold">People</div>
@@ -177,16 +177,18 @@
                             <td>{{ project.name }}</td>
                             <td>
                                 <template v-if="project.vcs">
-                                <i class="fa fa-github"></i> <a :href="project.vcs.url" target="_blank">{{ project.vcs.repository_type }}</a><br/>
-                                <span class="updated">{{ project.vcs.last_updated | momentfromnow }}</span>
+                                <div v-for="vcs in project.vcs">
+                                    <i class="fa fa-github"></i> <a :href="vcs.url" target="_blank">{{ vcs.repository_type }}</a><br/>
+                                    <span class="updated">{{ vcs.last_updated | momentfromnow }}</span>
+                                </div>
                                 </template>
                                 <template v-else>
                                     no VCS
                                 </template>
                             </td>
                             <td>
-                                <template v-if="project.iss">
-                                    <div v-for="is in project.iss">
+                                <template v-if="project.its">
+                                    <div v-for="is in project.its">
                                     <a :href="is.url" target="_blank">{{ is.url }}</a><br/>
                                     <span class="updated">{{ is.last_updated | momentfromnow }}</span>
                                     <br/>
@@ -227,13 +229,12 @@ import Chart from 'chart.js'
 export default {
   name: 'dashboard',
   computed: mapGetters({
-    dashboard: 'dashboard',
     dashboardStats: 'dashboardStats',
     dashboardStatsHistory: 'dashboardStatsHistory',
     projects: 'allProjectData'
   }),
   mounted () {
-    this.$store.dispatch('updateDashboard')
+    // this.$store.dispatch('updateDashboard')
     this.$store.dispatch('updateDashboardStats')
     this.$store.dispatch('updateDashboardStatsHistory')
     // this.drawChart()
@@ -334,13 +335,13 @@ export default {
       let emails = []
       let people = []
       let i = 1
-      Object.keys(this.dashboardStats).forEach(key => {
+      Object.keys(this.dashboardStats.projects).forEach(key => {
         labels.push(key)
-        commits.push(this.dashboardStats[key].commits)
-        issues.push(this.dashboardStats[key].issues)
-        files.push(this.dashboardStats[key].files)
-        emails.push(this.dashboardStats[key].messages)
-        people.push(this.dashboardStats[key].people)
+        commits.push(this.dashboardStats.projects[key].commits)
+        issues.push(this.dashboardStats.projects[key].issues)
+        files.push(this.dashboardStats.projects[key].files)
+        emails.push(this.dashboardStats.projects[key].messages)
+        people.push(this.dashboardStats.projects[key].people)
         backgroundColor.push(this.color(i))
         i += 1
       })

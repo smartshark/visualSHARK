@@ -88,16 +88,11 @@ export default {
   watch: {
     loginSuccess (value) {
       if (value === true) {
-        this.$store.dispatch('getAllProjects')
-        this.$store.dispatch('getAllVcs')
-        this.$store.dispatch('getAllIssueSystems')
-        this.$store.dispatch('getAllMailingLists')
-        this.$store.dispatch('getAllVcsBranches')
         this.$router.replace('/')
       }
     },
     loginMessage (value) {
-      console.log('login error message changed', value)
+      console.log('login error', value)
     }
   }
 }

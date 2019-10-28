@@ -65,6 +65,7 @@ export const PUSH_LOADING = 'PUSH_LOADING'
 export const POP_LOADING = 'POP_LOADING'
 export const LOGIN = 'LOGIN'
 export const LOGOUT = 'LOGOUT'
+export const SESSIONLOGIN = 'SESSIONLOGIN'
 
 export const SET_COMMIT_LABEL_FIELDS = 'SET_COMMIT_LABEL_FIELDS'
 
