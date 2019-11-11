@@ -7,7 +7,7 @@
             </div>
             <div class="card-block">
              <MonacoEditor class="editor"
-  :diffEditor="true" :value="code" :original="original" language="javascript" ref="editor" />
+  :diffEditor="true" :value="code" :original="original" language="foldLanguage" ref="editor" />
             </div>
           </div>
 
@@ -18,6 +18,8 @@
 <script>
 import { mapGetters } from 'vuex'
 import MonacoEditor from 'vue-monaco'
+
+
 
 export default {
   data () {
@@ -40,7 +42,25 @@ var jsCode2 = [
 	'		this.age = age;',
 	'	}',
 	'}',
-	'Person.prototype.getAge = function () {',
+	'Person.prototsdfsdfype.getAgedfsdf = function () {',
+	'	return this.age;',
+	'};',
+	'"use strict";',
+	'function Person(age) {',
+	'	if (age) {',
+	'		this.age = age;',
+	'	}',
+	'}',
+	'Person.prototsdfsdfype.getAgedfsdf = function () {',
+	'	return this.age;',
+	'};',
+	'"use strict";',
+	'function Person(age) {',
+	'	if (age) {',
+	'		this.age = age;',
+	'	}',
+	'}',
+	'Person.prototsdfsdfype.getAgedfsdf = function () {',
 	'	return this.age;',
 	'};'
 ].join('\n');
@@ -51,11 +71,44 @@ var jsCode2 = [
     }
   },
   mounted () {
+monaco.languages.register({
+    id: "foldLanguage"
+});
+  var that2 = this.$refs;
+
+  monaco.languages.registerFoldingRangeProvider("foldLanguage", {
+    provideFoldingRanges: function(model, context, token) {
+        var ranges = [];
+        var startLine = 1;
+        var changes = that2.editor.getEditor().getLineChanges();
+        for(var i = 0; i < changes.length; i++)
+        {
+          var change = changes[i];
+          ranges.push({
+                start: startLine,
+                end: change.originalStartLineNumber -1,
+                kind: monaco.languages.FoldingRangeKind.Region
+          });
+          startLine = change.originalEndLineNumber +1;
+          console.log(change);
+        }
+
+        ranges.push({
+                start: startLine,
+                end: model.getLineCount(),
+                kind: monaco.languages.FoldingRangeKind.Region
+        });
+        console.log(ranges);
+        return ranges;
+    }
+});
      var ed = this.$refs.editor.getEditor().getOriginalEditor();
      var decorations = this.$refs.editor.getEditor().getOriginalEditor().deltaDecorations([], [
 	{ range: new monaco.Range(1,1,3,1), options: { isWholeLine: true, linesDecorationsClassName: 'myLineDecoration' }},
 ]);
+window.editor1 = this.$refs.editor;
 
+this.$refs.editor.getEditor().getOriginalEditor().updateOptions({ readOnly: true, folding: true, language: "foldLanguage" });
 this.$refs.editor.getEditor().getOriginalEditor().addAction({
 	// An unique identifier of the contributed action.
 	id: 'my-unique-id',
@@ -89,6 +142,7 @@ this.$refs.editor.getEditor().getOriginalEditor().addAction({
 	}
 });
 
+this.$refs.editor.getEditor().getModifiedEditor().updateOptions({ readOnly: true });
 this.$refs.editor.getEditor().getOriginalEditor().addAction({
 	// An unique identifier of the contributed action.
 	id: 'my-unique-id2',
@@ -121,6 +175,10 @@ this.$refs.editor.getEditor().getOriginalEditor().addAction({
 		return null;
 	}
 });
+
+setTimeout(function() {
+that2.editor.getEditor().getOriginalEditor().trigger('fold', 'editor.foldAll');
+}, 1000);
 
   },
   components: {
