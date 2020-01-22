@@ -626,8 +626,8 @@ public class IvyArtifactReport extends IvyPostResolveTask {
 
 
     return {
-      code: jsCode,
-      original: jsCode2
+      code: jsCode2,
+      original: jsCode
     }
   },
   mounted () {
@@ -687,14 +687,13 @@ public class IvyArtifactReport extends IvyPostResolveTask {
 });
 
      var ed = this.$refs.editor.getEditor().getOriginalEditor();
-     var decorations = this.$refs.editor.getEditor().getOriginalEditor().deltaDecorations([], [
-	{ range: new monaco.Range(1,1,3,1), options: { isWholeLine: true, linesDecorationsClassName: 'myLineDecoration' }},
-]);
+     var decorations = [];
 window.editor1 = this.$refs.editor;
 
 this.$refs.editor.getEditor().getModifiedEditor().updateOptions({ readOnly: true, folding: true, automaticLayout: true  });
 this.$refs.editor.getEditor().getOriginalEditor().updateOptions({ readOnly: true, folding: true,  automaticLayout: true  });
-this.$refs.editor.getEditor().getOriginalEditor().addAction({
+
+var action1  = {
 	// An unique identifier of the contributed action.
 	id: 'my-unique-id',
 
@@ -725,9 +724,11 @@ this.$refs.editor.getEditor().getOriginalEditor().addAction({
 ]);
 		return null;
 	}
-});
+};
+this.$refs.editor.getEditor().getOriginalEditor().addAction(action1);
+this.$refs.editor.getEditor().getModifiedEditor().addAction(action1);
 
-this.$refs.editor.getEditor().getOriginalEditor().addAction({
+var action2  = {
 	// An unique identifier of the contributed action.
 	id: 'my-unique-id2',
 
@@ -758,7 +759,10 @@ this.$refs.editor.getEditor().getOriginalEditor().addAction({
 ]);
 		return null;
 	}
-});
+};
+
+this.$refs.editor.getEditor().getOriginalEditor().addAction(action2);
+this.$refs.editor.getEditor().getModifiedEditor().addAction(action2);
 
 var foldingContrib = that2.$refs.editor.getEditor().getOriginalEditor().getContribution('editor.contrib.folding');
 var foldingContribModified = that2.$refs.editor.getEditor().getModifiedEditor().getContribution('editor.contrib.folding');
@@ -815,7 +819,7 @@ that2.$refs.editor.getEditor().getOriginalEditor().trigger('fold', 'editor.foldA
 }
 
 .myLineDecoration {
-	background: lightblue;
+	background: yellow;
 	width: 5px !important;
 	margin-left: 3px;
 }
