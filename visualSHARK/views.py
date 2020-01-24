@@ -5,6 +5,10 @@ import json
 import os
 import io
 import logging
+import tarfile
+import git
+import shutil
+import re
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -50,6 +54,7 @@ from .util.helper import Label, TICKET_TYPE_MAPPING
 
 log = logging.getLogger()
 
+_hdr_pat = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
 
 class RelatedOrderingFilter(OrderingFilter):
     """Extends OrderingFilter to support ordering by fields in related models."""
@@ -1122,3 +1127,86 @@ class IssueLinkSet(APIView):
         result = {}
         result['status'] = "ok"
         return Response(result)
+
+
+class CommitLabel(APIView):
+    read_perm = 'view_issue_links'
+    write_perm = 'edit_issue_links'
+
+    def get(self, request):
+        project = "gora"
+        commit_hash = "70ff159fc7b4535f6e59a17317cca5e1618803d9"
+        projectDb = Project.objects.get(name=project)
+        vcs_system = VCSSystem.objects.get(project_id=projectDb.id)
+        content = vcs_system.repository_file.read()
+        filename = 'tmp/' + project + ".tar.gz"
+        with open(filename, "wb") as text_file:
+            text_file.write(content)
+            text_file.close()
+
+        with tarfile.open(filename, "r:gz") as tar:
+            tar.extractall('tmp')
+            tar.close()
+
+        repo = git.Repo('tmp/' + project)
+        repo.git.reset('--hard', commit_hash)
+
+        result = {}
+        files = []
+
+        commit = Commit.objects.get(revision_hash=commit_hash)
+
+        file_actions = FileAction.objects.filter(commit_id=commit.id)
+        for file_action in file_actions:
+            file = File.objects.get(id=file_action.file_id)
+            fileCompare = {}
+            fileCompare['path'] = file.path
+            f = open('tmp/' + project + "/" + file.path, "r")
+            fileContent = f.read()
+            fileCompare['before'] = fileContent
+            f.close()
+
+            hunks = Hunk.objects.filter(file_action_id=file_action.id)
+            beforeContent = fileContent
+            for hunk in hunks:
+                header = "@@ -" + str(hunk.old_start) + "," + str(hunk.old_lines) +" +" + str(hunk.new_start) + "," + str(hunk.new_lines) +" @@\n"
+                beforeContent = self.apply_patch(beforeContent, header + hunk.content)
+            fileCompare['after'] = beforeContent
+            files.append(fileCompare)
+            # print(file.path)
+
+        shutil.rmtree('tmp/' + project)
+
+        result['files'] = files
+        result['status'] = "ok"
+        return Response(result)
+
+
+    def apply_patch(self, s, patch, revert=False):
+        """
+        Apply unified diff patch to string s to recover newer string.
+        If revert is True, treat s as the newer string, recover older string.
+        """
+        s = s.splitlines(True)
+        p = patch.splitlines(True)
+        t = ''
+        i = sl = 0
+        (midx, sign) = (1, '+') if not revert else (3, '-')
+        while i < len(p) and p[i].startswith(("---", "+++")): i += 1  # skip header lines
+        while i < len(p):
+            m = _hdr_pat.match(p[i])
+            if not m: raise Exception("Cannot process diff")
+            i += 1
+            l = int(m.group(midx)) - 1 + (m.group(midx + 1) == '0')
+            t += ''.join(s[sl:l])
+            sl = l
+            while i < len(p) and p[i][0] != '@':
+                if i + 1 < len(p) and p[i + 1][0] == '\\':
+                    line = p[i][:-1]; i += 2
+                else:
+                    line = p[i]; i += 1
+                if len(line) > 0:
+                    if line[0] == sign or line[0] == ' ': t += line[1:]
+                    sl += (line[0] != sign)
+        t += ''.join(s[sl:])
+        return t
