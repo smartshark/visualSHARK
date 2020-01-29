@@ -5,9 +5,9 @@ import json
 import os
 import io
 import logging
-import tarfile
 import git
 import shutil
+import tempfile
 import re
 
 from datetime import datetime, date
@@ -1135,49 +1135,59 @@ class CommitLabel(APIView):
 
     def get(self, request):
         project = "gora"
-        commit_hash = "70ff159fc7b4535f6e59a17317cca5e1618803d9"
-        projectDb = Project.objects.get(name=project)
-        vcs_system = VCSSystem.objects.get(project_id=projectDb.id)
-        content = vcs_system.repository_file.read()
-        filename = 'tmp/' + project + ".tar.gz"
-        with open(filename, "wb") as text_file:
-            text_file.write(content)
-            text_file.close()
-
-        with tarfile.open(filename, "r:gz") as tar:
-            tar.extractall('tmp')
-            tar.close()
-
-        repo = git.Repo('tmp/' + project)
-        repo.git.reset('--hard', commit_hash)
-
         result = {}
-        files = []
+        #issue_id = ObjectId("5e2856656b4afcd592c528f5")
+        issue_id = ObjectId("5e2856036b4afcd592c52142")
 
-        commit = Commit.objects.get(revision_hash=commit_hash)
+        # Default error handling
+        issue = Issue.objects.get(id=issue_id)
+        if issue == None:
+            result['status'] = "failure"
+            return Response(result)
 
-        file_actions = FileAction.objects.filter(commit_id=commit.id)
-        for file_action in file_actions:
-            file = File.objects.get(id=file_action.file_id)
-            fileCompare = {}
-            fileCompare['path'] = file.path
-            f = open('tmp/' + project + "/" + file.path, "r")
-            fileContent = f.read()
-            fileCompare['before'] = fileContent
-            f.close()
+        if (not os.path.exists('repo_cache/' + project)):
+            result['status'] = "failure"
+            return Response(result)
 
-            hunks = Hunk.objects.filter(file_action_id=file_action.id)
-            beforeContent = fileContent
-            for hunk in hunks:
-                header = "@@ -" + str(hunk.old_start) + "," + str(hunk.old_lines) +" +" + str(hunk.new_start) + "," + str(hunk.new_lines) +" @@\n"
-                beforeContent = self.apply_patch(beforeContent, header + hunk.content)
-            fileCompare['after'] = beforeContent
-            files.append(fileCompare)
-            # print(file.path)
+        # Clone to temp folder
+        folder = tempfile.mkdtemp()
+        git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
 
-        shutil.rmtree('tmp/' + project)
+        # Get all commits to issue
+        commits = Commit.objects.filter(linked_issue_ids=issue_id)
+        commit_data = []
+        for commit in commits:
+            repo = git.Repo(folder)
+            repo.git.reset('--hard', commit.revision_hash)
+            files = []
+            file_actions = FileAction.objects.filter(commit_id=commit.id)
+            for file_action in file_actions:
+                file = File.objects.get(id=file_action.file_id)
+                fileCompare = {}
+                fileCompare['path'] = file.path
+                f = open(folder + "/" + file.path, "r")
+                fileContent = f.read()
+                fileCompare['before'] = fileContent
+                f.close()
 
-        result['files'] = files
+                hunks = Hunk.objects.filter(file_action_id=file_action.id)
+                before_content = fileContent
+                for hunk in hunks:
+                    header = "@@ -" + str(hunk.old_start) + "," + str(hunk.old_lines) +" +" + str(hunk.new_start) + "," + str(hunk.new_lines) +" @@\n"
+                    before_content = self.apply_patch(before_content, header + hunk.content)
+                    fileCompare['after'] = before_content
+                    files.append(fileCompare)
+
+                files.append(fileCompare)
+            commit_response_object = {}
+            commit_response_object["revision_hash"] = commit.revision_hash
+            commit_response_object["files"] = files
+            commit_data.append(commit_response_object)
+
+        shutil.rmtree(folder)
+
+        result['commits'] = commit_data
+        result['issue'] = issue.title
         result['status'] = "ok"
         return Response(result)
 

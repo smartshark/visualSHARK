@@ -66,9 +66,9 @@ export default {
       rest.getIssueWithCommits('')
         .then(response => {
           this.$store.dispatch('popLoading')
-          console.log(response.data['files'][0]['after'])
-          var original = response.data['files'][0]['before']
-          var code = response.data['files'][0]['after']
+          console.log(response.data['commits'][0]["files"][0]['after'])
+          var original = response.data['commits'][0]["files"][0]['before']
+          var code = response.data['commits'][0]["files"][0]['after']
           var originalModel = monaco.editor.createModel(original, "java");
           var modifiedModel = monaco.editor.createModel(code, "java");
 
