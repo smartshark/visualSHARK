@@ -1136,8 +1136,15 @@ class CommitLabel(APIView):
     def get(self, request):
         project = "gora"
         result = {}
-        #issue_id = ObjectId("5e2856656b4afcd592c528f5")
-        issue_id = ObjectId("5e2856036b4afcd592c52142")
+        issue_id = ObjectId("5e2855306b4afcd592c5117e")
+        #issue_id = ObjectId("5e2857146b4afcd592c53599")
+
+        #issues = Issue.objects.all()
+        #for issue in issues:
+        #    commits = Commit.objects.filter(linked_issue_ids=issue.id)
+        #    if(commits.count() > 1):
+        #        issue_id = issue.id
+        #        print(issue.id)
 
         # Default error handling
         issue = Issue.objects.get(id=issue_id)
@@ -1154,7 +1161,7 @@ class CommitLabel(APIView):
         git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
 
         # Get all commits to issue
-        commits = Commit.objects.filter(linked_issue_ids=issue_id)
+        commits = Commit.objects.filter(linked_issue_ids=issue.id)
         commit_data = []
         for commit in commits:
             repo = git.Repo(folder)
@@ -1176,7 +1183,6 @@ class CommitLabel(APIView):
                     header = "@@ -" + str(hunk.old_start) + "," + str(hunk.old_lines) +" +" + str(hunk.new_start) + "," + str(hunk.new_lines) +" @@\n"
                     before_content = self.apply_patch(before_content, header + hunk.content)
                     fileCompare['after'] = before_content
-                    files.append(fileCompare)
 
                 files.append(fileCompare)
             commit_response_object = {}

@@ -26,20 +26,21 @@
 <div class="row">
 <label class="col-sm-2">Commit Message</label>
 <div class="col-sm-10">
-            <textarea class="form-control">FIX: Artifact report throws NPE when artifact is not in cache (IVY-1150) (thanks to Steve Jones)
-
-git-svn-id: https://svn.apache.org/repos/asf/ant/ivy/core/trunk@892370 13f79535-47bb-0310-9956-ffa450edef68</textarea>
+            <textarea :value="value" class="form-control"></textarea>
             </div>
             </div>
             </div>
           </div>
-          <div class="card">
+          <div class="card" v-for="commit in commits">
             <div class="card-header">
-              <i class="fa fa-bug"></i> Changes
+              <i class="fa fa-bug"></i> Commit {{ commit.revision_hash }}
             </div>
             <div class="card-block">
-             <MonacoEditor class="editor"
-  :diffEditor="true" :value="code" :original="original" language="java" ref="editor" />
+            <div v-for="file in commit.files">
+            {{ file.path }}
+             <MonacoEditor  class="editor"
+  :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
+            </div>
             </div>
           </div>
 
@@ -54,216 +55,211 @@ import rest from '../api/rest'
 
 
 export default {
-  data () {
-    return {
-      code: '',
-      original: ''
-    }
-  },
-  mounted () {
-
- this.$store.dispatch('pushLoading')
-      rest.getIssueWithCommits('')
-        .then(response => {
-          this.$store.dispatch('popLoading')
-          console.log(response.data['commits'][0]["files"][0]['after'])
-          var original = response.data['commits'][0]["files"][0]['before']
-          var code = response.data['commits'][0]["files"][0]['after']
-          var originalModel = monaco.editor.createModel(original, "java");
-          var modifiedModel = monaco.editor.createModel(code, "java");
-
-
-          window.editor.getEditor().setModel({
-	original: originalModel,
-	modified: modifiedModel
-});
-
-setTimeout(function() {
-window.editor.getEditor().getOriginalEditor().trigger('fold', 'editor.foldAll');
-}, 1000);
-
-        })
-        .catch(e => {
-          this.$store.dispatch('pushError', e)
-        })
-
-  var that2 = this;
-  window.editor = this.$refs.editor;
-  console.log("That2 log:");
-  console.log(that2);
-  var margin = 2;
-
-  monaco.languages.registerFoldingRangeProvider("java", {
-    provideFoldingRanges: function(model, context, token) {
-        var ranges = [];
-        console.log(model);
-        console.log(context);
-        console.log(that2);
-        var startLine = 1;
-        var isOrginial = window.editor.getEditor().getOriginalEditor().getModel() == model;
-        var changes = window.editor.getEditor().getLineChanges();
-        for(var i = 0; i < changes.length; i++)
-        {
-          var change = changes[i];
-          var ende = change.originalStartLineNumber;
-          if(ende > change.modifiedStartLineNumber)
-          {
-             ende = change.modifiedStartLineNumber;
-          }
-          ende = ende - margin;
-          var range = {
-                start: startLine,
-                end: ende,
-                kind: monaco.languages.FoldingRangeKind.Region
-          };
-          ranges.push(range);
-
-          var newStartLine = change.originalEndLineNumber;
-          if(newStartLine < change.modifiedEndLineNumber)
-          {
-             newStartLine = change.modifiedEndLineNumber;
-          }
-          if(newStartLine == 0)
-          {
-             newStartLine = ende +1;
-
-          }
-          startLine = newStartLine + margin;
-
+    data() {
+        return {
+            code: '',
+            original: '',
+            commits: [],
+            value: ''
         }
+    },
+    computed: mapGetters({
+        currentProject: 'currentProject',
+        projectsVcs: 'projectsVcs',
+        projectsIts: 'projectsIts',
+        projectsMl: 'projectsMl'
+    }),
+    mounted() {
 
-        ranges.push({
-                start: startLine + margin,
-                end: model.getLineCount(),
-                kind: monaco.languages.FoldingRangeKind.Region
-        });
-        return ranges;
+        var that = this;
+
+        // Start background request
+        this.$store.dispatch('pushLoading')
+        rest.getIssueWithCommits('')
+            .then(response => {
+                this.$store.dispatch('popLoading')
+                this.commits = response.data['commits'];
+                setTimeout(() => {
+                    // Register all editors
+                    that.registerFoldingModel();
+                    for (var i = 0; i < that.$refs.editor.length; i++) {
+                        console.log("Init editor: ", i);
+                        that.initEditor(that.$refs.editor[i]);
+                    }
+                }, 25);
+            })
+            .catch(e => {
+                this.$store.dispatch('pushError', e)
+            });
+    },
+    components: {
+        MonacoEditor
+    },
+    methods: {
+        initEditor: function(editor) {
+            this.addActionToEditor(editor);
+            this.setAutoFolding(editor);
+            this.setFoldingModel(editor);
+            this.foldAll(editor);
+        },
+        foldAll: function(editor) {
+            setTimeout(function() {
+                editor.getEditor().getOriginalEditor().trigger('fold', 'editor.foldAll');
+            }, 1000);
+        },
+        registerFoldingModel: function() {
+            var that = this;
+            monaco.languages.registerFoldingRangeProvider("java", {
+                provideFoldingRanges: function(model, context, token) {
+                    var margin = 2;
+                    var ranges = [];
+                    // Detect editor
+                    var editor = null;
+                    var isOrginial = false;
+                    for (var i = 0; i < that.$refs.editor.length; i++) {
+                        var currentEditor = that.$refs.editor[i].getEditor();
+                        if (currentEditor.getOriginalEditor().getModel() == model) {
+                            editor = currentEditor;
+                            isOrginial = true;
+                        } else if (currentEditor.getModifiedEditor().getModel() == model) {
+                            editor = currentEditor;
+                            isOrginial = false;
+                        }
+                    }
+                    var startLine = 1;
+                    var changes = editor.getLineChanges();
+                    for (var i = 0; i < changes.length; i++) {
+                        var change = changes[i];
+                        var ende = change.originalStartLineNumber;
+                        if (ende > change.modifiedStartLineNumber) {
+                            ende = change.modifiedStartLineNumber;
+                        }
+                        ende = ende - margin;
+                        var range = {
+                            start: startLine,
+                            end: ende,
+                            kind: monaco.languages.FoldingRangeKind.Region
+                        };
+                        ranges.push(range);
+
+                        var newStartLine = change.originalEndLineNumber;
+                        if (newStartLine < change.modifiedEndLineNumber) {
+                            newStartLine = change.modifiedEndLineNumber;
+                        }
+                        if (newStartLine == 0) {
+                            newStartLine = ende + 1;
+
+                        }
+                        startLine = newStartLine + margin;
+
+                    }
+
+                    ranges.push({
+                        start: startLine + margin,
+                        end: model.getLineCount(),
+                        kind: monaco.languages.FoldingRangeKind.Region
+                    });
+                    return ranges;
+                }
+            });
+        },
+        setFoldingModel: function(editor) {
+            var foldingContrib = editor.getEditor().getOriginalEditor().getContribution('editor.contrib.folding');
+            var foldingContribModified = editor.getEditor().getModifiedEditor().getContribution('editor.contrib.folding');
+            foldingContribModified.getFoldingModel().then(foldingModelModified => {
+                foldingContrib.getFoldingModel().then(foldingModel => {
+                    foldingModel.onDidChange((e) => {
+                        var regions = foldingModel.regions;
+                        var regionsModified = foldingModelModified.regions;
+                        let toToggle = [];
+                        for (let i = regions.length - 1; i >= 0; i--) {
+                            if (regions.isCollapsed(i) != regionsModified.isCollapsed(i)) {
+                                toToggle.push(regionsModified.toRegion(i));
+                            }
+                        }
+                        foldingModelModified.toggleCollapseState(toToggle);
+                    });
+
+                    foldingModelModified.onDidChange((e) => {
+                        var regions = foldingModel.regions;
+                        var regionsModified = foldingModelModified.regions;
+                        let toToggle = [];
+                        for (let i = regions.length - 1; i >= 0; i--) {
+                            if (regions.isCollapsed(i) != regionsModified.isCollapsed(i)) {
+                                toToggle.push(regions.toRegion(i));
+                            }
+                        }
+                        foldingModel.toggleCollapseState(toToggle);
+                    });
+                });
+            });
+        },
+        setAutoFolding: function(editor) {
+            editor.getEditor().getModifiedEditor().updateOptions({
+                readOnly: true,
+                folding: true,
+                automaticLayout: true
+            });
+            editor.getEditor().getOriginalEditor().updateOptions({
+                readOnly: true,
+                folding: true,
+                automaticLayout: true
+            });
+        },
+        addActionToEditor: function(editor) {
+
+            var action1 = {
+                id: 'my-unique-id',
+                label: 'Add Linelabel',
+                keybindings: [ // chord
+                    monaco.KeyCode.KEY_L
+                ],
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: 1.5,
+                run: function(ed) {
+                    var lineNumber = ed.getPosition().lineNumber;
+                    ed.deltaDecorations([], [{
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        options: {
+                            isWholeLine: true,
+                            linesDecorationsClassName: 'myLineDecoration'
+                        }
+                    }, ]);
+                    return null;
+                }
+            };
+            editor.getEditor().getOriginalEditor().addAction(action1);
+            editor.getEditor().getModifiedEditor().addAction(action1);
+
+            var action2 = {
+                id: 'my-unique-id2',
+                label: 'Add Linelabel2',
+                keybindings: [ // chord
+                    monaco.KeyCode.KEY_K
+                ],
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: 1.5,
+                run: function(ed) {
+                    var lineNumber = ed.getPosition().lineNumber;
+                    ed.deltaDecorations([], [{
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        options: {
+                            isWholeLine: true,
+                            linesDecorationsClassName: 'myLineDecoration2'
+                        }
+                    }, ]);
+                    return null;
+                }
+            };
+
+            editor.getEditor().getOriginalEditor().addAction(action2);
+            editor.getEditor().getModifiedEditor().addAction(action2);
+        }
     }
-});
-
-     var ed = this.$refs.editor.getEditor().getOriginalEditor();
-     var decorations = [];
-window.editor1 = this.$refs.editor;
-
-this.$refs.editor.getEditor().getModifiedEditor().updateOptions({ readOnly: true, folding: true, automaticLayout: true  });
-this.$refs.editor.getEditor().getOriginalEditor().updateOptions({ readOnly: true, folding: true,  automaticLayout: true  });
-
-var action1  = {
-	// An unique identifier of the contributed action.
-	id: 'my-unique-id',
-
-	// A label of the action that will be presented to the user.
-	label: 'Add Linelabel',
-
-	// An optional array of keybindings for the action.
-	keybindings: [		// chord
-		 monaco.KeyCode.KEY_L
-	],
-
-	// A precondition for this action.
-	precondition: null,
-
-	// A rule to evaluate on top of the precondition in order to dispatch the keybindings.
-	keybindingContext: null,
-
-	contextMenuGroupId: 'navigation',
-
-	contextMenuOrder: 1.5,
-
-	// Method that will be executed when the action is triggered.
-	// @param editor The editor instance is passed in as a convinience
-	run: function(ed) {
-	  var lineNumber = ed.getPosition().lineNumber;
-	  ed.deltaDecorations([], [
-	{ range: new monaco.Range(lineNumber,1,lineNumber,1), options: { isWholeLine: true, linesDecorationsClassName: 'myLineDecoration' }},
-]);
-		return null;
-	}
-};
-this.$refs.editor.getEditor().getOriginalEditor().addAction(action1);
-this.$refs.editor.getEditor().getModifiedEditor().addAction(action1);
-
-var action2  = {
-	// An unique identifier of the contributed action.
-	id: 'my-unique-id2',
-
-	// A label of the action that will be presented to the user.
-	label: 'Add Linelabel2',
-
-	// An optional array of keybindings for the action.
-	keybindings: [		// chord
-		 monaco.KeyCode.KEY_K
-	],
-
-	// A precondition for this action.
-	precondition: null,
-
-	// A rule to evaluate on top of the precondition in order to dispatch the keybindings.
-	keybindingContext: null,
-
-	contextMenuGroupId: 'navigation',
-
-	contextMenuOrder: 1.5,
-
-	// Method that will be executed when the action is triggered.
-	// @param editor The editor instance is passed in as a convinience
-	run: function(ed) {
-	  var lineNumber = ed.getPosition().lineNumber;
-	  ed.deltaDecorations([], [
-	{ range: new monaco.Range(lineNumber,1,lineNumber,1), options: { isWholeLine: true, linesDecorationsClassName: 'myLineDecoration2' }},
-]);
-		return null;
-	}
-};
-
-this.$refs.editor.getEditor().getOriginalEditor().addAction(action2);
-this.$refs.editor.getEditor().getModifiedEditor().addAction(action2);
-
-var foldingContrib = that2.$refs.editor.getEditor().getOriginalEditor().getContribution('editor.contrib.folding');
-var foldingContribModified = that2.$refs.editor.getEditor().getModifiedEditor().getContribution('editor.contrib.folding');
-foldingContribModified.getFoldingModel().then(foldingModelModified => {
-  foldingContrib.getFoldingModel().then(foldingModel => {
-    foldingModel.onDidChange((e) => {
-      var regions = foldingModel.regions;
-      var regionsModified = foldingModelModified.regions;
-	    let toToggle = [];
-    	for (let i = regions.length - 1; i >= 0; i--) {
-    	   if(regions.isCollapsed(i) != regionsModified.isCollapsed(i))
-    	   {
-    	   toToggle.push(regionsModified.toRegion(i));
-    	   }
-    	}
-    	foldingModelModified.toggleCollapseState(toToggle);
-    });
-
-    foldingModelModified.onDidChange((e) => {
-      var regions = foldingModel.regions;
-      var regionsModified = foldingModelModified.regions;
-	    let toToggle = [];
-    	for (let i = regions.length - 1; i >= 0; i--) {
-    	   if(regions.isCollapsed(i) != regionsModified.isCollapsed(i))
-    	   {
-    	   toToggle.push(regions.toRegion(i));
-    	   }
-    	}
-    	foldingModel.toggleCollapseState(toToggle);
-    });
-  });
- });
-setTimeout(function() {
-that2.$refs.editor.getEditor().getOriginalEditor().trigger('fold', 'editor.foldAll');
-}, 1000);
-
-  },
-  components: {
-    MonacoEditor
-  },
-  computed: mapGetters({
-    currentProject: 'currentProject',
-    projectsVcs: 'projectsVcs',
-    projectsIts: 'projectsIts',
-    projectsMl: 'projectsMl'
-  })
 }
 </script>
 
