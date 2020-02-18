@@ -1,6 +1,17 @@
 <template>
   <div class="wrapper">
     <div class="animated fadeIn">
+     <div class="card">
+            <div class="card-header">
+              <i class="fa fa-tag"></i> Labels
+            </div>
+            <div class="card-block">
+                <div class="label"><span class="dot" style="background-color: #84142d;"></span>bug fix</div>
+                <div class="label"><span class="dot"></span>whitespace or comment</div>
+                <div class="label"><span class="dot" style="background-color: #142850;"></span>refactoring</div>
+                <div class="label"><span class="dot" style="background-color: #ffbd69;"></span>unrelated</div>
+            </div>
+      </div>
           <div class="card">
             <div class="card-header">
               <i class="fa fa-bug"></i> General information
@@ -8,38 +19,51 @@
             <div class="card-block">
 
             <div class="row">
-<label class="col-sm-2">Revision</label>
+<label class="col-sm-2">Issue title</label>
 
 <div class="col-sm-10">
-            <a href="#">Show 26c458f09bc858537d02b3749868e8318b167a68 on GitHub</a>
-            </div>
-            </div>
-
-            <div class="row">
-<label class="col-sm-2">Issue Links</label>
-<div class="col-sm-10">
-            <a href="#">IVY-1150</a>
+            <a href="#">{{ issue.title }}</a>
             </div>
             </div>
 
 
 <div class="row">
-<label class="col-sm-2">Commit Message</label>
+<label class="col-sm-2">Issue description</label>
 <div class="col-sm-10">
-            <textarea :value="value" class="form-control"></textarea>
+            <pre class="form-control">{{ issue.desc }}</pre>
+            </div>
+            </div>
+                        <div class="row">
+<label class="col-sm-2">Commits</label>
+<div class="col-sm-10">
+            <button v-for="commit in commits" v-on:click="scrollToCommit(commit)" class="btn btn-default" style="margin-right: 5px;">{{ commit.revision_hash }}</button>
             </div>
             </div>
             </div>
           </div>
-          <div class="card" v-for="commit in commits">
+          <div class="card" v-for="commit in commits" :id="commit.revision_hash" >
             <div class="card-header">
+             <a role="button" data-toggle="collapse" v-on:click="scrollToCommit(commit)" aria-expanded="false" aria-controls="collapseExample">
               <i class="fa fa-bug"></i> Commit {{ commit.revision_hash }}
+              </a>
             </div>
+            <div :id="'collapse' + commit.revision_hash">
             <div class="card-block">
+<div class="row">
+<label class="col-sm-2">Commit Message</label>
+<div class="col-sm-10">
+            <pre class="form-control">{{ commit.message }}</pre>
+            </div>
+            </div>
             <div v-for="file in commit.files">
+            <div class="card-header" ref="header">
             {{ file.path }}
+            </div>
+            <div>
              <MonacoEditor  class="editor"
   :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
+  </div>
+            </div>
             </div>
             </div>
           </div>
@@ -57,10 +81,10 @@ import rest from '../api/rest'
 export default {
     data() {
         return {
-            code: '',
-            original: '',
             commits: [],
-            value: ''
+            issue: '',
+            decorations: [],
+            decorationsObjects: [],
         }
     },
     computed: mapGetters({
@@ -79,13 +103,17 @@ export default {
             .then(response => {
                 this.$store.dispatch('popLoading')
                 this.commits = response.data['commits'];
+                this.issue = response.data['issue'];
                 setTimeout(() => {
                     // Register all editors
                     that.registerFoldingModel();
                     for (var i = 0; i < that.$refs.editor.length; i++) {
                         console.log("Init editor: ", i);
-                        that.initEditor(that.$refs.editor[i]);
+                        that.decorations[i] = [];
+                        that.decorationsObjects[i] = [];
+                        that.initEditor(i, that.$refs.editor[i]);
                     }
+                    that.validateAll();
                 }, 25);
             })
             .catch(e => {
@@ -96,8 +124,12 @@ export default {
         MonacoEditor
     },
     methods: {
-        initEditor: function(editor) {
-            this.addActionToEditor(editor);
+        scrollToCommit : function(commit) {
+            document.getElementById('collapse' + commit.revision_hash).style.display = "block";
+            document.getElementById(commit.revision_hash).scrollIntoView();
+        },
+        initEditor: function(i, editor) {
+            this.addActionToEditor(i, editor);
             this.setAutoFolding(editor);
             this.setFoldingModel(editor);
             this.foldAll(editor);
@@ -206,58 +238,95 @@ export default {
                 automaticLayout: true
             });
         },
-        addActionToEditor: function(editor) {
-
+        addActionToEditor: function(i, editor) {
+           this.addSingleActionToEditor(i, editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');
+           this.addSingleActionToEditor(i, editor, '2', 'Whitespace or comment', [ monaco.KeyCode.KEY_2 ], 'whitespace');
+           this.addSingleActionToEditor(i, editor, '3', 'Test', [ monaco.KeyCode.KEY_3 ], 'test');
+           this.addSingleActionToEditor(i, editor, '4', 'Unrelated', [ monaco.KeyCode.KEY_4 ], 'unrelated');
+        },
+        addSingleActionToEditor: function(c, editor, id, label, keybindings, className) {
+            var that = this;
             var action1 = {
-                id: 'my-unique-id',
-                label: 'Add Linelabel',
-                keybindings: [ // chord
-                    monaco.KeyCode.KEY_L
-                ],
+                id: id,
+                label: label,
+                keybindings: keybindings,
                 precondition: null,
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
-                contextMenuOrder: 1.5,
+                contextMenuOrder: id,
                 run: function(ed) {
                     var lineNumber = ed.getPosition().lineNumber;
-                    ed.deltaDecorations([], [{
+                    var changes = editor.getEditor().getLineChanges();
+                    var isInChange = false;
+                    for (var i = 0; i < changes.length; i++) {
+                         var change = changes[i];
+                         if((change.originalStartLineNumber <= lineNumber &&
+                            lineNumber <= change.originalEndLineNumber) ||
+                            (change.modifiedStartLineNumber <= lineNumber &&
+                            lineNumber <= change.modifiedEndLineNumber))
+                            {
+                                 isInChange = true;
+                            }
+                    }
+                    if(isInChange) {
+                    that.decorationsObjects[c][lineNumber] = {
                         range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                         options: {
                             isWholeLine: true,
-                            linesDecorationsClassName: 'myLineDecoration'
+                            linesDecorationsClassName: className
                         }
-                    }, ]);
+                    };
+                    console.log(that.decorationsObjects[c]);
+                    that.decorations[c] = ed.deltaDecorations(that.decorations[c], Object.values(that.decorationsObjects[c]));
+                        that.validateAll();
+                    }
+
                     return null;
                 }
             };
             editor.getEditor().getOriginalEditor().addAction(action1);
             editor.getEditor().getModifiedEditor().addAction(action1);
-
-            var action2 = {
-                id: 'my-unique-id2',
-                label: 'Add Linelabel2',
-                keybindings: [ // chord
-                    monaco.KeyCode.KEY_K
-                ],
-                precondition: null,
-                keybindingContext: null,
-                contextMenuGroupId: 'navigation',
-                contextMenuOrder: 1.5,
-                run: function(ed) {
-                    var lineNumber = ed.getPosition().lineNumber;
-                    ed.deltaDecorations([], [{
-                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
-                        options: {
-                            isWholeLine: true,
-                            linesDecorationsClassName: 'myLineDecoration2'
-                        }
-                    }, ]);
-                    return null;
-                }
-            };
-
-            editor.getEditor().getOriginalEditor().addAction(action2);
-            editor.getEditor().getModifiedEditor().addAction(action2);
+        },
+        validateAll: function () {
+            var that = this;
+            setTimeout(() => {
+                    for (var i = 0; i < that.$refs.editor.length; i++) {
+                        that.validateEditor(that.$refs.editor[i], i);
+                    }
+             }, 1000);
+        },
+        validateEditor: function(editor, c) {
+             var changes = editor.getEditor().getLineChanges();
+             var isSomethingMissing = false;
+             var lineDecorationsOrginal = this.decorationsObjects[c];
+             for (var i = 0; i < changes.length; i++) {
+                 var change = changes[i];
+                 if(change.originalEndLineNumber != 0)
+                 {
+                    for(var j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++)
+                    {
+                    if(typeof lineDecorationsOrginal[j] === 'undefined') {
+                    isSomethingMissing = true;
+                    }
+                    }
+                 }
+                 if(change.modifiedEndLineNumber != 0)
+                 {
+                    for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
+                    {
+                    if(typeof lineDecorationsOrginal[j] === 'undefined') {
+                    isSomethingMissing = true;
+                    }
+                    }
+                 }
+             }
+             var header = this.$refs.header[c];
+             if(!isSomethingMissing && header)
+             {
+                header.className = "card-header header-valid";
+             } else {
+                header.className = "card-header";
+             }
         }
     }
 }
@@ -269,13 +338,40 @@ export default {
   height: 800px;
 }
 
-.myLineDecoration {
-	background: yellow;
+.header-valid {
+  background-color: #57e84b;
+}
+
+.label {
+display: inline-flex;
+align-items: center;
+}
+.dot {
+  margin: 2px;
+  height: 25px;
+  width: 25px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.bugfix {
+	background: #84142d;
 	width: 5px !important;
 	margin-left: 3px;
 }
-.myLineDecoration2 {
-	background: red;
+.whitespace {
+  background-color: #bbb;
+	width: 5px !important;
+	margin-left: 3px;
+}
+.test {
+  background-color: #142850;
+	width: 5px !important;
+	margin-left: 3px;
+}
+.unrelated {
+  background-color: #ffbd69;
 	width: 5px !important;
 	margin-left: 3px;
 }

@@ -1187,13 +1187,17 @@ class CommitLabel(APIView):
                 files.append(fileCompare)
             commit_response_object = {}
             commit_response_object["revision_hash"] = commit.revision_hash
+            commit_response_object["message"] = commit.message
             commit_response_object["files"] = files
             commit_data.append(commit_response_object)
 
         shutil.rmtree(folder)
 
         result['commits'] = commit_data
-        result['issue'] = issue.title
+
+        serializer = IssueSerializer(issue, many=False)
+        data = serializer.data
+        result['issue'] = data
         result['status'] = "ok"
         return Response(result)
 
