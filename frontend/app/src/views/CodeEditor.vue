@@ -6,10 +6,11 @@
               <i class="fa fa-tag"></i> Labels
             </div>
             <div class="card-block">
-                <div class="label"><span class="dot" style="background-color: #84142d;"></span>bug fix</div>
-                <div class="label"><span class="dot"></span>whitespace or comment</div>
-                <div class="label"><span class="dot" style="background-color: #142850;"></span>refactoring</div>
-                <div class="label"><span class="dot" style="background-color: #ffbd69;"></span>unrelated</div>
+                <div class="label"><span class="dot" style="background-color: #84142d;">1</span>bug fix</div>
+                <div class="label"><span class="dot">2</span>whitespace or comment</div>
+                <div class="label"><span class="dot" style="background-color: #142850;">3</span>refactoring</div>
+                <div class="label"><span class="dot" style="background-color: #ffbd69;">4</span>unrelated</div>
+                <div>Press the key of the color to label the current line with the belonging label, press 5 to remove the label</div>
             </div>
       </div>
           <div class="card">
@@ -39,12 +40,13 @@
             <button v-for="commit in commits" v-on:click="scrollToCommit(commit)" class="btn btn-default" style="margin-right: 5px;">{{ commit.revision_hash }}</button>
             </div>
             </div>
+            <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right;">Submit labels</button>
             </div>
           </div>
           <div class="card" v-for="commit in commits" :id="commit.revision_hash" >
             <div class="card-header">
              <a role="button" data-toggle="collapse" v-on:click="scrollToCommit(commit)" aria-expanded="false" aria-controls="collapseExample">
-              <i class="fa fa-bug"></i> Commit {{ commit.revision_hash }}
+              <i class="fa fa-bug"></i> Commit {{ commit.revision_hash }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
               </a>
             </div>
             <div :id="'collapse' + commit.revision_hash">
@@ -56,8 +58,8 @@
             </div>
             </div>
             <div v-for="file in commit.files">
-            <div class="card-header" ref="header">
-            {{ file.path }}
+            <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
+            {{ file.path }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
             </div>
             <div>
              <MonacoEditor  class="editor"
@@ -127,6 +129,9 @@ export default {
         scrollToCommit : function(commit) {
             document.getElementById('collapse' + commit.revision_hash).style.display = "block";
             document.getElementById(commit.revision_hash).scrollIntoView();
+        },
+        top : function() {
+            scroll(0,0)
         },
         initEditor: function(i, editor) {
             this.addActionToEditor(i, editor);
@@ -243,6 +248,7 @@ export default {
            this.addSingleActionToEditor(i, editor, '2', 'Whitespace or comment', [ monaco.KeyCode.KEY_2 ], 'whitespace');
            this.addSingleActionToEditor(i, editor, '3', 'Test', [ monaco.KeyCode.KEY_3 ], 'test');
            this.addSingleActionToEditor(i, editor, '4', 'Unrelated', [ monaco.KeyCode.KEY_4 ], 'unrelated');
+           this.addSingleActionToEditor(i, editor, '5', 'Remove label', [ monaco.KeyCode.KEY_5 ], '');
         },
         addSingleActionToEditor: function(c, editor, id, label, keybindings, className) {
             var that = this;
@@ -269,6 +275,9 @@ export default {
                             }
                     }
                     if(isInChange) {
+                    if(className == '') {
+                      delete that.decorationsObjects[c][lineNumber];
+                    } else {
                     that.decorationsObjects[c][lineNumber] = {
                         range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                         options: {
@@ -276,7 +285,8 @@ export default {
                             linesDecorationsClassName: className
                         }
                     };
-                    console.log(that.decorationsObjects[c]);
+                    }
+
                     that.decorations[c] = ed.deltaDecorations(that.decorations[c], Object.values(that.decorationsObjects[c]));
                         that.validateAll();
                     }
@@ -324,9 +334,50 @@ export default {
              if(!isSomethingMissing && header)
              {
                 header.className = "card-header header-valid";
+                return true;
              } else {
                 header.className = "card-header";
              }
+             return false;
+        },
+        submitLabels : function() {
+             // check if anything is missing
+             var correct = true;
+             for (var i = 0; i < this.$refs.editor.length; i++) {
+                  correct = this.validateEditor(this.$refs.editor[i], i) && correct;
+             }
+             if(!correct)
+             {
+                // alert("Some labels are missing");
+                // return;
+             }
+             // else collect data for transmit
+             var data = [];
+             var c = 0;
+             for (var i = 0; i < this.commits.length; i++) {
+                  var commit = this.commits[i];
+                  var hash = commit.id;
+                  data[hash] = [];
+                  for(var j = 0; j < commit.files.length; j++)
+                  {
+                     var file = commit.files[j];
+                     console.log(file);
+                     data[hash][file.id] = [];
+                     var lineDecorationsOrginal = this.decorationsObjects[c];
+                     for(var k = 0; k < lineDecorationsOrginal.length; k++)
+                     {
+                          if(typeof lineDecorationsOrginal[k] === 'undefined') {
+                              continue;
+                          }
+                          var dataPerLabel = [];
+                          dataPerLabel["label"] = lineDecorationsOrginal[k].options.linesDecorationsClassName;
+                          dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
+                          data[hash][file.id].push(dataPerLabel);
+                     }
+                     c++;
+                  }
+             }
+             console.log(data);
         }
     }
 }
@@ -353,6 +404,9 @@ align-items: center;
   background-color: #bbb;
   border-radius: 50%;
   display: inline-block;
+  color: white;
+  text-align: center;
+  padding-top: 2px;
 }
 
 .bugfix {

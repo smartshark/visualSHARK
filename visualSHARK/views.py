@@ -1171,6 +1171,7 @@ class CommitLabel(APIView):
             for file_action in file_actions:
                 file = File.objects.get(id=file_action.file_id)
                 fileCompare = {}
+                fileCompare['id'] = str(file.id)
                 fileCompare['path'] = file.path
                 f = open(folder + "/" + file.path, "r")
                 fileContent = f.read()
@@ -1189,6 +1190,7 @@ class CommitLabel(APIView):
             commit_response_object["revision_hash"] = commit.revision_hash
             commit_response_object["message"] = commit.message
             commit_response_object["files"] = files
+            commit_response_object["id"] = str(commit.id)
             commit_data.append(commit_response_object)
 
         shutil.rmtree(folder)
