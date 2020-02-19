@@ -1135,7 +1135,6 @@ class CommitLabel(APIView):
 
     def get(self, request):
         project = "gora"
-        result = {}
         issue_id = ObjectId("5e2855306b4afcd592c5117e")
         #issue_id = ObjectId("5e2857146b4afcd592c53599")
 
@@ -1147,6 +1146,7 @@ class CommitLabel(APIView):
         #        print(issue.id)
 
         # Default error handling
+        result = {}
         issue = Issue.objects.get(id=issue_id)
         if issue == None:
             result['status'] = "failure"
@@ -1200,6 +1200,50 @@ class CommitLabel(APIView):
         serializer = IssueSerializer(issue, many=False)
         data = serializer.data
         result['issue'] = data
+        result['status'] = "ok"
+        return Response(result)
+
+
+    def post(self, request):
+        project = "gora"
+        issue_id = ObjectId("5e2855306b4afcd592c5117e")
+
+        result = {}
+        result['status'] = "failure"
+        # Default error handling
+        issue = Issue.objects.get(id=issue_id)
+        if issue == None:
+            return Response(result)
+
+        if (not os.path.exists('repo_cache/' + project)):
+            return Response(result)
+
+        # Clone to temp folder
+        folder = tempfile.mkdtemp()
+        git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
+
+        # iterate over
+        for commit in request.data["data"]:
+            print(commit)
+            file_array = request.data["data"][commit]
+            commits = Commit.objects.get(id=commit)
+            # check if commit belongs to issue
+            if commits == None or not issue_id in commits.linked_issue_ids:
+                return Response(result)
+
+            # load files and check if a file is missing
+            file_actions = FileAction.objects.filter(commit_id=commits.id)
+            missing = False
+            for file_action in file_actions:
+                if not str(file_action.file_id) in file_array:
+                    missing = True
+            if missing:
+                return Response(result)
+
+            # iterate over files
+            for file_action in file_actions:
+                hunks = Hunk.objects.filter(file_action_id=file_action.id)
+
         result['status'] = "ok"
         return Response(result)
 

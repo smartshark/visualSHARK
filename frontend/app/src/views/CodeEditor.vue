@@ -352,12 +352,12 @@ export default {
                 // return;
              }
              // else collect data for transmit
-             var data = [];
+             var data = {};
              var c = 0;
              for (var i = 0; i < this.commits.length; i++) {
                   var commit = this.commits[i];
                   var hash = commit.id;
-                  data[hash] = [];
+                  data[hash] = {};
                   for(var j = 0; j < commit.files.length; j++)
                   {
                      var file = commit.files[j];
@@ -369,15 +369,24 @@ export default {
                           if(typeof lineDecorationsOrginal[k] === 'undefined') {
                               continue;
                           }
-                          var dataPerLabel = [];
+                          var dataPerLabel = {};
                           dataPerLabel["label"] = lineDecorationsOrginal[k].options.linesDecorationsClassName;
                           dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
                           data[hash][file.id].push(dataPerLabel);
                      }
                      c++;
                   }
-             }
-             console.log(data);
+            }
+            console.log(data);
+            this.$store.dispatch('pushLoading')
+            rest.saveLabelsOfCommits({ data :data})
+            .then(response => {
+                this.$store.dispatch('popLoading')
+
+            })
+            .catch(e => {
+                this.$store.dispatch('pushError', e)
+            });
         }
     }
 }
