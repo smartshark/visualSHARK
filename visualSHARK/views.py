@@ -1181,8 +1181,9 @@ class CommitLabel(APIView):
                 hunks = Hunk.objects.filter(file_action_id=file_action.id)
                 before_content = fileContent
                 for hunk in hunks:
-                    header = "@@ -" + str(hunk.old_start) + "," + str(hunk.old_lines) +" +" + str(hunk.new_start) + "," + str(hunk.new_lines) +" @@\n"
-                    before_content = self.apply_patch(before_content, header + hunk.content)
+                    header = "@@ -" + str(hunk.new_start) + "," + str(hunk.old_lines) +" +" + str(hunk.old_start) + "," + str(hunk.new_lines) +" @@\n"
+                    print(header)
+                    before_content = self.apply_patch(before_content, header + hunk.content, revert=True)
                     fileCompare['after'] = before_content
 
                 files.append(fileCompare)
@@ -1218,13 +1219,9 @@ class CommitLabel(APIView):
         if (not os.path.exists('repo_cache/' + project)):
             return Response(result)
 
-        # Clone to temp folder
-        folder = tempfile.mkdtemp()
-        git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
-
         # iterate over
+        hunk_save = {}
         for commit in request.data["data"]:
-            print(commit)
             file_array = request.data["data"][commit]
             commits = Commit.objects.get(id=commit)
             # check if commit belongs to issue
@@ -1242,7 +1239,54 @@ class CommitLabel(APIView):
 
             # iterate over files
             for file_action in file_actions:
+                labeled_data = file_array[str(file_action.file_id)]
                 hunks = Hunk.objects.filter(file_action_id=file_action.id)
+                for data in labeled_data:
+                    hunk_found = None
+                    print(data["label"], data["change"]["originalStartLineNumber"], data["change"]["modifiedStartLineNumber"], data["line"], data["modified"])
+                    for hunk in hunks:
+                        # hunk_end_modified = hunk.new_start + hunk.new_lines
+                        hunk_end_original = hunk.old_start + hunk.old_lines
+                        # print(hunk.new_start, hunk_end_modified, hunk.old_start, hunk_end_original)
+                        if data["modified"] == True:
+                            if hunk.old_start <= data["change"]["modifiedStartLineNumber"] and data["change"]["modifiedStartLineNumber"] <= hunk_end_original:
+                                hunk_found = hunk
+                        else:
+                            if hunk.old_start <= data["change"]["originalStartLineNumber"] and data["change"]["originalStartLineNumber"] <= hunk_end_original:
+                                hunk_found = hunk
+
+                    if hunk_found == None:
+                        return Response(result)
+
+                    if str(hunk_found.id) not in hunk_save:
+                        hunk_save[str(hunk_found.id)] = {}
+
+                    hunk_array = hunk_save[str(hunk_found.id)]
+
+                    if data["label"] not in hunk_array:
+                        hunk_array[data["label"]] =[]
+
+                    hunk_array[data["label"]].append(data["line"])
+
+
+                    print(hunk_found.new_start, hunk_found.new_lines, hunk_found.old_start, hunk_found.old_lines)
+                    # print(hunk_found.content)
+                for hunk in hunks:
+                    if str(hunk.id) not in hunk_save:
+                        print("Missing hunk " + str(hunk.id))
+                        return Response(result)
+
+
+
+        # Backend Validation complete
+        print("Values to save")
+        print(hunk_save)
+        for hunk_id in hunk_save:
+            hunk = Hunk.objects.get(id=hunk_id)
+            if hunk.lines_manual is None:
+                hunk.lines_manual = {}
+            hunk.lines_manual.update({str(request.user): hunk_save[hunk_id]})
+            hunk.save()
 
         result['status'] = "ok"
         return Response(result)

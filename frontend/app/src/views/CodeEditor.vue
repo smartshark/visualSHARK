@@ -63,7 +63,7 @@
             </div>
             <div>
              <MonacoEditor  class="editor"
-  :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
+  :diffEditor="true" options={this.options} :value="file.after" :original="file.before" language="java" ref="editor" />
   </div>
             </div>
             </div>
@@ -85,8 +85,13 @@ export default {
         return {
             commits: [],
             issue: '',
-            decorations: [],
-            decorationsObjects: [],
+            decorationsLeft: [],
+            decorationsObjectsLeft: [],
+            decorationsRight: [],
+            decorationsObjectsRight: [],
+            options: {
+      ignoreTrimWhitespace: false
+          }
         }
     },
     computed: mapGetters({
@@ -111,8 +116,10 @@ export default {
                     that.registerFoldingModel();
                     for (var i = 0; i < that.$refs.editor.length; i++) {
                         console.log("Init editor: ", i);
-                        that.decorations[i] = [];
-                        that.decorationsObjects[i] = [];
+                        that.decorationsLeft[i] = [];
+                        that.decorationsObjectsLeft[i] = [];
+                        that.decorationsRight[i] = [];
+                        that.decorationsObjectsRight[i] = [];
                         that.initEditor(i, that.$refs.editor[i]);
                     }
                     that.validateAll();
@@ -232,6 +239,9 @@ export default {
             });
         },
         setAutoFolding: function(editor) {
+            editor.getEditor().updateOptions({
+                ignoreTrimWhitespace: false,
+            });
             editor.getEditor().getModifiedEditor().updateOptions({
                 readOnly: true,
                 folding: true,
@@ -252,7 +262,7 @@ export default {
         },
         addSingleActionToEditor: function(c, editor, id, label, keybindings, className) {
             var that = this;
-            var action1 = {
+            var actionLeft = {
                 id: id,
                 label: label,
                 keybindings: keybindings,
@@ -264,38 +274,83 @@ export default {
                     var lineNumber = ed.getPosition().lineNumber;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
+                    var foundChange;
                     for (var i = 0; i < changes.length; i++) {
                          var change = changes[i];
                          if((change.originalStartLineNumber <= lineNumber &&
-                            lineNumber <= change.originalEndLineNumber) ||
-                            (change.modifiedStartLineNumber <= lineNumber &&
-                            lineNumber <= change.modifiedEndLineNumber))
+                            lineNumber <= change.originalEndLineNumber))
                             {
+                                 foundChange = change;
                                  isInChange = true;
                             }
                     }
                     if(isInChange) {
                     if(className == '') {
-                      delete that.decorationsObjects[c][lineNumber];
+                      delete that.decorationsObjectsLeft[c][lineNumber];
                     } else {
-                    that.decorationsObjects[c][lineNumber] = {
+                    that.decorationsObjectsLeft[c][lineNumber] = {
                         range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                         options: {
                             isWholeLine: true,
                             linesDecorationsClassName: className
-                        }
+                        },
+                        change: foundChange
                     };
                     }
 
-                    that.decorations[c] = ed.deltaDecorations(that.decorations[c], Object.values(that.decorationsObjects[c]));
+                    that.decorationsLeft[c] = ed.deltaDecorations(that.decorationsLeft[c], Object.values(that.decorationsObjectsLeft[c]));
                         that.validateAll();
                     }
 
                     return null;
                 }
             };
-            editor.getEditor().getOriginalEditor().addAction(action1);
-            editor.getEditor().getModifiedEditor().addAction(action1);
+            editor.getEditor().getOriginalEditor().addAction(actionLeft);
+
+             var actionRight = {
+                id: id,
+                label: label,
+                keybindings: keybindings,
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: id,
+                run: function(ed) {
+                    var lineNumber = ed.getPosition().lineNumber;
+                    var changes = editor.getEditor().getLineChanges();
+                    var isInChange = false;
+                    var foundChange;
+                    for (var i = 0; i < changes.length; i++) {
+                         var change = changes[i];
+                         if(change.modifiedStartLineNumber <= lineNumber &&
+                            lineNumber <= change.modifiedEndLineNumber)
+                            {
+                                 foundChange = change;
+                                 isInChange = true;
+                            }
+                    }
+                    if(isInChange) {
+                    if(className == '') {
+                      delete that.decorationsObjectsRight[c][lineNumber];
+                    } else {
+                    that.decorationsObjectsRight[c][lineNumber] = {
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        options: {
+                            isWholeLine: true,
+                            linesDecorationsClassName: className
+                        },
+                        change: foundChange
+                    };
+                    }
+
+                    that.decorationsRight[c] = ed.deltaDecorations(that.decorationsRight[c], Object.values(that.decorationsObjectsRight[c]));
+                        that.validateAll();
+                    }
+
+                    return null;
+                }
+            };
+            editor.getEditor().getModifiedEditor().addAction(actionRight);
         },
         validateAll: function () {
             var that = this;
@@ -308,7 +363,8 @@ export default {
         validateEditor: function(editor, c) {
              var changes = editor.getEditor().getLineChanges();
              var isSomethingMissing = false;
-             var lineDecorationsOrginal = this.decorationsObjects[c];
+             var lineDecorationsOrginal = this.decorationsObjectsLeft[c];
+             var lineDecorationsModified = this.decorationsObjectsRight[c];
              for (var i = 0; i < changes.length; i++) {
                  var change = changes[i];
                  if(change.originalEndLineNumber != 0)
@@ -324,7 +380,7 @@ export default {
                  {
                     for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
                     {
-                    if(typeof lineDecorationsOrginal[j] === 'undefined') {
+                    if(typeof lineDecorationsModified[j] === 'undefined') {
                     isSomethingMissing = true;
                     }
                     }
@@ -363,7 +419,7 @@ export default {
                      var file = commit.files[j];
                      console.log(file);
                      data[hash][file.id] = [];
-                     var lineDecorationsOrginal = this.decorationsObjects[c];
+                     var lineDecorationsOrginal = this.decorationsObjectsLeft[c];
                      for(var k = 0; k < lineDecorationsOrginal.length; k++)
                      {
                           if(typeof lineDecorationsOrginal[k] === 'undefined') {
@@ -372,6 +428,21 @@ export default {
                           var dataPerLabel = {};
                           dataPerLabel["label"] = lineDecorationsOrginal[k].options.linesDecorationsClassName;
                           dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
+                          dataPerLabel["change"] = lineDecorationsOrginal[k].change;
+                          dataPerLabel["modified"] =false;
+                          data[hash][file.id].push(dataPerLabel);
+                     }
+                     var lineDecorationsModified = this.decorationsObjectsRight[c];
+                     for(var k = 0; k < lineDecorationsModified.length; k++)
+                     {
+                          if(typeof lineDecorationsModified[k] === 'undefined') {
+                              continue;
+                          }
+                          var dataPerLabel = {};
+                          dataPerLabel["label"] = lineDecorationsModified[k].options.linesDecorationsClassName;
+                          dataPerLabel["line"] = lineDecorationsModified[k].range.startLineNumber;
+                          dataPerLabel["change"] = lineDecorationsModified[k].change;
+                          dataPerLabel["modified"] =true;
                           data[hash][file.id].push(dataPerLabel);
                      }
                      c++;
