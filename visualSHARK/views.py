@@ -1134,16 +1134,17 @@ class LineLabelSet(APIView):
     write_perm = 'edit_issue_links'
 
     def _sample_issue(self, project_name):
-        issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
-        
         p = Project.objects.get(name=project_name)
         its = IssueSystem.objects.get(project_id=p.id)
 
-        #issue = None
-        #for i in Issue.objects.filter(issue_system_id=its.id):
-        #    if(Commit.objects.filter(linked_issue_ids=issue.id).count().count() > 1):
-        #        issue = i
-        #        break
+        issue = None
+        for i in Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug'):
+            if(Commit.objects.filter(fixed_issue_ids=i.id).count() > 1):
+                issue = i
+                break
+
+        # overwrite sampling
+        #issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
 
         return issue
 
@@ -1153,13 +1154,12 @@ class LineLabelSet(APIView):
         folder = tempfile.mkdtemp()
         git.repo.base.Repo.clone_from(project_path + "/", folder)
 
-        for commit in Commit.objects.filter(linked_issue_ids=issue.id):
+        for commit in Commit.objects.filter(fixed_issue_ids=issue.id):
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
-            
 
             changes = []
-            for fa in FileAction.objects.filter(commit_id=commit.id):
+            for fa in FileAction.objects.filter(commit_id=commit.id, mode='M'):
                 f = File.objects.get(id=fa.file_id)
                 if not f.path.lower().endswith('.java'):
                     continue
@@ -1209,11 +1209,16 @@ class LineLabelSet(APIView):
 
     def get(self, request):
         
-        project_name = 'commons-dbcp'
+        project_name = request.GET.get('project_name', None)
+        if not project_name:
+            log.error('got no project')
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+        # project_name = 'commons-dbcp'
         issue = self._sample_issue(project_name)
 
         project_path = '/srv/repos/' + project_name
-        
+
         if issue == None:
             log.error('issue not found')
             return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

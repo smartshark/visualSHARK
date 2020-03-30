@@ -1,9 +1,9 @@
 <template>
 <div class="wrapper">
-  <div class="animated fadeIn">
+  <div class="animated fadeIn" v-if="issue">
     <div class="card">
       <div class="card-header">
-        <i class="fa fa-bug"></i> {{issue.title}}
+        <i class="fa fa-bug"></i> {{issue.external_id}} - {{issue.title}}
       </div>
       <div class="card-block">
         <pre>{{issue.desc}}</pre>
@@ -12,7 +12,7 @@
         </div>
       </div>
     </div>
-    <div class="card" v-for="commit in commits">
+    <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
       <div class="card-header">
         <i class="fa fa-code"></i> {{commit.revision_hash}}
       </div>
@@ -55,7 +55,7 @@ export default {
   }),
   mounted() {
     this.$store.dispatch('pushLoading')
-    rest.getChangedLines('')
+    rest.getChangedLines(this.currentProject.name)
       .then(response => {
         this.$store.dispatch('popLoading')
         this.commits = response.data['commits']

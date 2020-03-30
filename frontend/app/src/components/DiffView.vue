@@ -2,7 +2,6 @@
   <div class="card">
     <div class="card-header" v-bind:class="{'complete': isComplete}">
       <i class="fa fa-file"></i> {{filename}}
-      <button class="primary" >submit</button>
       <button v-on:click="showCode = !showCode">Toggle Code</button>
       <button v-if="!isComplete" v-on:click="scrollToNext()">next</button>
     </div>
