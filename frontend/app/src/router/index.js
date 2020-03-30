@@ -18,6 +18,7 @@ import Labeling from '@/views/Labeling'
 import IssueTypeLabeling from '@/views/IssueTypeLabeling'
 import IssueTypeConflicts from '@/views/IssueTypeConflicts'
 import CommitIssueLinks from '@/views/CommitIssueLinks'
+import LineLabels from '@/views/LineLabels'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -108,13 +109,13 @@ const router = new Router({
         },
         {
           path: 'labeling',
-          name: 'Labeling',
+          name: 'Manual Labels',
           component: Labeling,
           props: true,
           children: [
             {
               path: 'issuetype',
-              name: 'Issue Type Labeling',
+              name: 'Issue Types',
               component: IssueTypeLabeling
             },
             {
@@ -126,6 +127,11 @@ const router = new Router({
               path: 'commitissuelinks',
               name: 'Commit->Issue Links',
               component: CommitIssueLinks
+            },
+            {
+              path: 'lines',
+              name: 'Change Lines',
+              component: LineLabels
             }
           ]
         },

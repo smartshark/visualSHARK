@@ -86,8 +86,4 @@ export default {
 .updated:before {
     content: "last update ";
 }
-.editor {
-  width: 600px;
-  height: 800px;
-}
 </style>

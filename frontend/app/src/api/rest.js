@@ -474,6 +474,20 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getChangedLines (dat) {
+    let req = this.getUrl('labeling/lines/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  saveChangedLines (dat) {
+    let req = this.getUrl('labeling/lines/')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getStatsHistory () {
     let req = this.getUrl('statshistory/')
     return axios.get(req, {headers: {

@@ -5,6 +5,9 @@ import json
 import os
 import io
 import logging
+import tempfile
+import git
+import shutil
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -24,6 +27,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework import filters
+from rest_framework import status
 import django_filters
 
 from mongoengine.queryset.visitor import Q
@@ -44,6 +48,7 @@ from rest_framework.filters import OrderingFilter
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
+from .util.helper import get_file_lines
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1121,4 +1126,107 @@ class IssueLinkSet(APIView):
 
         result = {}
         result['status'] = "ok"
+        return Response(result)
+
+
+class LineLabelSet(APIView):
+    read_perm = 'view_issue_links'
+    write_perm = 'edit_issue_links'
+
+    def _sample_issue(self, project_name):
+        issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
+        
+        p = Project.objects.get(name=project_name)
+        its = IssueSystem.objects.get(project_id=p.id)
+
+        #issue = None
+        #for i in Issue.objects.filter(issue_system_id=its.id):
+        #    if(Commit.objects.filter(linked_issue_ids=issue.id).count().count() > 1):
+        #        issue = i
+        #        break
+
+        return issue
+
+    def _commit_data(self, issue, project_path):
+        commits = []
+
+        folder = tempfile.mkdtemp()
+        git.repo.base.Repo.clone_from(project_path + "/", folder)
+
+        for commit in Commit.objects.filter(linked_issue_ids=issue.id):
+            repo = git.Repo(folder)
+            repo.git.reset('--hard', commit.revision_hash)
+            
+
+            changes = []
+            for fa in FileAction.objects.filter(commit_id=commit.id):
+                f = File.objects.get(id=fa.file_id)
+                if not f.path.lower().endswith('.java'):
+                    continue
+
+                nfile = open(folder + '/' + f.path, 'r', newline='\n').readlines()
+                lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines = get_file_lines(nfile, Hunk.objects.filter(file_action_id=fa.id))
+                changes.append({'filename': f.path, 'code': codes, 'lines': view_lines, 'code_after': ''.join(lines_after), 'code_before': ''.join(lines_before), 'added': only_added, 'deleted': only_deleted})
+            
+            commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
+
+        shutil.rmtree(folder)
+        return commits
+
+    def post(self, request):
+        issue_id = request.data['data']['issue_id']
+        labels = request.data['data']['labels']
+        issue = Issue.objects.get(id=issue_id)
+
+        its = IssueSystem.objects.get(id=issue.issue_system_id)
+        p = Project.objects.get(id=its.project_id)
+        project_path = '/srv/repos/' + p.name
+
+        # check if we have a label for every line that is deleted
+        commits = self._commit_data(issue, project_path)
+        new_changes = []
+        for c in commits:
+            for change in c['changes']:
+                key = c['revision_hash'] + '_' + change['filename']
+                label_lines = {}
+
+                # old lines only
+                olds = []
+                for l, v in change['lines'].items():
+                    if v['old'] != '-' and v['new'] == '-':
+                        olds.append(str(v['old']))
+
+                for del_line in olds:
+                    if del_line in labels[key] and labels[key][del_line] != 'label':
+                        label_lines[del_line] = labels[key][del_line]
+                    else:
+                        print('error, line {} not found or wrong label in key {}'.format(del_line, key))
+                tmp = {key: label_lines}
+                # tmp['labels'] = label_lines
+                new_changes.append(tmp)
+        print(new_changes)
+
+
+    def get(self, request):
+        
+        project_name = 'commons-dbcp'
+        issue = self._sample_issue(project_name)
+
+        project_path = '/srv/repos/' + project_name
+        
+        if issue == None:
+            log.error('issue not found')
+            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        result = {'commits': self._commit_data(issue, project_path)}
+
+        serializer = IssueSerializer(issue, many=False)
+        data = serializer.data
+        result['issue'] = data
+
         return Response(result)
