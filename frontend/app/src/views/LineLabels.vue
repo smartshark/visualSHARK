@@ -1,6 +1,6 @@
 <template>
 <div class="wrapper">
-  <div class="animated fadeIn" v-if="issue">
+  <div class="animated fadeIn" v-if="issue.id">
     <div class="card">
       <div class="card-header">
         <i class="fa fa-bug"></i> {{issue.external_id}} - {{issue.title}}

@@ -13,6 +13,8 @@
               <option name="label" value="label">label</option>
               <option name="whitespace" value="whitespace">whitespace</option>
               <option name="comment" value="comment">comment</option>
+              <option name="refactoring" value="refactoring">refactoring</option>
+              <option name="unrelated" value="unrelated">unrelated</option>
               <option name="bug" value="bug">bug</option>
             </select>
             <div class="lineno" v-if="lineno.new != '-'">{{index}}</div>
