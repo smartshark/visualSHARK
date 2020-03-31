@@ -17,7 +17,6 @@
               <option name="unrelated" value="unrelated">unrelated</option>
               <option name="bug" value="bug">bug</option>
             </select>
-            <div class="lineno" v-if="lineno.new != '-'">{{index}}</div>
           </div>
         </div>
         <div class="linesOld">
@@ -30,7 +29,7 @@
             {{lineno.new}}
           </div>
         </div>
-        <pre class="code" v-html="markedBlock"></pre>
+        <pre class="code" v-html="markedBlock" @mouseup="setSelected"></pre>
       </div>
     </div>
   </div>
@@ -111,9 +110,9 @@ export default {
       let marked = []
       for(let line of hljs.highlight('java', tmp).value.split('\n')) {
         if(this.onlyDeleted.includes(i)) {
-          marked.push('<span class="removedCode">- </span>' + line)
+          marked.push('<div class="removedCode">' + line + '</div>')
         }else if(this.onlyAdded.includes(i)) {
-          marked.push('<span class="addedCode">+ </span>' + line)
+          marked.push('<div class="addedCode">' + line + '</div>')
         }else{
           marked.push(line)
         }
@@ -132,6 +131,18 @@ export default {
       this.isComplete = b
       if(this.isComplete === true) {
         this.showCode = false
+      }
+    },
+    setSelected() {
+      let text = ""
+      if (window.getSelection) {
+          text = window.getSelection().toString()
+      } else if (document.selection && document.selection.type != "Control") {
+          text = document.selection.createRange().text
+      }
+
+      if(text !== "") {
+        console.log(text)
       }
     }
   }
@@ -167,34 +178,50 @@ pre {
   tab-size: 1.5em;
   -moz-tab-size: 1.5em;
 }
-
 .removedCode {
+  display: inline;
   background-color: rgba(255,0,0,0.2);
 }
-
 .addedCode {
+  display: inline;
   background-color: rgba(0,255,0,0.2);
 }
-
+.code {
+  line-height: 22px;
+  margin-left: 10px;
+}
+.editor {
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+.lineno {
+  min-height: 22px;
+  color: #aaa;
+}
 .lineLabels {
   flex-shrink: 0;
   padding-top: 0px;
   margin-top: 0;
+  background-color: rgb(245, 242, 240);
 }
 .linesNew {
   flex-shrink: 0;
   padding-top: 0px;
   margin-top: 0;
+  background-color: rgb(245, 242, 240);
 }
 .linesOld {
   flex-shrink: 0;
   padding-top: 0px;
   margin-top: 0;
+  background-color: rgb(245, 242, 240);
 }
 .labelType {
   -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
   border: none;
+  margin: 0px;
+  padding: 0px;
 }
 </style>

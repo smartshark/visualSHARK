@@ -810,6 +810,8 @@ def get_file_lines(file, hunks):
         if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
             lines.append('[{} {}] {}'.format(idx_old, idx_new, l))
             linenos.append('{}-{}'.format(idx_old, idx_new))
+            lines_before.append(l)
+            lines_after.append(l)
 
             codes.append(l)
             view_lines[i] = {'old': idx_old, 'new': idx_new}
