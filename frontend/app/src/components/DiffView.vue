@@ -8,8 +8,8 @@
     <div class="card-block" v-show="showCode">
       <div class="editor">
         <div class="lineLabels">
-          <div class="lineno" v-for="(lineno, key, index) in lines">
-            <select :id="commit + '_' + filename + '_' + lineno.old" v-model="models[lineno.old]" v-if="lineno.new == '-'" class="labelType" @change="changeLabel">
+          <div class="lineno" v-for="(lineno, key, index) in lines" v-bind:class="{'selectedModel': selectedModels.includes(lineno.old)}" @click.left.shift.exact.prevent="selectModel(lineno.old, $event)">
+            <select :id="commit + '_' + filename + '_' + lineno.old" v-model="models[lineno.old]" v-if="lineno.new == '-'" class="labelType"  @change="changeLabel(lineno.old)" @mousedown.left.shift.exact.prevent>
               <option name="label" value="label">label</option>
               <option name="whitespace" value="whitespace">whitespace</option>
               <option name="comment" value="comment">comment</option>
@@ -29,7 +29,7 @@
             {{lineno.new}}
           </div>
         </div>
-        <pre class="code" v-html="markedBlock" @mouseup="setSelected"></pre>
+        <pre class="code" v-html="markedBlock"></pre>
       </div>
     </div>
   </div>
@@ -57,7 +57,7 @@ export default {
       isComplete: false,
       showCode: true,
       margin: 2,
-      proxLines: new Set()
+      selectedModels: []
     }
   },
   components: {
@@ -100,27 +100,37 @@ export default {
     refreshModel() {
       for(let lineno in this.lines) {
         if(this.lines[lineno].new == '-') {
-          this.models[this.lines[lineno].old] = 'label'
+          // see: https://vuejs.org/v2/guide/reactivity.html
+          this.$set(this.models, this.lines[lineno].old, 'label')
+          //this.models[this.lines[lineno].old] = 'label'
         }
       }
     },
     refreshCode() {
+      // problem is that this maybe slow when compared to bulk operations
+      // solution when syntax highlighting breaks
+      // keep state https://github.com/highlightjs/highlight.js/issues/424
+      // we could basically split by line and render each line while keeping the parser state
       let tmp = this.code.join('')
       let i = 1
       let marked = []
-      for(let line of hljs.highlight('java', tmp).value.split('\n')) {
+
+      let state = null
+      for(let line of tmp.split('\n')) {
+        let po = hljs.highlight('java', line, true, state)
+        state = po.top
         if(this.onlyDeleted.includes(i)) {
-          marked.push('<div class="removedCode">' + line + '</div>')
+          marked.push('<div class="removedCode">' + po.value + '</div>')
         }else if(this.onlyAdded.includes(i)) {
-          marked.push('<div class="addedCode">' + line + '</div>')
+          marked.push('<div class="addedCode">' + po.value + '</div>')
         }else{
-          marked.push(line)
+          marked.push(po.value)
         }
         i++
       }
       this.markedBlock = marked.join('\n')
     },
-    changeLabel(event) {
+    changeLabel(modelIdx) {
       // check completeness
       let b = true
       for(let m in this.models) {
@@ -128,21 +138,30 @@ export default {
           b = false
         }
       }
+
+      // check if we are linked, if we are change all linked labels
+      if(this.selectedModels.includes(modelIdx)) {
+        for(let m of this.selectedModels) {
+          this.models[m] = this.models[modelIdx]
+        }
+
+        // reset linking
+        this.selectedModels = []
+      }
+
       this.isComplete = b
       if(this.isComplete === true) {
         this.showCode = false
       }
     },
-    setSelected() {
-      let text = ""
-      if (window.getSelection) {
-          text = window.getSelection().toString()
-      } else if (document.selection && document.selection.type != "Control") {
-          text = document.selection.createRange().text
+    selectModel(modelIdx, event) {
+      if(typeof this.models[modelIdx] === 'undefined') {
+        return
       }
-
-      if(text !== "") {
-        console.log(text)
+      if(this.selectedModels.includes(modelIdx)) {
+        this.selectedModels.splice(this.selectedModels.indexOf(modelIdx), 1)
+      }else {
+        this.selectedModels.push(modelIdx)
       }
     }
   }
@@ -156,6 +175,10 @@ pre {
   font-size: 100%;
   overflow: auto;
   white-space: pre;
+}
+.selectedModel {
+  border: 0px solid green;
+  border-right-width: 1px;
 }
 .hideLine {
   display: none;
