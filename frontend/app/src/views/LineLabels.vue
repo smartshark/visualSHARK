@@ -6,7 +6,7 @@
         <i class="fa fa-bug"></i> {{issue.external_id}} - {{issue.title}}
       </div>
       <div class="card-block">
-        <pre>{{issue.desc}}</pre>
+        <pre class="force-wrap">{{issue.desc}}</pre>
         <div class="submitLine">
           <button v-on:click="submit">Submit Labels</button>
         </div>
@@ -112,4 +112,11 @@ export default {
 </script>
 
 <style>
+pre.force-wrap {
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
 </style>

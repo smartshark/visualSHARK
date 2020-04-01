@@ -267,6 +267,8 @@ pre {
   height: 800px;
   display: flex;
   align-items: flex-start;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
   overflow: auto;
   tab-size: 1.5em;
   -moz-tab-size: 1.5em;
@@ -283,10 +285,8 @@ pre {
   padding-top: 5px;
   line-height: 22px;
   margin-left: 10px;
-}
-.editor {
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  overflow: unset !important;
+  white-space: pre !important;
 }
 .lineno {
   min-height: 22px;
