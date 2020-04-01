@@ -3,13 +3,12 @@
     <div class="card-header" v-bind:class="{'complete': isComplete}">
       <i class="fa fa-file"></i> {{filename}}
 
-     
-      <!--<label class="switch switch-3d switch-primary">
-        <input type="checkbox" class="switch-input" checked>
-        <span class="switch-label"></span>
-        <span class="switch-handle"></span>
-      </label>-->
-
+      <!--Mark whole file as test <input type="checkbox" name="mark_test"/>
+      Mark whole file as documentation <checkbox name="mark_documentation"/>-->
+      <input type="checkbox" value="mark_test" v-model="isTest">
+      Mark file as test
+      <input type="checkbox" value="mark_documentation" v-model="isDocumentation">
+      Mark file as documentation
       <button v-on:click="showCode = !showCode">Toggle Code</button>
       <button v-if="!isComplete" v-on:click="scrollToNext()">next</button>
     </div>
@@ -17,25 +16,39 @@
     <div class="card-block" v-show="showCode">
       <div class="editor">
         <div class="lineLabels">
-          <div class="lineno" v-for="(lineno, key, index) in lines" v-bind:class="{'selectedModel': selectedModels.includes(lineno.old)}" @click.left.shift.exact.prevent="selectModel(lineno.old, $event)">
-            <select :id="commit + '_' + filename + '_' + lineno.old" v-model="models[lineno.old]" v-if="lineno.new == '-'" class="labelType"  @change="changeLabel(lineno.old)" @mousedown.left.shift.exact.prevent>
-              <option name="label" value="label">label</option>
-              <option name="whitespace" value="whitespace">whitespace</option>
-              <option name="comment" value="comment">comment</option>
-              <option name="refactoring" value="refactoring">refactoring</option>
-              <option name="unrelated" value="unrelated">unrelated</option>
-              <option name="bug" value="bug">bug</option>
-            </select>
+          <div class="lineno" v-for="line in lines" v-bind:class="{'selectedModel': selectedModels.includes(line.number)}" @click.left.shift.exact.prevent="selectModel(line.number, $event)">
+            <template v-if="line.new == '-'">
+              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)" @mousedown.left.shift.exact.prevent>
+                <option name="label" value="label">label</option>
+                <option name="test" value="test">test</option>
+                <option name="whitespace" value="whitespace">whitespace</option>
+                <option name="documentation" value="documentation">documentation</option>
+                <option name="refactoring" value="refactoring">refactoring</option>
+                <option name="unrelated" value="unrelated">unrelated</option>
+                <option name="bug" value="bug">bug</option>
+              </select>
+            </template>
+            <template v-if="line.old == '-'">
+              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)" @mousedown.left.shift.exact.prevent>
+                <option name="label" value="label">label</option>
+                <option name="test" value="test">test</option>
+                <option name="whitespace" value="whitespace">whitespace</option>
+                <option name="documentation" value="documentation">documentation</option>
+                <option name="refactoring" value="refactoring">refactoring</option>
+                <option name="unrelated" value="unrelated">unrelated</option>
+                <option name="bug" value="bug">bug</option>
+              </select>
+            </template>
           </div>
         </div>
         <div class="linesOld">
-          <div class="lineno" v-for="(lineno, key, index) in lines">
-            {{lineno.old}}
+          <div class="lineno" v-for="line in lines">
+            {{line.old}}
           </div>
         </div>
         <div class="linesNew">
-          <div class="lineno" v-for="(lineno, key, index) in lines">
-            {{lineno.new}}
+          <div class="lineno" v-for="line in lines">
+            {{line.new}}
           </div>
         </div>
         <pre class="code" v-html="markedBlock"></pre>
@@ -55,18 +68,16 @@ export default {
   props: {
     commit: String,
     filename: String,
-    code: String,
-    lines: [Array, Object],
-    onlyDeleted: [Array, Object],
-    onlyAdded: [Array, Object]
+    lines: Array
   },
   data () {
     return {
       markedBlock: '',
       models: {},
       isComplete: false,
+      isDocumentation: false,
+      isTest: false,
       showCode: true,
-      margin: 2,
       selectedModels: []
     }
   },
@@ -79,25 +90,47 @@ export default {
     projectsIts: 'projectsIts'
   }),
   created () {
-    hljs.registerLanguage('java', java)
+    if(this.filename.endsWith('.java')) {
+      hljs.registerLanguage('java', java)
+    }
     this.refreshCode()
     this.initializeModel()
-
-    // check if we are already finished because we only have additions
-    if(this.onlyDeleted.length === 0) {
-      this.isComplete = true
-      this.showCode = false
-    }
   },
   watch: {
-    code: function(oldValue, newValue) {
-      this.refreshCode()
-    },
     lines: function(oldValue, newValue) {
-      this.refreshModel()
+      this.refreshCode()
+      this.initializeModel()
+    },
+    isDocumentation(oldValue, newValue) {
+      if(this.isDocumentation === true) {
+        this.setAllModels('documentation')
+      }
+      if(this.isDocumentation === false) {
+        this.setAllModels('label')
+      }
+    },
+    isTest(oldValue, newValue) {
+      if(this.isTest === true) {
+        this.setAllModels('test')
+      }
+      if(this.isTest === false) {
+        this.setAllModels('label')
+      }
     }
   },
   methods: {
+    setAllModels(label) {
+      for(let el in this.models) {
+        this.$set(this.models, el, label)
+      }
+
+      // change is not fired if we set it this way, we need to manually check completeness now
+      this.checkComplete()
+
+      if(this.isComplete !== true) {
+        this.showCode = true
+      }
+    },
     scrollToNext() {
       for(let el in this.models) {
         if(this.models[el] === 'label') {
@@ -108,11 +141,15 @@ export default {
       }
     },
     initializeModel() {
-      for(let lineno in this.lines) {
-        if(this.lines[lineno].new == '-') {
+      for(let line of this.lines) {
+        // if new == - we are on a line only existing on old
+        if(line.new == '-') {
           // see: https://vuejs.org/v2/guide/reactivity.html
-          this.$set(this.models, this.lines[lineno].old, 'label')
+          this.$set(this.models, line.number, 'label')
           //this.models[this.lines[lineno].old] = 'label'
+        }
+        if(line.old == '-') {
+          this.$set(this.models, line.number, 'label')
         }
       }
     },
@@ -121,22 +158,31 @@ export default {
       // solution when syntax highlighting breaks
       // keep state https://github.com/highlightjs/highlight.js/issues/424
       // we could basically split by line and render each line while keeping the parser state
-      let tmp = this.code
-      let i = 1
       let marked = []
 
-      let state = null
-      for(let line of tmp.split('\n')) {
-        let po = hljs.highlight('java', line, true, state)
-        state = po.top
-        if(this.onlyDeleted.includes(i)) {
-          marked.push('<div class="removedCode">' + po.value + '</div>')
-        }else if(this.onlyAdded.includes(i)) {
-          marked.push('<div class="addedCode">' + po.value + '</div>')
-        }else{
-          marked.push(po.value)
+      if(this.filename.endsWith('.java')) {
+        let state = null
+        for(let line of this.lines) {
+          let po = hljs.highlight('java', line.code, true, state)
+          state = po.top
+          if(line.new == '-') {
+            marked.push('<div class="removedCode">' + po.value + '</div>')
+          }else if(line.old == '-') {
+            marked.push('<div class="addedCode">' + po.value + '</div>')
+          }else{
+            marked.push(po.value)
+          }
         }
-        i++
+      }else {
+        for(let line of this.lines) {
+          if(line.new == '-') {
+            marked.push('<div class="removedCode">' + line.code + '</div>')
+          }else if(line.old == '-') {
+            marked.push('<div class="addedCode">' + line.code + '</div>')
+          }else{
+            marked.push(line.code)
+          }
+        }
       }
       this.markedBlock = marked.join('\n')
     },
@@ -152,6 +198,9 @@ export default {
       }
 
       // check completeness
+      this.checkComplete()
+    },
+    checkComplete() {
       let b = true
       for(let m in this.models) {
         if(this.models[m] == 'label') {

@@ -20,7 +20,7 @@
         <pre>{{commit.message}}</pre>
       </div>
       <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :filename="c.filename" :code="c.code" :lines="c.lines" :onlyDeleted="c.deleted" :onlyAdded="c.added" ref="diffView"/>
+        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView"/>
       </template>
     </div>
   </div>

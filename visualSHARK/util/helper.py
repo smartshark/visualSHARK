@@ -828,3 +828,39 @@ def get_file_lines(file, hunks):
             idx_old += 1
     
     return lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines
+
+
+def get_change_view(file, hunks):
+    view_lines = []
+    added_lines = {}
+    deleted_lines = {}
+
+    for hunk in hunks:
+        al, dl = get_lines(hunk)
+        added_lines.update(al)
+        deleted_lines.update(dl)
+    
+    idx_old = idx_new = 1
+    i = 1
+    for l in file:
+        while idx_old in deleted_lines.keys():
+            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old], 'number': i})
+
+            i += 1
+            idx_old += 1
+
+        if idx_new in added_lines.keys():
+            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new], 'number': i})
+
+            i += 1
+            idx_new += 1
+            continue
+
+        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': l, 'number': i})
+
+            i += 1
+            idx_new += 1
+            idx_old += 1
+    
+    return view_lines

@@ -8,6 +8,7 @@ import logging
 import tempfile
 import git
 import shutil
+import magic
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -48,7 +49,7 @@ from rest_framework.filters import OrderingFilter
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
-from .util.helper import get_file_lines
+from .util.helper import get_file_lines, get_change_view
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1134,15 +1135,19 @@ class LineLabelSet(APIView):
     write_perm = 'edit_issue_links'
 
     def _sample_issue(self, project_name):
+
+        # check if last sample was finished, if not resend last sample
+
         # todo:
         # - reject samples which have been labeled by this user
         # - maybe load previous labels if unfinished?
+        # - check if there is anything to label at all?
         p = Project.objects.get(name=project_name)
         its = IssueSystem.objects.get(project_id=p.id)
 
         issue = None
         for i in Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug'):
-            if(Commit.objects.filter(fixed_issue_ids=i.id).count() > 1):
+            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 1:
                 issue = i
                 break
 
@@ -1161,19 +1166,37 @@ class LineLabelSet(APIView):
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
 
+            print('commit', commit.revision_hash)
             changes = []
-            for fa in FileAction.objects.filter(commit_id=commit.id, mode='M'):
+            for fa in FileAction.objects.filter(commit_id=commit.id):
                 f = File.objects.get(id=fa.file_id)
-                if not f.path.lower().endswith('.java'):
+
+                source_file = folder + '/' + f.path
+                if not os.path.exists(source_file):
+                    #print('file', source_file, 'not existing, skipping')
                     continue
 
-                nfile = open(folder + '/' + f.path, 'rb').read().decode('utf-8')
+                #print('open file', source_file, end='')
+                # use libmagic to guess encoding
+                blob = open(source_file, 'rb').read()
+                m = magic.Magic(mime_encoding=True)
+                encoding = m.from_buffer(blob)
+                #print('encoding', encoding)
+                
+                # we open everything but binary
+                if encoding == 'binary':
+                    continue
+                if encoding == 'unknown-8bit':
+                    continue
+
+
+                nfile = open(source_file, 'rb').read().decode(encoding)
                 nfile = nfile.replace('\r\n', '\n')
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
-                lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines = get_file_lines(nfile, Hunk.objects.filter(file_action_id=fa.id))
-                changes.append({'filename': f.path, 'code': '\n'.join(codes), 'lines': view_lines, 'code_after': ''.join(lines_after), 'code_before': ''.join(lines_before), 'added': only_added, 'deleted': only_deleted})
-            
+                view_lines = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
+                changes.append({'filename': f.path, 'lines': view_lines})
+
             commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 
         shutil.rmtree(folder)
@@ -1196,20 +1219,25 @@ class LineLabelSet(APIView):
                 key = c['revision_hash'] + '_' + change['filename']
                 label_lines = {}
 
-                # old lines only
-                olds = []
-                for l, v in change['lines'].items():
-                    if v['old'] != '-' and v['new'] == '-':
-                        olds.append(str(v['old']))
+                # load all lines that need a label
+                lines_needing_labels = []
+                for line in change['lines']:
+                    if line['old'] != '-' and line['new'] == '-':
+                        lines_needing_labels.append(str(line['number']))
+                    if line['new'] != '-' and line['old'] == '-':
+                        lines_needing_labels.append(str(line['number']))
 
-                for del_line in olds:
-                    if del_line in labels[key] and labels[key][del_line] != 'label':
-                        label_lines[del_line] = labels[key][del_line]
+                # check if every line we have locally is in labels and has a label
+                for line_number in lines_needing_labels:
+                    if line_number in labels[key] and labels[key][line_number] != 'label':
+                        label_lines[line_number] = labels[key][line_number]
                     else:
-                        print('error, line {} not found or wrong label in key {}'.format(del_line, key))
+                        print('error, line {} not found or wrong label in key {}'.format(line_number, key))
+
                 tmp = {key: label_lines}
                 # tmp['labels'] = label_lines
                 new_changes.append(tmp)
+        print('final changes')
         print(new_changes)
 
 
@@ -1218,7 +1246,7 @@ class LineLabelSet(APIView):
         project_name = request.GET.get('project_name', None)
         if not project_name:
             log.error('got no project')
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
         # project_name = 'commons-dbcp'
         issue = self._sample_issue(project_name)
@@ -1227,11 +1255,11 @@ class LineLabelSet(APIView):
 
         if issue == None:
             log.error('issue not found')
-            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not os.path.exists(project_path):
             log.error('no such path ' + project_path)
-            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
         result = {'commits': self._commit_data(issue, project_path)}
