@@ -93,7 +93,6 @@ export default {
   created () {
     hljs.registerLanguage('java', java)
     hljs.registerLanguage('xml', xml)
-    hljs.registerLanguage('html', xml)
     this.refreshCode()
     this.initializeModel()
   },
@@ -180,7 +179,7 @@ export default {
       }else if(this.filename.toLowerCase().endsWith('.xml')) {
         marked = this.loadSyntax('xml')
       }else if(this.filename.toLowerCase().endsWith('.html')) {
-        marked = this.loadSyntax('html')
+        marked = this.loadSyntax('xml')
       }else {
         for(let line of this.lines) {
           if(line.new == '-') {

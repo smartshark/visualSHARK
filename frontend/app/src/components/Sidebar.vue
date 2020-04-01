@@ -32,7 +32,7 @@
               <li class="nav-item" v-if="permissions.includes('view_issue_links')">
                 <router-link :to="'/labeling/commitissuelinks'" class="nav-link"><i class="fa fa-link"></i> Commit->Issue Links</router-link>
               </li>
-              <li class="nav-item" v-if="permissions.includes('view_issue_links')">
+              <li class="nav-item" v-if="permissions.includes('view_line_labels')">
                 <router-link :to="'/labeling/lines'" class="nav-link"><i class="fa fa-file"></i> Changed Lines</router-link>
               </li>
             </ul>

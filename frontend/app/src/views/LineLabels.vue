@@ -1,5 +1,11 @@
 <template>
 <div class="wrapper">
+  <template v-if="flashes">
+    <alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" type="success" dismissable>
+      <span class="icon-info-circled alert-icon-float-left"></span>
+      <p>{{flash.message}}</p>
+    </alert>
+  </template>
   <div class="animated fadeIn" v-if="issue.id">
     <div class="card">
       <div class="card-header">
@@ -24,7 +30,7 @@
         <pre>{{commit.message}}</pre>
       </div>
       <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" key="commit.revision_hash + c.filename"/>
+        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.filename"/>
       </template>
     </div>
   </div>
@@ -37,6 +43,7 @@ import { alert } from 'vue-strap'
 import rest from '../api/rest'
 
 import DiffView from '@/components/DiffView.vue'
+import modal from '@/components/Modal'
 
 export default {
   name: 'linelabels',
@@ -46,12 +53,16 @@ export default {
       issue: {},
       result: [],
       vcs_url: '',
-      issue_url: ''
+      issue_url: '',
+      has_trained: false,
+      load_last: false,
+      flashes: []
     }
   },
   components: {
     alert,
-    DiffView
+    DiffView,
+    modal
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -71,6 +82,7 @@ export default {
       this.$store.dispatch('pushLoading')
       this.result = []
       this.commits = []
+      this.flashes = []
       this.vcs_url = ''
       this.issue_url = ''
       rest.getChangedLines(this.currentProject.name)
@@ -80,6 +92,16 @@ export default {
           this.issue = response.data['issue']
           this.vcs_url = response.data['vcs_url']
           this.issue_url = response.data['issue_url']
+
+          this.has_trained = response.data['has_trained']
+          this.load_last = response.data['load_last']
+
+          if(this.has_trained !== true) {
+            this.flashes.push({id: 'train', message: 'You have not finished the training! Loading training issues first!'})
+          }
+          if(this.load_last === true) {
+            this.flashes.push({id: 'last', message: 'You have not finished labeling the last issue, loading last issue first.'})
+          }
         })
         .catch(e => {
           this.$store.dispatch('pushError', e)

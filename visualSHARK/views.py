@@ -36,7 +36,7 @@ from bson.objectid import ObjectId
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, \
     Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
-from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
+from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -1131,8 +1131,8 @@ class IssueLinkSet(APIView):
 
 
 class LineLabelSet(APIView):
-    read_perm = 'view_issue_links'
-    write_perm = 'edit_issue_links'
+    read_perm = 'view_line_labels'
+    write_perm = 'edit_line_labels'
 
     def _sample_issue(self, project_name):
 
@@ -1147,13 +1147,12 @@ class LineLabelSet(APIView):
 
         issue = None
         for i in Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug'):
-            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 1:
+            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0:
                 issue = i
                 break
 
         # overwrite sampling
         #issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
-        print(issue.id)
         return issue
 
     def _commit_data(self, issue, project_path):
@@ -1243,6 +1242,11 @@ class LineLabelSet(APIView):
         if errors:
             return Response({'message': '\n'.join(errors)}, status=status.status.HTTP_400_BAD_REQUEST)
 
+        # reset the issue id for sucessful labeling
+        up = UserProfile.objects.get(user=request.user)
+        up.line_label_last_issue_id = ''
+        up.save()
+
         print('final changes')
         print(new_changes)
         return Response({'changes': new_changes})
@@ -1255,12 +1259,28 @@ class LineLabelSet(APIView):
             log.error('got no project')
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
-        # project_name = 'commons-dbcp'
-        issue = self._sample_issue(project_name)
+        # if the user has no last_issue_id sample one
+        load_last = False
+        if not request.user.profile.line_label_last_issue_id:
+            issue = self._sample_issue(project_name)
+            
+            up = UserProfile.objects.get(user=request.user)
+            up.line_label_last_issue_id = issue.id
+            up.save()
+
+        # otherwise use the last unfinished one
+        else:
+            print('loading last issue', request.user.profile.line_label_last_issue_id)
+            issue = Issue.objects.get(id=request.user.profile.line_label_last_issue_id)
+            load_last = True
+
+        if issue == None:
+            log.error('issue not found')
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # urls for issue system and git
-        p = Project.objects.get(name=project_name)
         issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
+        p = Project.objects.get(id=issue_system.project_id)
         if 'jira' in issue_system.url:
             issue_url = 'https://issues.apache.org/jira/browse/'
         elif 'github' in issue_system.url:
@@ -1271,18 +1291,14 @@ class LineLabelSet(APIView):
         vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
         vcs_url = vcs.url.replace('.git', '') + '/commit/'
 
-        project_path = settings.LOCAL_REPOSITORY_PATH + project_name
-
-        if issue == None:
-            log.error('issue not found')
-            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
 
         if not os.path.exists(project_path):
             log.error('no such path ' + project_path)
             return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-        result = {'commits': self._commit_data(issue, project_path), 'issue_url': issue_url, 'vcs_url': vcs_url}
+        result = {'commits': self._commit_data(issue, project_path), 'issue_url': issue_url, 'vcs_url': vcs_url, 'has_trained': request.user.profile.line_label_has_trained, 'load_last': load_last}
 
         serializer = IssueSerializer(issue, many=False)
         data = serializer.data
