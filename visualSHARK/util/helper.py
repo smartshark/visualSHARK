@@ -794,7 +794,7 @@ def get_file_lines(file, hunks):
         while idx_old in deleted_lines.keys():
             lines.append('[{} {}] -{}'.format(idx_old, ' ' * len(str(idx_new)), deleted_lines[idx_old]))
             linenos.append('{}-{}'.format(idx_old, '&nbsp;' * len(str(idx_new))))
-            lines_before.append(deleted_lines[idx_old] + "\n")
+            lines_before.append(deleted_lines[idx_old])
 
             only_deleted.append(i)
             codes.append(deleted_lines[idx_old])
@@ -806,7 +806,7 @@ def get_file_lines(file, hunks):
         if idx_new in added_lines.keys():
             lines.append('[{} {}] +{}'.format(' ' * len(str(idx_old)), idx_new, added_lines[idx_new]))
             linenos.append('{}-{}'.format('&nbsp;' * len(str(idx_old)), idx_new))
-            lines_after.append(added_lines[idx_new] + "\n")
+            lines_after.append(added_lines[idx_new])
 
             only_added.append(i)
             codes.append(added_lines[idx_new])

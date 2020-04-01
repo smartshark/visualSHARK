@@ -58,3 +58,6 @@ QUEUE = {
 # ServerSHARK API KEY
 API_KEY = None
 SERVERSHARK_API_URL = 'http://127.0.0.1:8001/remote'
+
+# path for local checkouts to get file contents
+LOCAL_REPOSITORY_PATH = '/srv/repos/'

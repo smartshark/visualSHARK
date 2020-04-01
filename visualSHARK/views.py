@@ -1186,7 +1186,7 @@ class LineLabelSet(APIView):
 
         its = IssueSystem.objects.get(id=issue.issue_system_id)
         p = Project.objects.get(id=its.project_id)
-        project_path = '/srv/repos/' + p.name
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
 
         # check if we have a label for every line that is deleted
         commits = self._commit_data(issue, project_path)
@@ -1223,7 +1223,7 @@ class LineLabelSet(APIView):
         # project_name = 'commons-dbcp'
         issue = self._sample_issue(project_name)
 
-        project_path = '/srv/repos/' + project_name
+        project_path = settings.LOCAL_REPOSITORY_PATH + project_name
 
         if issue == None:
             log.error('issue not found')

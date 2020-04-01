@@ -81,7 +81,7 @@ export default {
   created () {
     hljs.registerLanguage('java', java)
     this.refreshCode()
-    this.refreshModel()
+    this.initializeModel()
 
     // check if we are already finished because we only have additions
     if(this.onlyDeleted.length === 0) {
@@ -107,7 +107,7 @@ export default {
         }
       }
     },
-    refreshModel() {
+    initializeModel() {
       for(let lineno in this.lines) {
         if(this.lines[lineno].new == '-') {
           // see: https://vuejs.org/v2/guide/reactivity.html
