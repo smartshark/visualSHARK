@@ -1258,6 +1258,19 @@ class LineLabelSet(APIView):
         # project_name = 'commons-dbcp'
         issue = self._sample_issue(project_name)
 
+        # urls for issue system and git
+        p = Project.objects.get(name=project_name)
+        issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
+        if 'jira' in issue_system.url:
+            issue_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not issue_url.endswith('/'):
+                issue_url += '/'
+
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
         project_path = settings.LOCAL_REPOSITORY_PATH + project_name
 
         if issue == None:
@@ -1269,7 +1282,7 @@ class LineLabelSet(APIView):
             return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-        result = {'commits': self._commit_data(issue, project_path)}
+        result = {'commits': self._commit_data(issue, project_path), 'issue_url': issue_url, 'vcs_url': vcs_url}
 
         serializer = IssueSerializer(issue, many=False)
         data = serializer.data

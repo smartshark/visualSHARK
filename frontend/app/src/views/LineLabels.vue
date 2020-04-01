@@ -3,7 +3,7 @@
   <div class="animated fadeIn" v-if="issue.id">
     <div class="card">
       <div class="card-header">
-        <i class="fa fa-bug"></i> {{issue.external_id}} - {{issue.title}}
+        <i class="fa fa-bug"></i> <a :href="issue_url + issue.external_id" target="_blank">{{issue.external_id}}</a> - {{issue.title}}
       </div>
       <div class="card-block">
         <pre class="force-wrap">{{issue.desc}}</pre>
@@ -18,7 +18,7 @@
     </div>
     <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
       <div class="card-header">
-        <i class="fa fa-code"></i> {{commit.revision_hash}}
+        <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a>
       </div>
       <div class="card-block">
         <pre>{{commit.message}}</pre>
@@ -44,7 +44,9 @@ export default {
     return {
       commits: [],
       issue: {},
-      result: []
+      result: [],
+      vcs_url: '',
+      issue_url: ''
     }
   },
   components: {
@@ -69,11 +71,15 @@ export default {
       this.$store.dispatch('pushLoading')
       this.result = []
       this.commits = []
+      this.vcs_url = ''
+      this.issue_url = ''
       rest.getChangedLines(this.currentProject.name)
         .then(response => {
           this.$store.dispatch('popLoading')
           this.commits = response.data['commits']
           this.issue = response.data['issue']
+          this.vcs_url = response.data['vcs_url']
+          this.issue_url = response.data['issue_url']
         })
         .catch(e => {
           this.$store.dispatch('pushError', e)
