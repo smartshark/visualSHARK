@@ -10,6 +10,10 @@
         <div class="submitLine">
           <button v-on:click="submit">Submit Labels</button>
         </div>
+        <div v-if="result.length > 0">
+          Submitted and validated changes:
+          <div v-for="change in result">{{change}}</div>
+        </div>
       </div>
     </div>
     <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
@@ -41,7 +45,8 @@ export default {
   data () {
     return {
       commits: [],
-      issue: {}
+      issue: {},
+      result: []
     }
   },
   components: {
@@ -95,6 +100,7 @@ export default {
         rest.saveChangedLines({data: {labels: result, issue_id: this.issue.id}})
           .then(response => {
             this.$store.dispatch('popLoading')
+            this.result = response.data['changes']
           })
           .catch(e => {
             this.$store.dispatch('pushError', e)

@@ -63,6 +63,7 @@ import { mapGetters } from 'vuex'
 import { alert } from 'vue-strap'
 import hljs from 'highlight.js/lib/highlight';
 import java from 'highlight.js/lib/languages/java';
+import xml from 'highlight.js/lib/languages/xml';
 
 export default {
   props: {
@@ -92,6 +93,9 @@ export default {
   created () {
     if(this.filename.endsWith('.java')) {
       hljs.registerLanguage('java', java)
+    }
+    if(this.filename.endsWith('.xml')) {
+      hljs.registerLanguage('xml', xml)
     }
     this.refreshCode()
     this.initializeModel()
@@ -153,6 +157,22 @@ export default {
         }
       }
     },
+    loadSyntax(lang) {
+      let marked = []
+      let state = null
+      for(let line of this.lines) {
+        let po = hljs.highlight(lang, line.code, true, state)
+        state = po.top
+        if(line.new == '-') {
+          marked.push('<div class="removedCode">' + po.value + '</div>')
+        }else if(line.old == '-') {
+          marked.push('<div class="addedCode">' + po.value + '</div>')
+        }else{
+          marked.push(po.value)
+        }
+      }
+      return marked
+    },
     refreshCode() {
       // problem is that this maybe slow when compared to bulk operations
       // solution when syntax highlighting breaks
@@ -161,18 +181,9 @@ export default {
       let marked = []
 
       if(this.filename.endsWith('.java')) {
-        let state = null
-        for(let line of this.lines) {
-          let po = hljs.highlight('java', line.code, true, state)
-          state = po.top
-          if(line.new == '-') {
-            marked.push('<div class="removedCode">' + po.value + '</div>')
-          }else if(line.old == '-') {
-            marked.push('<div class="addedCode">' + po.value + '</div>')
-          }else{
-            marked.push(po.value)
-          }
-        }
+        marked = this.loadSyntax('java')
+      }else if(this.filename.endsWith('.xml')) {
+        marked = this.loadSyntax('xml')
       }else {
         for(let line of this.lines) {
           if(line.new == '-') {

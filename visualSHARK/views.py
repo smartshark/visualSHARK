@@ -1166,7 +1166,7 @@ class LineLabelSet(APIView):
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
 
-            print('commit', commit.revision_hash)
+            # print('commit', commit.revision_hash)
             changes = []
             for fa in FileAction.objects.filter(commit_id=commit.id):
                 f = File.objects.get(id=fa.file_id)
@@ -1214,6 +1214,7 @@ class LineLabelSet(APIView):
         # check if we have a label for every line that is deleted
         commits = self._commit_data(issue, project_path)
         new_changes = []
+        errors = []
         for c in commits:
             for change in c['changes']:
                 key = c['revision_hash'] + '_' + change['filename']
@@ -1232,13 +1233,17 @@ class LineLabelSet(APIView):
                     if line_number in labels[key] and labels[key][line_number] != 'label':
                         label_lines[line_number] = labels[key][line_number]
                     else:
-                        print('error, line {} not found or wrong label in key {}'.format(line_number, key))
+                        errors.append('error, line {} not found or wrong label in key {}'.format(line_number, key))
 
                 tmp = {key: label_lines}
                 # tmp['labels'] = label_lines
                 new_changes.append(tmp)
+        if errors:
+            return Response({'message': '\n'.join(errors)}, status=status.status.HTTP_400_BAD_REQUEST)
+
         print('final changes')
         print(new_changes)
+        return Response({'changes': new_changes})
 
 
     def get(self, request):
