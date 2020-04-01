@@ -53,19 +53,27 @@ export default {
     projectsVcs: 'projectsVcs',
     projectsIts: 'projectsIts'
   }),
+  watch: {
+    currentProject (value) {
+      this.loadSample()
+    }
+  },
   mounted() {
-    this.$store.dispatch('pushLoading')
-    rest.getChangedLines(this.currentProject.name)
-      .then(response => {
-        this.$store.dispatch('popLoading')
-        this.commits = response.data['commits']
-        this.issue = response.data['issue']
-      })
-      .catch(e => {
-        this.$store.dispatch('pushError', e)
-      });
+    this.loadSample()
   },
   methods: {
+    loadSample() {
+      this.$store.dispatch('pushLoading')
+      rest.getChangedLines(this.currentProject.name)
+        .then(response => {
+          this.$store.dispatch('popLoading')
+          this.commits = response.data['commits']
+          this.issue = response.data['issue']
+        })
+        .catch(e => {
+          this.$store.dispatch('pushError', e)
+        });
+    },
     submit() {
       let isComplete = true;
       let result = {}
