@@ -842,18 +842,21 @@ def get_change_view(file, hunks):
     
     idx_old = idx_new = 1
     i = 1
+    has_changed = False
     for l in file:
         while idx_old in deleted_lines.keys():
             view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old], 'number': i})
 
             i += 1
             idx_old += 1
+            has_changed = True
 
         if idx_new in added_lines.keys():
             view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new], 'number': i})
 
             i += 1
             idx_new += 1
+            has_changed = True
             continue
 
         if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
@@ -863,4 +866,4 @@ def get_change_view(file, hunks):
             idx_new += 1
             idx_old += 1
     
-    return view_lines
+    return view_lines, has_changed
