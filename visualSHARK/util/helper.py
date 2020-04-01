@@ -742,7 +742,9 @@ def get_lines(hunk):
     del_line = hunk.old_start
     add_line = hunk.new_start
 
-    for line in hunk.content.split('\n'):
+    h = normalize_line_endings(hunk.content)
+
+    for line in h.split('\n'):
         
         tmp = line[1:]
         
@@ -757,6 +759,12 @@ def get_lines(hunk):
         add_line += 1        
     
     return added_lines, deleted_lines
+
+
+def normalize_line_endings(line):
+    line = line.replace('\r\n', '\n')
+    return line.replace('\r', '\n')
+
 
 def get_file_lines(file, hunks):
     lines = []
@@ -789,7 +797,7 @@ def get_file_lines(file, hunks):
             lines_before.append(deleted_lines[idx_old] + "\n")
 
             only_deleted.append(i)
-            codes.append(deleted_lines[idx_old] + "\n")
+            codes.append(deleted_lines[idx_old])
             view_lines[i] = {'old': idx_old, 'new': '-'}
 
             i += 1
@@ -801,7 +809,7 @@ def get_file_lines(file, hunks):
             lines_after.append(added_lines[idx_new] + "\n")
 
             only_added.append(i)
-            codes.append(added_lines[idx_new] + "\n")
+            codes.append(added_lines[idx_new])
             view_lines[i] = {'old': '-', 'new': idx_new}
 
             idx_new += 1

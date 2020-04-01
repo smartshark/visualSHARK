@@ -2,9 +2,18 @@
   <div class="card">
     <div class="card-header" v-bind:class="{'complete': isComplete}">
       <i class="fa fa-file"></i> {{filename}}
+
+     
+      <!--<label class="switch switch-3d switch-primary">
+        <input type="checkbox" class="switch-input" checked>
+        <span class="switch-label"></span>
+        <span class="switch-handle"></span>
+      </label>-->
+
       <button v-on:click="showCode = !showCode">Toggle Code</button>
       <button v-if="!isComplete" v-on:click="scrollToNext()">next</button>
     </div>
+    <transition name="flip">
     <div class="card-block" v-show="showCode">
       <div class="editor">
         <div class="lineLabels">
@@ -32,6 +41,7 @@
         <pre class="code" v-html="markedBlock"></pre>
       </div>
     </div>
+    </transition>
   </div>
 </template>
 
@@ -45,7 +55,7 @@ export default {
   props: {
     commit: String,
     filename: String,
-    code: [Array, Object],
+    code: String,
     lines: [Array, Object],
     onlyDeleted: [Array, Object],
     onlyAdded: [Array, Object]
@@ -92,7 +102,7 @@ export default {
       for(let el in this.models) {
         if(this.models[el] === 'label') {
           let k = this.commit + '_' + this.filename + '_' + el
-          document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start' })
+          document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'})
           break
         }
       }
@@ -111,7 +121,7 @@ export default {
       // solution when syntax highlighting breaks
       // keep state https://github.com/highlightjs/highlight.js/issues/424
       // we could basically split by line and render each line while keeping the parser state
-      let tmp = this.code.join('')
+      let tmp = this.code
       let i = 1
       let marked = []
 
@@ -131,14 +141,6 @@ export default {
       this.markedBlock = marked.join('\n')
     },
     changeLabel(modelIdx) {
-      // check completeness
-      let b = true
-      for(let m in this.models) {
-        if(this.models[m] == 'label') {
-          b = false
-        }
-      }
-
       // check if we are linked, if we are change all linked labels
       if(this.selectedModels.includes(modelIdx)) {
         for(let m of this.selectedModels) {
@@ -147,6 +149,14 @@ export default {
 
         // reset linking
         this.selectedModels = []
+      }
+
+      // check completeness
+      let b = true
+      for(let m in this.models) {
+        if(this.models[m] == 'label') {
+          b = false
+        }
       }
 
       this.isComplete = b
@@ -210,6 +220,7 @@ pre {
   background-color: rgba(0,255,0,0.2);
 }
 .code {
+  padding-top: 5px;
   line-height: 22px;
   margin-left: 10px;
 }
@@ -223,19 +234,22 @@ pre {
 }
 .lineLabels {
   flex-shrink: 0;
-  padding-top: 0px;
+  padding-top: 5px;
   margin-top: 0;
   background-color: rgb(245, 242, 240);
+  padding-left: 5px;
 }
 .linesNew {
   flex-shrink: 0;
-  padding-top: 0px;
+  padding-top: 5px;
+  padding-right: 5px;
   margin-top: 0;
   background-color: rgb(245, 242, 240);
 }
 .linesOld {
   flex-shrink: 0;
-  padding-top: 0px;
+  padding-top: 5px;
+  padding-right: 5px;
   margin-top: 0;
   background-color: rgb(245, 242, 240);
 }
@@ -246,5 +260,6 @@ pre {
   border: none;
   margin: 0px;
   padding: 0px;
+  max-width: 50px;
 }
 </style>

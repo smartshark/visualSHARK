@@ -1134,6 +1134,9 @@ class LineLabelSet(APIView):
     write_perm = 'edit_issue_links'
 
     def _sample_issue(self, project_name):
+        # todo:
+        # - reject samples which have been labeled by this user
+        # - maybe load previous labels if unfinished?
         p = Project.objects.get(name=project_name)
         its = IssueSystem.objects.get(project_id=p.id)
 
@@ -1145,7 +1148,7 @@ class LineLabelSet(APIView):
 
         # overwrite sampling
         #issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
-
+        print(issue.id)
         return issue
 
     def _commit_data(self, issue, project_path):
@@ -1164,9 +1167,12 @@ class LineLabelSet(APIView):
                 if not f.path.lower().endswith('.java'):
                     continue
 
-                nfile = open(folder + '/' + f.path, 'r', newline='\n').readlines()
+                nfile = open(folder + '/' + f.path, 'rb').read().decode('utf-8')
+                nfile = nfile.replace('\r\n', '\n')
+                nfile = nfile.replace('\r', '\n')
+                nfile = nfile.split('\n')
                 lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines = get_file_lines(nfile, Hunk.objects.filter(file_action_id=fa.id))
-                changes.append({'filename': f.path, 'code': codes, 'lines': view_lines, 'code_after': ''.join(lines_after), 'code_before': ''.join(lines_before), 'added': only_added, 'deleted': only_deleted})
+                changes.append({'filename': f.path, 'code': '\n'.join(codes), 'lines': view_lines, 'code_after': ''.join(lines_after), 'code_before': ''.join(lines_before), 'added': only_added, 'deleted': only_deleted})
             
             commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 
