@@ -24,7 +24,7 @@
         <pre>{{commit.message}}</pre>
       </div>
       <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView"/>
+        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" key="commit.revision_hash + c.filename"/>
       </template>
     </div>
   </div>
@@ -67,6 +67,8 @@ export default {
   methods: {
     loadSample() {
       this.$store.dispatch('pushLoading')
+      this.result = []
+      this.commits = []
       rest.getChangedLines(this.currentProject.name)
         .then(response => {
           this.$store.dispatch('popLoading')
