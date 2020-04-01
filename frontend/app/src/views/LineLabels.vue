@@ -35,8 +35,6 @@
 import { mapGetters } from 'vuex'
 import { alert } from 'vue-strap'
 import rest from '../api/rest'
-import hljs from 'highlight.js/lib/highlight';
-import java from 'highlight.js/lib/languages/java';
 
 import DiffView from '@/components/DiffView.vue'
 

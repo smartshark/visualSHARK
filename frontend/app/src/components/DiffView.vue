@@ -91,12 +91,9 @@ export default {
     projectsIts: 'projectsIts'
   }),
   created () {
-    if(this.filename.endsWith('.java')) {
-      hljs.registerLanguage('java', java)
-    }
-    if(this.filename.endsWith('.xml')) {
-      hljs.registerLanguage('xml', xml)
-    }
+    hljs.registerLanguage('java', java)
+    hljs.registerLanguage('xml', xml)
+    hljs.registerLanguage('html', xml)
     this.refreshCode()
     this.initializeModel()
   },
@@ -174,16 +171,16 @@ export default {
       return marked
     },
     refreshCode() {
-      // problem is that this maybe slow when compared to bulk operations
       // solution when syntax highlighting breaks
       // keep state https://github.com/highlightjs/highlight.js/issues/424
-      // we could basically split by line and render each line while keeping the parser state
       let marked = []
 
-      if(this.filename.endsWith('.java')) {
+      if(this.filename.toLowerCase().endsWith('.java')) {
         marked = this.loadSyntax('java')
-      }else if(this.filename.endsWith('.xml')) {
+      }else if(this.filename.toLowerCase().endsWith('.xml')) {
         marked = this.loadSyntax('xml')
+      }else if(this.filename.toLowerCase().endsWith('.html')) {
+        marked = this.loadSyntax('html')
       }else {
         for(let line of this.lines) {
           if(line.new == '-') {
@@ -198,7 +195,7 @@ export default {
       this.markedBlock = marked.join('\n')
     },
     changeLabel(modelIdx) {
-      // check if we are linked, if we are change all linked labels
+      // check if we are linked, if we are changing all linked labels
       if(this.selectedModels.includes(modelIdx)) {
         for(let m of this.selectedModels) {
           this.models[m] = this.models[modelIdx]
