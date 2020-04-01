@@ -36,14 +36,15 @@ class Command(BaseCommand):
 
         if options['project'] == 'all':
             for project in Project.objects.all():
-                self.createCache(project)
+                self.create_repository(project)
         else:
             project = Project.objects.get(name__iexact=options['project'])
+            self.create_repository(project)
 
         end = timeit.default_timer() - start
         self.stdout.write(self.style.SUCCESS('[OK]') + ' Finished in {:.3f}s '.format(end))
 
-    def createCache(self, project):
+    def create_repository(self, project):
         project_path = settings.LOCAL_REPOSITORY_PATH + project.name
 
         vcs_system = VCSSystem.objects(project_id=project.id).get()
@@ -53,12 +54,12 @@ class Command(BaseCommand):
 
         content = vcs_system.repository_file.read()
         filename = settings.LOCAL_REPOSITORY_PATH + project.name + ".tar.gz"
-        with open(filename, "wb") as text_file:
-            text_file.write(content)
-            text_file.close()
+        with open(filename, "wb") as arc:
+            arc.write(content)
+            arc.close()
 
         with tarfile.open(filename, "r:gz") as tar:
-            tar.extractall('repo_cache')
+            tar.extractall(settings.LOCAL_REPOSITORY_PATH)
             tar.close()
 
         os.remove(filename)
