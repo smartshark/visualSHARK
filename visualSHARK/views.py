@@ -1384,7 +1384,10 @@ class LineLabelSet(APIView):
 
         return Response(result)
 
-
+# tutorial issues:
+# -  IMAGING-99 
+# - imaging-82
+# -imaging-121
 class LeaderboardSet(APIView):
     read_perm = 'view_line_labels'
 
