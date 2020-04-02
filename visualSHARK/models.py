@@ -70,6 +70,8 @@ class UserProfile(models.Model):
     """
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
     channel = models.UUIDField(default=uuid.uuid4, editable=False)
+    line_label_has_trained = models.BooleanField(default=False)
+    line_label_last_issue_id = models.CharField(max_length=255, default='')
 
     def __str__(self):
         return self.user.username

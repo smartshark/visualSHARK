@@ -57,7 +57,7 @@
             <pre class="form-control">{{ commit.message }}</pre>
             </div>
             </div>
-            <div v-for="file in commit.files">
+            <div v-for="file in commit.changes">
             <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
             {{ file.path }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
             </div>

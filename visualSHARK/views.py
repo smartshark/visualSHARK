@@ -29,6 +29,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework import filters
+from rest_framework import status
 import django_filters
 
 from mongoengine.queryset.visitor import Q
@@ -1134,32 +1135,49 @@ class CommitLabel(APIView):
     read_perm = 'view_issue_links'
     write_perm = 'edit_issue_links'
 
-    def get(self, request):
-        project = "gora"
-        issue_id = ObjectId("5e2855306b4afcd592c5117e")
-        #issue_id = ObjectId("5e2857146b4afcd592c53599")
+    def _sample_issue(self, user, project_name):
+        """Sample issue for user:
+        An issue is sampled under these conditions:
+            - is fixed in at least one commit
+            - has less than 4 labels (including currently running!)
+            - has verified_type bug
+            - the user has not labeld it before
+        """
+        p = Project.objects.get(name=project_name)
+        its = IssueSystem.objects.get(project_id=p.id)
 
-        #issues = Issue.objects.all()
-        #for issue in issues:
-        #    commits = Commit.objects.filter(linked_issue_ids=issue.id)
-        #    if(commits.count() > 1):
-        #        issue_id = issue.id
-        #        print(issue.id)
+        issues = list(Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug').order_by('?'))
+        random.shuffle(issues)
 
-        # Default error handling
-        result = {}
-        issue = Issue.objects.get(id=issue_id)
-        if issue == None:
-            result['status'] = "failure"
-            return Response(result)
+        issue = None
+        for i in issues:
 
-        if (not os.path.exists('repo_cache/' + project)):
-            result['status'] = "failure"
-            return Response(result)
+            # only consider issues which are linked to bug_fixing commits
+            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0:
+                users = self._label_users(i)
 
+                # skip issue if we already labeled it
+                if user in users:
+                    continue
+
+                open_issues = self._open_issues()
+
+                # skip issue if it exceeds 4 labelers including unfinished issues
+                if len(users) + open_issues.count(str(i.id)) >= 4:
+                    continue
+
+                # use this issue
+                issue = i
+                break
+
+        # overwrite sampling
+        # issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
+        return issue
+
+    def _commit_data(self, issue, project_path):
         # Clone to temp folder
         folder = tempfile.mkdtemp()
-        git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
+        git.repo.base.Repo.clone_from(project_path + "/", folder)
 
         # Get all commits to issue
         # commits = Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message')
@@ -1199,21 +1217,60 @@ class CommitLabel(APIView):
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
 
-                lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines = get_file_lines(nfile, Hunk.objects.filter(file_action_id=file_action.id))
+                lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines = get_file_lines(nfile,
+                                                                                                               Hunk.objects.filter(
+                                                                                                                   file_action_id=file_action.id))
                 files.append(
-                        {'filename': file.path, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after) , 'parent_revision_hash': file_action.parent_revision_hash})
+                    {'filename': file.path, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after),
+                     'parent_revision_hash': file_action.parent_revision_hash})
 
-
-            commit_data.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'files': files, 'id': str(commit.id)})
+            commit_data.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': files,
+                                'id': str(commit.id)})
 
         shutil.rmtree(folder)
 
-        result['commits'] = commit_data
+        return commit_data
+
+    def get(self, request):
+        project = "gora"
+        issue_id = ObjectId("5e2855306b4afcd592c5117e")
+        #issue_id = ObjectId("5e2857146b4afcd592c53599")
+
+        #issues = Issue.objects.all()
+        #for issue in issues:
+        #    commits = Commit.objects.filter(linked_issue_ids=issue.id)
+        #    if(commits.count() > 1):
+        #        issue_id = issue.id
+        #        print(issue.id)
+
+        # Default error handling
+        issue = Issue.objects.get(id=issue_id)
+
+        issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
+        p = Project.objects.get(id=issue_system.project_id)
+        if 'jira' in issue_system.url:
+            issue_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not issue_url.endswith('/'):
+                issue_url += '/'
+
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        result = {'warning': '', 'commits': self._commit_data(issue, project_path), 'issue_url': issue_url,
+                  'vcs_url': vcs_url, 'has_trained': request.user.profile.line_label_has_trained }
 
         serializer = IssueSerializer(issue, many=False)
         data = serializer.data
         result['issue'] = data
-        result['status'] = "ok"
         return Response(result)
 
 
