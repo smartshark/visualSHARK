@@ -34,13 +34,13 @@
     </div>
     <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
       <div class="card-header">
-        <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a>
+        <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a> ({{commit.changes.length}} files)
       </div>
       <div class="card-block">
         <pre>{{commit.message}}</pre>
       </div>
       <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.filename"/>
+        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
       </template>
     </div>
   </div>

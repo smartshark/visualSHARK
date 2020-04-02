@@ -1182,9 +1182,12 @@ class LineLabelSet(APIView):
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
 
+            if commit.parents:
+                parent_revision_hash = commit.parents[0]
+
             # print('commit', commit.revision_hash)
             changes = []
-            for fa in FileAction.objects.filter(commit_id=commit.id):
+            for fa in FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=parent_revision_hash):
                 f = File.objects.get(id=fa.file_id)
 
                 source_file = folder + '/' + f.path
@@ -1213,7 +1216,7 @@ class LineLabelSet(APIView):
                 view_lines, has_changed = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
 
                 if has_changed:
-                    changes.append({'filename': f.path, 'lines': view_lines})
+                    changes.append({'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash})
 
             commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 
@@ -1237,7 +1240,7 @@ class LineLabelSet(APIView):
         errors = []
         for c in commits:
             for change in c['changes']:
-                key = c['revision_hash'] + '_' + change['filename']
+                key = c['revision_hash'] + '_' + change['parent_revision_hash'] + '_' + change['filename']
                 label_lines = {}
 
                 # load all lines that need a label
@@ -1273,11 +1276,12 @@ class LineLabelSet(APIView):
         # now save the final changes
         for change in new_changes:
             for key, changes in change.items():
-                revision_hash, file_name = key.split('_')[0], '_'.join(key.split('_')[1:])  # ugly :-(
+                revision_hash, parent_revision_hash, file_name = key.split('_')[0], key.split('_')[1], '_'.join(key.split('_')[2:])  # ugly :-(
 
+                # these are just sanity checks, the only important informaiton is the hunk_id
                 c = Commit.objects.get(revision_hash=revision_hash, vcs_system_id=vcs.id)
                 f = File.objects.get(path=file_name, vcs_system_id=vcs.id)
-                fa = FileAction.objects.get(commit_id=c.id, file_id=f.id)
+                fa = FileAction.objects.get(commit_id=c.id, file_id=f.id, parent_revision_hash=parent_revision_hash)
 
                 write_changes = {}
                 for hunk_id, lines in changes.items():
