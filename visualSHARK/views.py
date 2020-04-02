@@ -1135,7 +1135,22 @@ class LineLabelSet(APIView):
     read_perm = 'view_line_labels'
     write_perm = 'edit_line_labels'
 
-    def _sample_issue(self, project_name):
+    def _has_labeled(self, user, issue):
+        labeled_hunks = []
+        all_hunks = []
+        for c in Commit.objects.filter(fixed_issue_ids=issue.id).only('id'):
+            
+            for fa in FileAction.objects.filter(commit_id=c.id):
+                for h in Hunk.objects.filter(file_action_id=fa.id):
+                    all_hunks.append(str(h.id))
+                    if user in h.lines_manual.keys():
+                        labeled_hunks.append(str(h.id))
+        if len(labeled_hunks) == len(all_hunks):
+            return True
+        else:
+            return False
+
+    def _sample_issue(self, user, project_name):
 
         # check if last sample was finished, if not resend last sample
 
@@ -1148,7 +1163,8 @@ class LineLabelSet(APIView):
 
         issue = None
         for i in Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug'):
-            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0:
+            # continue if the user already labeled the issue
+            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0 and not self._has_labeled(user, i):
                 issue = i
                 break
 
@@ -1293,7 +1309,7 @@ class LineLabelSet(APIView):
         # if the user has no last_issue_id sample one
         load_last = False
         if not request.user.profile.line_label_last_issue_id:
-            issue = self._sample_issue(project_name)
+            issue = self._sample_issue(request.user.username, project_name)
             
             up = UserProfile.objects.get(user=request.user)
             up.line_label_last_issue_id = issue.id
