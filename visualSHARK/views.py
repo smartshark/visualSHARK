@@ -9,6 +9,7 @@ import tempfile
 import git
 import shutil
 import magic
+import random
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -1135,36 +1136,62 @@ class LineLabelSet(APIView):
     read_perm = 'view_line_labels'
     write_perm = 'edit_line_labels'
 
-    def _has_labeled(self, user, issue):
-        labeled_hunks = []
-        all_hunks = []
-        for c in Commit.objects.filter(fixed_issue_ids=issue.id).only('id'):
-            
-            for fa in FileAction.objects.filter(commit_id=c.id):
+    def _open_issues(self):
+        issue_ids = []
+        for up in UserProfile.objects.all():
+            if up.line_label_last_issue_id:
+                issue_ids.append(up.line_label_last_issue_id)
+        return issue_ids
+
+    def _label_users(self, issue):
+        """Return all users which have labeled this issue"""
+        users = set()
+
+        for c in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'parents'):
+            if c.parents:
+                fa_qry = FileAction.objects.filter(commit_id=c.id, parent_revision_hash=c.parents[0])
+            else:
+                fa_qry = FileAction.objects.filter(commit_id=c.id)
+
+            for fa in fa_qry:
                 for h in Hunk.objects.filter(file_action_id=fa.id):
-                    all_hunks.append(str(h.id))
-                    if user in h.lines_manual.keys():
-                        labeled_hunks.append(str(h.id))
-        if len(labeled_hunks) == len(all_hunks):
-            return True
-        else:
-            return False
+                    for user, lines in h.lines_manual.items():
+                        users.add(user)
+        return list(users)
 
     def _sample_issue(self, user, project_name):
+        """Sample issue for user:
 
-        # check if last sample was finished, if not resend last sample
-
-        # todo:
-        # - reject samples which have been labeled by this user
-        # - maybe load previous labels if unfinished?
-        # - check if there is anything to label at all?
+        An issue is sampled under these conditions:
+            - is fixed in at least one commit
+            - has less than 4 labels (including currently running!)
+            - has verified_type bug
+            - the user has not labeld it before
+        """
         p = Project.objects.get(name=project_name)
         its = IssueSystem.objects.get(project_id=p.id)
 
+        issues = list(Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug').order_by('?'))
+        random.shuffle(issues)
+        
         issue = None
-        for i in Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug'):
-            # continue if the user already labeled the issue
-            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0 and not self._has_labeled(user, i):
+        for i in issues:
+            
+            # only consider issues which are linked to bug_fixing commits
+            if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0:
+                users = self._label_users(i)
+                
+                # skip issue if we already labeled it
+                if user in users:
+                    continue
+
+                open_issues = self._open_issues()
+
+                # skip issue if it exceeds 4 labelers including unfinished issues
+                if len(users) + open_issues.count(str(i.id)) >= 4:
+                    continue
+
+                # use this issue
                 issue = i
                 break
 
@@ -1178,16 +1205,18 @@ class LineLabelSet(APIView):
         folder = tempfile.mkdtemp()
         git.repo.base.Repo.clone_from(project_path + "/", folder)
 
-        for commit in Commit.objects.filter(fixed_issue_ids=issue.id):
+        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
 
             if commit.parents:
-                parent_revision_hash = commit.parents[0]
+                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+            else:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id)
 
             # print('commit', commit.revision_hash)
             changes = []
-            for fa in FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=parent_revision_hash):
+            for fa in fa_qry:
                 f = File.objects.get(id=fa.file_id)
 
                 source_file = folder + '/' + f.path
@@ -1296,7 +1325,6 @@ class LineLabelSet(APIView):
                 for hunk_id, result in write_changes.items():
                     r = {'set__lines_manual__{}'.format(request.user.username): result[request.user.username]}
                     h = Hunk.objects.get(id=hunk_id).update(**r)
-                    print(h)
 
         print('final changes')
         print(new_changes)
