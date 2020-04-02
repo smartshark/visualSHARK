@@ -6,6 +6,17 @@
       <p>{{flash.message}}</p>
     </alert>
   </template>
+  <div class="card">
+    <div class="card-header">
+      <i class="fa fa-info"></i> Control
+    </div>
+    <div class="card-block">
+      <div class="submitLine">
+        <button v-if="result.length == 0" v-on:click="submit">Submit Labels</button>
+        <button v-else v-on:click="load">Load next issue</button>
+      </div>
+    </div>
+  </div>
   <div class="animated fadeIn" v-if="issue.id">
     <div class="card">
       <div class="card-header">
@@ -13,10 +24,6 @@
       </div>
       <div class="card-block">
         <pre class="force-wrap">{{issue.desc}}</pre>
-        <div class="submitLine">
-          <button v-if="result.length == 0" v-on:click="submit">Submit Labels</button>
-          <button v-else v-on:click="load">Load next issue</button>
-        </div>
         <div v-if="result.length > 0">
           Submitted and validated changes:
           <div v-for="change in result">
@@ -99,6 +106,7 @@ export default {
       this.flashes = []
       this.vcs_url = ''
       this.issue_url = ''
+      this.issue = {}
       rest.getChangedLines(this.currentProject.name)
         .then(response => {
           this.$store.dispatch('popLoading')
