@@ -19,6 +19,7 @@ import IssueTypeLabeling from '@/views/IssueTypeLabeling'
 import IssueTypeConflicts from '@/views/IssueTypeConflicts'
 import CommitIssueLinks from '@/views/CommitIssueLinks'
 import LineLabels from '@/views/LineLabels'
+import Leaderboard from '@/views/Leaderboard'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -132,6 +133,11 @@ const router = new Router({
               path: 'lines',
               name: 'Change Lines',
               component: LineLabels
+            },
+            {
+              path: 'leaderboard',
+              name: 'Leaderboard',
+              component: Leaderboard
             }
           ]
         },

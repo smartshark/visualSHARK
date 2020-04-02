@@ -60,7 +60,8 @@ export default {
   @import '~simple-line-icons/css/simple-line-icons.css';
 
   /*multiselect css*/
-  
+  $fa-font-path: '~@fortawesome/fontawesome-free/fonts';
+  @import '~@fortawesome/fontawesome-free/css/all.min.css';
 </style>
 
 <style lang="scss">

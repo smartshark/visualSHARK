@@ -743,17 +743,19 @@ def get_lines(hunk):
     add_line = hunk.new_start
 
     h = normalize_line_endings(hunk.content)
-
+    i = 0
     for line in h.split('\n'):
         
         tmp = line[1:]
         
         if line.startswith('+'):
-            added_lines[add_line] = tmp
+            added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             del_line -= 1
+            i += 1
         if line.startswith('-'):
-            deleted_lines[del_line] = tmp
+            deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             add_line -= 1
+            i += 1
         
         del_line += 1
         add_line += 1        
@@ -845,14 +847,14 @@ def get_change_view(file, hunks):
     has_changed = False
     for l in file:
         while idx_old in deleted_lines.keys():
-            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old], 'number': i})
+            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']})
 
             i += 1
             idx_old += 1
             has_changed = True
 
         if idx_new in added_lines.keys():
-            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new], 'number': i})
+            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']})
 
             i += 1
             idx_new += 1

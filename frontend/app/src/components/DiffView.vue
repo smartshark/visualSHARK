@@ -135,7 +135,8 @@ export default {
       for(let el in this.models) {
         if(this.models[el] === 'label') {
           let k = this.commit + '_' + this.filename + '_' + el
-          document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'start'})
+          document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'})
+          console.log('page offsets', window.pageXOffset, window.pageYOffset)
           break
         }
       }
@@ -170,6 +171,8 @@ export default {
       return marked
     },
     refreshCode() {
+      // todo:
+      // - we can not use v-html for un-highlighted stuff, it breaks the html if the code contains <elements>
       // solution when syntax highlighting breaks
       // keep state https://github.com/highlightjs/highlight.js/issues/424
       let marked = []
@@ -317,5 +320,6 @@ pre {
   margin: 0px;
   padding: 0px;
   max-width: 50px;
+  scroll-margin: 20px;
 }
 </style>

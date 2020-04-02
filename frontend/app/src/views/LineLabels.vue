@@ -18,7 +18,17 @@
         </div>
         <div v-if="result.length > 0">
           Submitted and validated changes:
-          <div v-for="change in result">{{change}}</div>
+          <div v-for="change in result">
+            <div v-for="(item, key, index) in change">
+              <strong>FileChange: {{key}}</strong><br/>
+              <div v-for="(item2, key2, index2) in item">
+                <strong>Hunk: {{key2}}</strong><br/>
+                <div v-for="l in item2">
+                  {{l}}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

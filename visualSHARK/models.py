@@ -234,3 +234,9 @@ class ProjectAttributes(models.Model):
 
     def __str__(self):
         return self.project_name
+
+
+class LeaderboardSnapshot(models.Model):
+    """Contains leaderboard snapshots."""
+    created_at = models.DateTimeField(auto_now_add=True, blank=False)
+    data = models.TextField()

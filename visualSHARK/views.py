@@ -37,6 +37,7 @@ from bson.objectid import ObjectId
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, \
     Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
+from .models import LeaderboardSnapshot
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -1210,6 +1211,8 @@ class LineLabelSet(APIView):
 
         its = IssueSystem.objects.get(id=issue.issue_system_id)
         p = Project.objects.get(id=its.project_id)
+        vcs = VCSSystem.objects.get(project_id=p.id)
+
         project_path = settings.LOCAL_REPOSITORY_PATH + p.name
 
         # check if we have a label for every line that is deleted
@@ -1224,15 +1227,18 @@ class LineLabelSet(APIView):
                 # load all lines that need a label
                 lines_needing_labels = []
                 for line in change['lines']:
-                    if line['old'] != '-' and line['new'] == '-':
-                        lines_needing_labels.append(str(line['number']))
-                    if line['new'] != '-' and line['old'] == '-':
-                        lines_needing_labels.append(str(line['number']))
+                    if line['old'] == '-' or line['new'] == '-':
+                        lines_needing_labels.append(line)
 
-                # check if every line we have locally is in labels and has a label
-                for line_number in lines_needing_labels:
+                # check if every line that needs a label is in submitted labels and has a label
+                for line in lines_needing_labels:
+                    line_number = str(line['number'])
                     if line_number in labels[key] and labels[key][line_number] != 'label':
-                        label_lines[line_number] = labels[key][line_number]
+
+                        if line['hunk_id'] not in label_lines.keys():
+                            label_lines[line['hunk_id']] = []
+                        label_lines[line['hunk_id']].append({'label': labels[key][line_number], 'hunk_line': line['hunk_line'], 'line': line['code']})
+                        # label_lines[line_number] = {'label': labels[key][line_number], 'user': request.user.username, 'hunk_id': line['hunk_id'], 'hunk_line': line['hunk_line']}
                     else:
                         errors.append('error, line {} not found or wrong label in key {}'.format(line_number, key))
 
@@ -1240,12 +1246,37 @@ class LineLabelSet(APIView):
                 # tmp['labels'] = label_lines
                 new_changes.append(tmp)
         if errors:
-            return Response({'message': '\n'.join(errors)}, status=status.status.HTTP_400_BAD_REQUEST)
+            print(errors)
+            return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
 
         # reset the issue id for sucessful labeling
         up = UserProfile.objects.get(user=request.user)
         up.line_label_last_issue_id = ''
         up.save()
+
+        # now save the final changes
+        for change in new_changes:
+            for key, changes in change.items():
+                revision_hash, file_name = key.split('_')[0], '_'.join(key.split('_')[1:])  # ugly :-(
+
+                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_id=vcs.id)
+                f = File.objects.get(path=file_name, vcs_system_id=vcs.id)
+                fa = FileAction.objects.get(commit_id=c.id, file_id=f.id)
+
+                write_changes = {}
+                for hunk_id, lines in changes.items():
+                    if hunk_id not in write_changes.keys():
+                        write_changes[hunk_id] = {}
+                        write_changes[hunk_id][request.user.username] = {}
+                    for line in lines:
+                        if line['label'] not in write_changes[hunk_id][request.user.username].keys():
+                            write_changes[hunk_id][request.user.username][line['label']] = []
+                        write_changes[hunk_id][request.user.username][line['label']].append(line['hunk_line'])
+
+                for hunk_id, result in write_changes.items():
+                    r = {'set__lines_manual__{}'.format(request.user.username): result[request.user.username]}
+                    h = Hunk.objects.get(id=hunk_id).update(**r)
+                    print(h)
 
         print('final changes')
         print(new_changes)
@@ -1305,3 +1336,11 @@ class LineLabelSet(APIView):
         result['issue'] = data
 
         return Response(result)
+
+
+class LeaderboardSet(APIView):
+    read_perm = 'view_line_labels'
+
+    def get(self, request):
+        lb = LeaderboardSnapshot.objects.order_by('created_at')[0]
+        return Response({'board': json.loads(lb.data), 'last_updated': lb.created_at})
