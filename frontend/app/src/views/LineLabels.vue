@@ -130,7 +130,7 @@ export default {
           let p = dv.parent
           let f = dv.filename
           let m = dv.models
-          result[c + '_' + p '_' + f] = m
+          result[c + '_' + p + '_' + f] = m
         }
       }
 
