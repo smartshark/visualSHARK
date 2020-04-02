@@ -1,5 +1,12 @@
 <template>
   <div class="wrapper">
+  <template v-if="flashes">
+    <alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" type="success" dismissable>
+      <span class="icon-info-circled alert-icon-float-left"></span>
+      <p>{{flash.message}}</p>
+    </alert>
+  </template>
+
     <div class="animated fadeIn">
      <div class="card">
             <div class="card-header">
@@ -76,6 +83,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { alert } from 'vue-strap'
 import MonacoEditor from 'vue-monaco'
 import rest from '../api/rest'
 
@@ -89,6 +97,7 @@ export default {
             decorationsObjectsLeft: [],
             decorationsRight: [],
             decorationsObjectsRight: [],
+            flashes: [],
             options: {
       ignoreTrimWhitespace: false
           }
@@ -109,6 +118,13 @@ export default {
         rest.getIssueWithCommits('')
             .then(response => {
                 this.$store.dispatch('popLoading')
+
+                 // maybe we are finished for this project
+                if(response.data['warning'] == 'no_more_issues') {
+                    this.flashes.push({id: 'no_more_issues', message: 'No more issues for this project available, select next project.'})
+                    return
+                }
+
                 this.commits = response.data['commits'];
                 this.issue = response.data['issue'];
                 setTimeout(() => {
@@ -124,13 +140,22 @@ export default {
                     }
                     that.validateAll();
                 }, 25);
+
+                if(this.has_trained !== true) {
+                    this.flashes.push({id: 'train', message: 'You have not finished the training! Loading training issues first!'})
+                }
+
+                if(this.load_last === true) {
+                     this.flashes.push({id: 'last', message: 'You have not finished labeling the last issue, loading last issue first.'})
+                }
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)
             });
     },
     components: {
-        MonacoEditor
+        MonacoEditor,
+        alert
     },
     methods: {
         scrollToCommit : function(commit) {
@@ -413,12 +438,12 @@ export default {
              for (var i = 0; i < this.commits.length; i++) {
                   var commit = this.commits[i];
                   var hash = commit.id;
-                  data[hash] = {};
-                  for(var j = 0; j < commit.files.length; j++)
+
+                  for(var j = 0; j < commit.changes.length; j++)
                   {
-                     var file = commit.files[j];
-                     console.log(file);
-                     data[hash][file.id] = [];
+                     var file = commit.changes[j];
+                     console.log(hash + "_" + file.parent_revision_hash + "_" + file.filename);
+                     data[commit.revision_hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
                      var lineDecorationsOrginal = this.decorationsObjectsLeft[c];
                      for(var k = 0; k < lineDecorationsOrginal.length; k++)
                      {
@@ -430,7 +455,7 @@ export default {
                           dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
                           dataPerLabel["change"] = lineDecorationsOrginal[k].change;
                           dataPerLabel["modified"] =false;
-                          data[hash][file.id].push(dataPerLabel);
+                          data[commit.revision_hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
                      }
                      var lineDecorationsModified = this.decorationsObjectsRight[c];
                      for(var k = 0; k < lineDecorationsModified.length; k++)
@@ -443,14 +468,15 @@ export default {
                           dataPerLabel["line"] = lineDecorationsModified[k].range.startLineNumber;
                           dataPerLabel["change"] = lineDecorationsModified[k].change;
                           dataPerLabel["modified"] =true;
-                          data[hash][file.id].push(dataPerLabel);
+                          data[commit.revision_hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
                      }
                      c++;
                   }
             }
             console.log(data);
             this.$store.dispatch('pushLoading')
-            rest.saveLabelsOfCommits({ data :data})
+            var result = { labels : data}
+            rest.saveLabelsOfCommits({ data : result })
             .then(response => {
                 this.$store.dispatch('popLoading')
 

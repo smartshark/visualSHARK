@@ -781,7 +781,7 @@ def get_file_lines(file, hunks):
     only_deleted = []
     only_added = []
 
-    view_lines = {}
+    view_lines = []
 
     for hunk in hunks:
         al, dl = get_lines(hunk)
@@ -799,7 +799,9 @@ def get_file_lines(file, hunks):
 
             only_deleted.append(i)
             codes.append(deleted_lines[idx_old])
-            view_lines[i] = {'old': idx_old, 'new': '-'}
+            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i,
+                               'hunk_id': str(deleted_lines[idx_old]['hunk_id']),
+                               'hunk_line': deleted_lines[idx_old]['hunk_line']})
 
             i += 1
             idx_old += 1
@@ -811,7 +813,8 @@ def get_file_lines(file, hunks):
 
             only_added.append(i)
             codes.append(added_lines[idx_new])
-            view_lines[i] = {'old': '-', 'new': idx_new}
+            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']})
+
 
             idx_new += 1
             continue
@@ -823,7 +826,7 @@ def get_file_lines(file, hunks):
             lines_after.append(l)
 
             codes.append(l)
-            view_lines[i] = {'old': idx_old, 'new': idx_new}
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': l, 'number': i})
 
             idx_new += 1
             idx_old += 1

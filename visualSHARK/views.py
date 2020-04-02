@@ -1221,7 +1221,7 @@ class CommitLabel(APIView):
                                                                                                                Hunk.objects.filter(
                                                                                                                    file_action_id=file_action.id))
                 files.append(
-                    {'filename': file.path, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after),
+                    {'filename': file.path, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after), 'lines': view_lines,
                      'parent_revision_hash': file_action.parent_revision_hash})
 
             commit_data.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': files,
@@ -1232,18 +1232,11 @@ class CommitLabel(APIView):
         return commit_data
 
     def get(self, request):
-        project = "gora"
+
         issue_id = ObjectId("5e2855306b4afcd592c5117e")
-        #issue_id = ObjectId("5e2857146b4afcd592c53599")
 
-        #issues = Issue.objects.all()
-        #for issue in issues:
-        #    commits = Commit.objects.filter(linked_issue_ids=issue.id)
-        #    if(commits.count() > 1):
-        #        issue_id = issue.id
-        #        print(issue.id)
+        #Missing Sampeling
 
-        # Default error handling
         issue = Issue.objects.get(id=issue_id)
 
         issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
@@ -1275,88 +1268,92 @@ class CommitLabel(APIView):
 
 
     def post(self, request):
-        project = "gora"
         issue_id = ObjectId("5e2855306b4afcd592c5117e")
-
-        result = {}
-        result['status'] = "failure"
-        # Default error handling
+        labels = request.data["data"]["labels"]
         issue = Issue.objects.get(id=issue_id)
-        if issue == None:
-            return Response(result)
 
-        if (not os.path.exists('repo_cache/' + project)):
-            return Response(result)
+        its = IssueSystem.objects.get(id=issue.issue_system_id)
+        p = Project.objects.get(id=its.project_id)
+        vcs = VCSSystem.objects.get(project_id=p.id)
 
-        # iterate over
-        hunk_save = {}
-        for commit in request.data["data"]:
-            file_array = request.data["data"][commit]
-            commits = Commit.objects.get(id=commit)
-            # check if commit belongs to issue
-            if commits == None or not issue_id in commits.linked_issue_ids:
-                return Response(result)
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
 
-            # load files and check if a file is missing
-            file_actions = FileAction.objects.filter(commit_id=commits.id)
-            missing = False
-            for file_action in file_actions:
-                if not str(file_action.file_id) in file_array:
-                    missing = True
-            if missing:
-                return Response(result)
+        # check if we have a label for every line that is deleted
+        commits = self._commit_data(issue, project_path)
 
-            # iterate over files
-            for file_action in file_actions:
-                labeled_data = file_array[str(file_action.file_id)]
-                hunks = Hunk.objects.filter(file_action_id=file_action.id)
-                for data in labeled_data:
-                    hunk_found = None
-                    print(data["label"], data["change"]["originalStartLineNumber"], data["change"]["modifiedStartLineNumber"], data["line"], data["modified"])
-                    for hunk in hunks:
-                        # hunk_end_modified = hunk.new_start + hunk.new_lines
-                        hunk_end_original = hunk.old_start + hunk.old_lines
-                        # print(hunk.new_start, hunk_end_modified, hunk.old_start, hunk_end_original)
-                        if data["modified"] == True:
-                            if hunk.old_start <= data["change"]["modifiedStartLineNumber"] and data["change"]["modifiedStartLineNumber"] <= hunk_end_original:
-                                hunk_found = hunk
-                        else:
-                            if hunk.old_start <= data["change"]["originalStartLineNumber"] and data["change"]["originalStartLineNumber"] <= hunk_end_original:
-                                hunk_found = hunk
+        errors = []
+        new_changes = []
+        for c in commits:
+            for change in c['changes']:
+                key = c['revision_hash'] + '_' + change['parent_revision_hash'] + '_' + change['filename']
+                label_lines = {}
 
-                    if hunk_found == None:
-                        return Response(result)
+                if key not in labels:
+                    errors.append('error, file {} not labeled'.format(change['filename']))
+                    continue
 
-                    if str(hunk_found.id) not in hunk_save:
-                        hunk_save[str(hunk_found.id)] = {}
-
-                    hunk_array = hunk_save[str(hunk_found.id)]
-
-                    if data["label"] not in hunk_array:
-                        hunk_array[data["label"]] =[]
-
-                    hunk_array[data["label"]].append(data["line"])
+                # load all lines that need a label
+                lines_needing_labels = []
+                for line in change['lines']:
+                    if line['old'] == '-' or line['new'] == '-':
+                        lines_needing_labels.append(line)
 
 
-                    print(hunk_found.new_start, hunk_found.new_lines, hunk_found.old_start, hunk_found.old_lines)
-                    # print(hunk_found.content)
-                for hunk in hunks:
-                    if str(hunk.id) not in hunk_save:
-                        print("Missing hunk " + str(hunk.id))
-                        return Response(result)
+                for line in lines_needing_labels:
+                    #print(line)
+                    line_number = str(line['old'])
+                    if line_number == '-':
+                        line_number = str(line['new'])
+
+                    if line_number in labels[key]:
+                        #print(line_number)
+
+                        if line['hunk_id'] not in label_lines.keys():
+                            label_lines[line['hunk_id']] = []
+                        label_lines[line['hunk_id']].append({'label': labels[key][line_number]['label'], 'hunk_line': line['hunk_line'], 'line': line['code']})
+                    else:
+                        #print(line)
+                        errors.append('error, line {} not found or wrong label in file {} in revision {}'.format(line_number, change['filename'], c['revision_hash']))
 
 
+                tmp = {key: label_lines}
+                new_changes.append(tmp)
+        if errors:
+            print(errors)
+            return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
 
-        # Backend Validation complete
-        print("Values to save")
-        print(hunk_save)
-        for hunk_id in hunk_save:
-            hunk = Hunk.objects.get(id=hunk_id)
-            if hunk.lines_manual is None:
-                hunk.lines_manual = {}
-            hunk.lines_manual.update({str(request.user): hunk_save[hunk_id]})
-            hunk.save()
 
-        result['status'] = "ok"
-        return Response(result)
+        # reset the issue id for sucessful labeling
+        #up = UserProfile.objects.get(user=request.user)
+        #up.line_label_last_issue_id = ''
+        #up.save()
+
+        # now save the final changes
+        for change in new_changes:
+            for key, changes in change.items():
+                revision_hash, parent_revision_hash, file_name = key.split('_')[0], key.split('_')[1], '_'.join(key.split('_')[2:])  # ugly :-(
+
+                # these are just sanity checks, the only important informaiton is the hunk_id
+                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_id=vcs.id)
+                f = File.objects.get(path=file_name, vcs_system_id=vcs.id)
+                fa = FileAction.objects.get(commit_id=c.id, file_id=f.id, parent_revision_hash=parent_revision_hash)
+
+                write_changes = {}
+                for hunk_id, lines in changes.items():
+                    if hunk_id not in write_changes.keys():
+                        write_changes[hunk_id] = {}
+                        write_changes[hunk_id][request.user.username] = {}
+                    for line in lines:
+                        if line['label'] not in write_changes[hunk_id][request.user.username].keys():
+                            write_changes[hunk_id][request.user.username][line['label']] = []
+                        write_changes[hunk_id][request.user.username][line['label']].append(line['hunk_line'])
+
+                for hunk_id, result in write_changes.items():
+                    r = {'set__lines_manual__{}'.format(request.user.username): result[request.user.username]}
+                    h = Hunk.objects.get(id=hunk_id).update(**r)
+
+        print('final changes')
+        print(new_changes)
+
+        return Response({'changes': new_changes})
 
