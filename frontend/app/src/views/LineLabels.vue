@@ -40,7 +40,7 @@
         <pre>{{commit.message}}</pre>
       </div>
       <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
+        <DiffView :commit="commit.revision_hash" :parent="c.parent_revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
       </template>
     </div>
   </div>
@@ -127,9 +127,10 @@ export default {
           isComplete = false
         }else {
           let c = dv.commit
+          let p = dv.parent
           let f = dv.filename
           let m = dv.models
-          result[c + '_' + f] = m
+          result[c + '_' + p '_' + f] = m
         }
       }
 

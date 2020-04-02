@@ -69,6 +69,7 @@ export default {
   props: {
     commit: String,
     filename: String,
+    parent: String,
     lines: Array
   },
   data () {
