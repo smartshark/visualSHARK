@@ -795,7 +795,7 @@ def get_file_lines(file, hunks):
         while idx_old in deleted_lines.keys():
             lines.append('[{} {}] -{}'.format(idx_old, ' ' * len(str(idx_new)), deleted_lines[idx_old]))
             linenos.append('{}-{}'.format(idx_old, '&nbsp;' * len(str(idx_new))))
-            lines_before.append(deleted_lines[idx_old])
+            lines_before.append(deleted_lines[idx_old]['code'])
 
             only_deleted.append(i)
             codes.append(deleted_lines[idx_old])
@@ -807,7 +807,7 @@ def get_file_lines(file, hunks):
         if idx_new in added_lines.keys():
             lines.append('[{} {}] +{}'.format(' ' * len(str(idx_old)), idx_new, added_lines[idx_new]))
             linenos.append('{}-{}'.format('&nbsp;' * len(str(idx_old)), idx_new))
-            lines_after.append(added_lines[idx_new])
+            lines_after.append(added_lines[idx_new]['code'])
 
             only_added.append(i)
             codes.append(added_lines[idx_new])
@@ -829,46 +829,3 @@ def get_file_lines(file, hunks):
             idx_old += 1
 
     return lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines
-
-
-def get_change_view(file, hunks):
-    view_lines = []
-    added_lines = {}
-    deleted_lines = {}
-
-    for hunk in hunks:
-        al, dl = get_lines(hunk)
-        added_lines.update(al)
-        deleted_lines.update(dl)
-
-    idx_old = idx_new = 1
-    i = 1
-    has_changed = False
-    for l in file:
-        while idx_old in deleted_lines.keys():
-            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i,
-                               'hunk_id': str(deleted_lines[idx_old]['hunk_id']),
-                               'hunk_line': deleted_lines[idx_old]['hunk_line']})
-
-            i += 1
-            idx_old += 1
-            has_changed = True
-
-        if idx_new in added_lines.keys():
-            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i,
-                               'hunk_id': str(added_lines[idx_new]['hunk_id']),
-                               'hunk_line': added_lines[idx_new]['hunk_line']})
-
-            i += 1
-            idx_new += 1
-            has_changed = True
-            continue
-
-        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
-            view_lines.append({'old': idx_old, 'new': idx_new, 'code': l, 'number': i})
-
-            i += 1
-            idx_new += 1
-            idx_old += 1
-
-    return view_lines, has_changed

@@ -47,7 +47,7 @@ from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRe
 from rest_framework.filters import OrderingFilter
 
 from .util import prediction
-from .util.helper import tag_filter, OntdekBaan, get_change_view
+from .util.helper import tag_filter, OntdekBaan, get_file_lines
 from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
@@ -1162,7 +1162,8 @@ class CommitLabel(APIView):
         git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
 
         # Get all commits to issue
-        commits = Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message')
+        # commits = Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message')
+        commits = Commit.objects.filter(linked_issue_ids=issue.id)
         commit_data = []
         for commit in commits:
             print(commit.revision_hash)
@@ -1198,19 +1199,12 @@ class CommitLabel(APIView):
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
 
-                view_lines, has_changed = get_change_view(nfile, Hunk.objects.filter(file_action_id=file_action.id))
+                lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines = get_file_lines(nfile, Hunk.objects.filter(file_action_id=file_action.id))
+                files.append(
+                        {'filename': file.path, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after) , 'parent_revision_hash': file_action.parent_revision_hash})
 
-                if has_changed:
-                    files.append(
-                        {'filename': file.path, 'lines': view_lines, 'parent_revision_hash': file_action.parent_revision_hash})
 
-            #commit_data.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': files}
-            commit_response_object = {}
-            commit_response_object["revision_hash"] = commit.revision_hash
-            commit_response_object["message"] = commit.message
-            commit_response_object["files"] = files
-            commit_response_object["id"] = str(commit.id)
-            commit_data.append(commit_response_object)
+            commit_data.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'files': files, 'id': str(commit.id)})
 
         shutil.rmtree(folder)
 
