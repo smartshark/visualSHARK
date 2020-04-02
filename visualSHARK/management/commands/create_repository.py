@@ -47,7 +47,12 @@ class Command(BaseCommand):
     def create_repository(self, project):
         project_path = settings.LOCAL_REPOSITORY_PATH + project.name
 
-        vcs_system = VCSSystem.objects(project_id=project.id).get()
+        try:
+            vcs_system = VCSSystem.objects(project_id=project.id).get()
+        except VCSSystem.DoesNotExist:
+            print('no vcs system for {} skipping'.format(project.name))
+            return
+
         if(os.path.exists(project_path)):
             self.stdout.write(self.style.SUCCESS('[INFO]') + ' Project ' + project.name + ' will be ignored, since the data already exists')
             return
