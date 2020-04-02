@@ -732,3 +732,143 @@ TICKET_TYPE_MAPPING = {'bug': 'bug',
                        'documentation': 'documentation',
                        'question': 'other',
                        'dependency upgrade': 'other'}
+
+
+def get_lines(hunk):
+    added_lines = {}
+    deleted_lines = {}
+
+    del_line = hunk.old_start
+    add_line = hunk.new_start
+
+    h = normalize_line_endings(hunk.content)
+    i = 0
+    for line in h.split('\n'):
+
+        tmp = line[1:]
+
+        if line.startswith('+'):
+            added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
+            del_line -= 1
+            i += 1
+        if line.startswith('-'):
+            deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
+            add_line -= 1
+            i += 1
+
+        del_line += 1
+        add_line += 1
+
+    return added_lines, deleted_lines
+
+
+def normalize_line_endings(line):
+    line = line.replace('\r\n', '\n')
+    return line.replace('\r', '\n')
+
+
+def get_file_lines(file, hunks):
+    lines = []
+    added_lines = {}
+    deleted_lines = {}
+
+    linenos = []
+    codes = []
+
+    lines_before = []
+    lines_after = []
+
+    only_deleted = []
+    only_added = []
+
+    view_lines = {}
+
+    for hunk in hunks:
+        al, dl = get_lines(hunk)
+        added_lines.update(al)
+        deleted_lines.update(dl)
+
+    idx_old = idx_new = 1
+    i = 0
+    for l in file:
+        i += 1
+        while idx_old in deleted_lines.keys():
+            lines.append('[{} {}] -{}'.format(idx_old, ' ' * len(str(idx_new)), deleted_lines[idx_old]))
+            linenos.append('{}-{}'.format(idx_old, '&nbsp;' * len(str(idx_new))))
+            lines_before.append(deleted_lines[idx_old])
+
+            only_deleted.append(i)
+            codes.append(deleted_lines[idx_old])
+            view_lines[i] = {'old': idx_old, 'new': '-'}
+
+            i += 1
+            idx_old += 1
+
+        if idx_new in added_lines.keys():
+            lines.append('[{} {}] +{}'.format(' ' * len(str(idx_old)), idx_new, added_lines[idx_new]))
+            linenos.append('{}-{}'.format('&nbsp;' * len(str(idx_old)), idx_new))
+            lines_after.append(added_lines[idx_new])
+
+            only_added.append(i)
+            codes.append(added_lines[idx_new])
+            view_lines[i] = {'old': '-', 'new': idx_new}
+
+            idx_new += 1
+            continue
+
+        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
+            lines.append('[{} {}] {}'.format(idx_old, idx_new, l))
+            linenos.append('{}-{}'.format(idx_old, idx_new))
+            lines_before.append(l)
+            lines_after.append(l)
+
+            codes.append(l)
+            view_lines[i] = {'old': idx_old, 'new': idx_new}
+
+            idx_new += 1
+            idx_old += 1
+
+    return lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines
+
+
+def get_change_view(file, hunks):
+    view_lines = []
+    added_lines = {}
+    deleted_lines = {}
+
+    for hunk in hunks:
+        al, dl = get_lines(hunk)
+        added_lines.update(al)
+        deleted_lines.update(dl)
+
+    idx_old = idx_new = 1
+    i = 1
+    has_changed = False
+    for l in file:
+        while idx_old in deleted_lines.keys():
+            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i,
+                               'hunk_id': str(deleted_lines[idx_old]['hunk_id']),
+                               'hunk_line': deleted_lines[idx_old]['hunk_line']})
+
+            i += 1
+            idx_old += 1
+            has_changed = True
+
+        if idx_new in added_lines.keys():
+            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i,
+                               'hunk_id': str(added_lines[idx_new]['hunk_id']),
+                               'hunk_line': added_lines[idx_new]['hunk_line']})
+
+            i += 1
+            idx_new += 1
+            has_changed = True
+            continue
+
+        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': l, 'number': i})
+
+            i += 1
+            idx_new += 1
+            idx_old += 1
+
+    return view_lines, has_changed

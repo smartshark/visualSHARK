@@ -8,6 +8,7 @@ import logging
 import git
 import shutil
 import tempfile
+import magic
 import re
 
 from datetime import datetime, date
@@ -46,7 +47,7 @@ from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRe
 from rest_framework.filters import OrderingFilter
 
 from .util import prediction
-from .util.helper import tag_filter, OntdekBaan
+from .util.helper import tag_filter, OntdekBaan, get_change_view
 from .util.helper import Label, TICKET_TYPE_MAPPING
 
 # from visibleSHARK.util.label import LabelPath
@@ -1161,32 +1162,49 @@ class CommitLabel(APIView):
         git.repo.base.Repo.clone_from("repo_cache/" + project + "/", folder)
 
         # Get all commits to issue
-        commits = Commit.objects.filter(linked_issue_ids=issue.id)
+        commits = Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message')
         commit_data = []
         for commit in commits:
+            print(commit.revision_hash)
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
             files = []
-            file_actions = FileAction.objects.filter(commit_id=commit.id)
+            if commit.parents:
+                file_actions = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+            else:
+                file_actions = FileAction.objects.filter(commit_id=commit.id)
+
             for file_action in file_actions:
                 file = File.objects.get(id=file_action.file_id)
                 fileCompare = {}
                 fileCompare['id'] = str(file.id)
                 fileCompare['path'] = file.path
-                f = open(folder + "/" + file.path, "r")
-                fileContent = f.read()
-                fileCompare['before'] = fileContent
-                f.close()
+                source_file = folder + "/" + file.path
+                if not os.path.exists(source_file):
+                    # print('file', source_file, 'not existing, skipping')
+                    continue
+                blob = open(source_file, "rb").read()
+                m = magic.Magic(mime_encoding=True)
+                encoding = m.from_buffer(blob)
 
-                hunks = Hunk.objects.filter(file_action_id=file_action.id)
-                before_content = fileContent
-                for hunk in hunks:
-                    header = "@@ -" + str(hunk.new_start) + "," + str(hunk.old_lines) +" +" + str(hunk.old_start) + "," + str(hunk.new_lines) +" @@\n"
-                    print(header)
-                    before_content = self.apply_patch(before_content, header + hunk.content, revert=True)
-                    fileCompare['after'] = before_content
+                # we open everything but binary
+                if encoding == 'binary':
+                    continue
+                if encoding == 'unknown-8bit':
+                    continue
 
-                files.append(fileCompare)
+                nfile = open(source_file, 'rb').read().decode(encoding)
+                nfile = nfile.replace('\r\n', '\n')
+                nfile = nfile.replace('\r', '\n')
+                nfile = nfile.split('\n')
+
+                view_lines, has_changed = get_change_view(nfile, Hunk.objects.filter(file_action_id=file_action.id))
+
+                if has_changed:
+                    files.append(
+                        {'filename': file.path, 'lines': view_lines, 'parent_revision_hash': file_action.parent_revision_hash})
+
+            #commit_data.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': files}
             commit_response_object = {}
             commit_response_object["revision_hash"] = commit.revision_hash
             commit_response_object["message"] = commit.message
@@ -1291,32 +1309,3 @@ class CommitLabel(APIView):
         result['status'] = "ok"
         return Response(result)
 
-
-    def apply_patch(self, s, patch, revert=False):
-        """
-        Apply unified diff patch to string s to recover newer string.
-        If revert is True, treat s as the newer string, recover older string.
-        """
-        s = s.splitlines(True)
-        p = patch.splitlines(True)
-        t = ''
-        i = sl = 0
-        (midx, sign) = (1, '+') if not revert else (3, '-')
-        while i < len(p) and p[i].startswith(("---", "+++")): i += 1  # skip header lines
-        while i < len(p):
-            m = _hdr_pat.match(p[i])
-            if not m: raise Exception("Cannot process diff")
-            i += 1
-            l = int(m.group(midx)) - 1 + (m.group(midx + 1) == '0')
-            t += ''.join(s[sl:l])
-            sl = l
-            while i < len(p) and p[i][0] != '@':
-                if i + 1 < len(p) and p[i + 1][0] == '\\':
-                    line = p[i][:-1]; i += 2
-                else:
-                    line = p[i]; i += 1
-                if len(line) > 0:
-                    if line[0] == sign or line[0] == ' ': t += line[1:]
-                    sl += (line[0] != sign)
-        t += ''.join(s[sl:])
-        return t
