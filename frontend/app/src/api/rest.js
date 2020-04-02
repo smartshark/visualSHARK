@@ -160,8 +160,8 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
-  getIssueWithCommits (dat) {
-    let req = this.getUrl('labeling/commit/')
+  getIssueWithCommits (project_name) {
+    let req = this.getUrl('labeling/commit/?project_name=' + project_name)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

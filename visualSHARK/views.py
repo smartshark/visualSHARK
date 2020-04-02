@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import magic
 import re
+import random
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -36,7 +37,7 @@ from mongoengine.queryset.visitor import Q
 from bson.objectid import ObjectId
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, \
-    Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
+    Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes, UserProfile
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
@@ -1171,7 +1172,8 @@ class CommitLabel(APIView):
                 break
 
         # overwrite sampling
-        # issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
+
+        # issue = Issue.objects.get(id="5e2855306b4afcd592c5117e")
         return issue
 
     def _commit_data(self, issue, project_path):
@@ -1180,8 +1182,8 @@ class CommitLabel(APIView):
         git.repo.base.Repo.clone_from(project_path + "/", folder)
 
         # Get all commits to issue
-        # commits = Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message')
-        commits = Commit.objects.filter(linked_issue_ids=issue.id)
+        #commits = Commit.objects.filter(linked_issue_ids=issue.id)
+        commits = Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message')
         commit_data = []
         for commit in commits:
             print(commit.revision_hash)
@@ -1233,11 +1235,30 @@ class CommitLabel(APIView):
 
     def get(self, request):
 
-        issue_id = ObjectId("5e2855306b4afcd592c5117e")
+        project_name = request.GET.get('project_name', None)
+        if not project_name:
+            log.error('got no project')
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
-        #Missing Sampeling
+        # if the user has no last_issue_id sample one
+        load_last = False
+        if not request.user.profile.line_label_last_issue_id:
+            issue = self._sample_issue(request.user.username, project_name)
 
-        issue = Issue.objects.get(id=issue_id)
+            if issue:
+                up = UserProfile.objects.get(user=request.user)
+                up.line_label_last_issue_id = issue.id
+                up.save()
+
+        # otherwise use the last unfinished one
+        else:
+            print('loading last issue', request.user.profile.line_label_last_issue_id)
+            issue = Issue.objects.get(id=request.user.profile.line_label_last_issue_id)
+            load_last = True
+
+        if issue == None:
+            return Response({'warning': 'no_more_issues'})
+
 
         issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
         p = Project.objects.get(id=issue_system.project_id)
@@ -1259,7 +1280,7 @@ class CommitLabel(APIView):
 
 
         result = {'warning': '', 'commits': self._commit_data(issue, project_path), 'issue_url': issue_url,
-                  'vcs_url': vcs_url, 'has_trained': request.user.profile.line_label_has_trained }
+                  'vcs_url': vcs_url, 'has_trained': request.user.profile.line_label_has_trained, 'load_last': load_last }
 
         serializer = IssueSerializer(issue, many=False)
         data = serializer.data
