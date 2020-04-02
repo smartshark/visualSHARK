@@ -14,7 +14,8 @@
       <div class="card-block">
         <pre class="force-wrap">{{issue.desc}}</pre>
         <div class="submitLine">
-          <button v-on:click="submit">Submit Labels</button>
+          <button v-if="result.length == 0" v-on:click="submit">Submit Labels</button>
+          <button v-else v-on:click="load">Load next issue</button>
         </div>
         <div v-if="result.length > 0">
           Submitted and validated changes:
@@ -88,6 +89,9 @@ export default {
     this.loadSample()
   },
   methods: {
+    load() {
+      this.loadSample()
+    },
     loadSample() {
       this.$store.dispatch('pushLoading')
       this.result = []
@@ -98,6 +102,13 @@ export default {
       rest.getChangedLines(this.currentProject.name)
         .then(response => {
           this.$store.dispatch('popLoading')
+
+          // maybe we are finished for this project
+          if(response.data['warning'] == 'no_more_issues') {
+            this.flashes.push({id: 'no_more_issues', message: 'No more issues for this project available, select next project.'})
+            return
+          }
+
           this.commits = response.data['commits']
           this.issue = response.data['issue']
           this.vcs_url = response.data['vcs_url']

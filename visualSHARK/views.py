@@ -1343,9 +1343,10 @@ class LineLabelSet(APIView):
         if not request.user.profile.line_label_last_issue_id:
             issue = self._sample_issue(request.user.username, project_name)
             
-            up = UserProfile.objects.get(user=request.user)
-            up.line_label_last_issue_id = issue.id
-            up.save()
+            if issue:
+                up = UserProfile.objects.get(user=request.user)
+                up.line_label_last_issue_id = issue.id
+                up.save()
 
         # otherwise use the last unfinished one
         else:
@@ -1354,8 +1355,7 @@ class LineLabelSet(APIView):
             load_last = True
 
         if issue == None:
-            log.error('issue not found')
-            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'warning': 'no_more_issues'})
 
         # urls for issue system and git
         issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
@@ -1376,8 +1376,7 @@ class LineLabelSet(APIView):
             log.error('no such path ' + project_path)
             return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-        result = {'commits': self._commit_data(issue, project_path), 'issue_url': issue_url, 'vcs_url': vcs_url, 'has_trained': request.user.profile.line_label_has_trained, 'load_last': load_last}
+        result = {'warning': '', 'commits': self._commit_data(issue, project_path), 'issue_url': issue_url, 'vcs_url': vcs_url, 'has_trained': request.user.profile.line_label_has_trained, 'load_last': load_last}
 
         serializer = IssueSerializer(issue, many=False)
         data = serializer.data
