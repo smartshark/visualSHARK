@@ -1358,5 +1358,5 @@ class LeaderboardSet(APIView):
     read_perm = 'view_line_labels'
 
     def get(self, request):
-        lb = LeaderboardSnapshot.objects.order_by('created_at')[0]
+        lb = LeaderboardSnapshot.objects.order_by('-created_at')[0]
         return Response({'board': json.loads(lb.data), 'last_updated': lb.created_at})

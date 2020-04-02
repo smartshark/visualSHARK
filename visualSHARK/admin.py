@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
-    IssueValidationUser, ProjectAttributes
+    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot
 
 
 class CommitGraphAdmin(admin.ModelAdmin):
@@ -32,6 +32,9 @@ class IssueValidationUserAdmin(admin.ModelAdmin):
     list_display = ('user', 'issue_validation', 'label')
     list_filter = ('user',)
 
+class LeaderboardSnapshotAdmin(admin.ModelAdmin):
+    list_display = ('created_at',)
+
 admin.site.register(CommitGraph, CommitGraphAdmin)
 admin.site.register(CommitLabelField, CommitLabelFieldAdmin)
 admin.site.register(ProjectStats, ProjectStatsAdmin)
@@ -41,3 +44,4 @@ admin.site.register(UserProfile)
 admin.site.register(IssueValidation, IssueValidationAdmin)
 admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
 admin.site.register(ProjectAttributes)
+admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)

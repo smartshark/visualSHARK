@@ -17,7 +17,8 @@ class Command(BaseCommand):
             for username, lines in h.lines_manual.items():
                 if username not in board.keys():
                     board[username] = 0
-                board[username] += len(lines)
+                for label, line_numbers in lines.items():
+                    board[username] += len(line_numbers)
 
         ls = LeaderboardSnapshot()
         ls.data = json.dumps(board)
