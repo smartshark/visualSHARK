@@ -11,12 +11,16 @@
               <tr>
                 <th>User</th>
                 <th>Lines</th>
+                <th>Files</th>
+                <th>Commits</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(item, key, index) in board">
                 <td>{{key}}</td>
-                <td>{{item}}</td>
+                <td>{{item.lines}}</td>
+                <td>{{item.files}}</td>
+                <td>{{item.commits}}</td>
               </tr>
             </tbody>
           </table>

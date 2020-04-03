@@ -6,7 +6,7 @@
       <p>{{flash.message}}</p>
     </alert>
   </template>
-  <div class="card">
+  <div class="card" v-bind:class="{'isLoading': isLoading}">
     <div class="card-header">
       <i class="fa fa-info"></i> Control
     </div>
@@ -74,6 +74,7 @@ export default {
       issue_url: '',
       has_trained: false,
       load_last: false,
+      isLoading: true,
       flashes: []
     }
   },
@@ -107,10 +108,11 @@ export default {
       this.vcs_url = ''
       this.issue_url = ''
       this.issue = {}
+      this.isLoading = true
       rest.getChangedLines(this.currentProject.name)
         .then(response => {
           this.$store.dispatch('popLoading')
-
+          this.isLoading = false
           // maybe we are finished for this project
           if(response.data['warning'] == 'no_more_issues') {
             this.flashes.push({id: 'no_more_issues', message: 'No more issues for this project available, select next project.'})
@@ -133,13 +135,16 @@ export default {
           }
         })
         .catch(e => {
+          this.isLoading = false
           this.$store.dispatch('pushError', e)
         });
     },
     submit() {
-      let isComplete = true;
+      let isComplete = true
       let result = {}
+      this.isLoading = true
       for(let o in this.$refs.diffView) {
+        
         let dv = this.$refs.diffView[o]
         if(!dv.isComplete) {
           this.$store.dispatch('pushError', {message: 'Change ' + dv.commit + ' is incomplete!'})
@@ -157,10 +162,12 @@ export default {
         this.$store.dispatch('pushLoading')
         rest.saveChangedLines({data: {labels: result, issue_id: this.issue.id}})
           .then(response => {
+            this.isLoading = false
             this.$store.dispatch('popLoading')
             this.result = response.data['changes']
           })
           .catch(e => {
+            this.isLoading = false
             this.$store.dispatch('pushError', e)
           });
       }
@@ -176,5 +183,8 @@ pre.force-wrap {
   white-space: -pre-wrap;      /* Opera 4-6 */
   white-space: -o-pre-wrap;    /* Opera 7 */
   word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+.isLoading {
+  opacity: 0.2;
 }
 </style>
