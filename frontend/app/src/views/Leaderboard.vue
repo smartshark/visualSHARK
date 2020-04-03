@@ -13,6 +13,7 @@
                 <th>Lines</th>
                 <th>Files</th>
                 <th>Commits</th>
+                <th>Issues</th>
               </tr>
             </thead>
             <tbody>
@@ -21,6 +22,7 @@
                 <td>{{item.lines}}</td>
                 <td>{{item.files}}</td>
                 <td>{{item.commits}}</td>
+                <td>{{item.issues}}</td>
               </tr>
             </tbody>
           </table>
