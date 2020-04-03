@@ -17,11 +17,26 @@ class Command(BaseCommand):
         for h in Hunk.objects.filter(lines_manual__exists=True):
             for username, lines in h.lines_manual.items():
                 if username not in board.keys():
-                    board[username] = {'lines': 0, 'commits': set(), 'files': set()}
+                    board[username] = {'lines': 0, 'issues': set(), 'commits': set(), 'files': set()}
                     hunks[username] = set()
                 hunks[username].add(h)
                 for label, line_numbers in lines.items():
                     board[username]['lines'] += len(line_numbers)
+
+        # this is kind of inefficient but we do not get to issues from hunks as commit
+        # can be linked to more than one issue in fixed_issue_ids
+        for i in Issue.objects.filter(issue_type_verified='bug'):
+            commits = Commit.objects.filter(fixed_issue_ids=i.id).only('id', 'parents')
+            if len(commits) > 0:
+                for c in commits:
+                    if c.parents:
+                        fas = FileAction.objects.filter(commit_id=c.id, parent_revision_hash=c.parents[0])
+                    else:
+                        fas = FileAction.objects.filter(commit_id=c.id)
+                    for fa in fas:
+                        for h in Hunk.objects.filter(file_action_id=fa.id, lines_manual__exists=True):
+                            for username, lines in h.lines_manual.items():
+                                board[username]['issues'].add(str(i.id))
 
         # other counts outside of hunk lines
         for username, hunks in hunks.items():
@@ -35,6 +50,7 @@ class Command(BaseCommand):
         for username, values in board.items():
             board[username]['commits'] = len(values['commits'])
             board[username]['files'] = len(values['files'])
+            board[username]['issues'] = len(values['issues'])
 
         ls = LeaderboardSnapshot()
         ls.data = json.dumps(board)
