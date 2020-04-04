@@ -1,7 +1,7 @@
 <template>
 <div>
  <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
-            {{ file.filename }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
+            {{ file.filename }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button> <button class="btn btn-default" v-on:click="labelTest()" style="float: right;">Label as test</button>
  </div>
         <div>
              <MonacoEditor  class="editor"
@@ -257,6 +257,45 @@ export default {
                           data[hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
                      }
             return data;
+        },
+        labelTest: function() {
+             var className = 'test';
+             var changes = this.$refs.editor.getEditor().getLineChanges();
+             console.log(this.$refs.editor.getEditor());
+             for (var i = 0; i < changes.length; i++) {
+                 var change = changes[i];
+
+                 for(var j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++) {
+
+                 this.decorationsObjectsLeft[j] = {
+                        range: new monaco.Range(j, 1, j, 1),
+                        options: {
+                            isWholeLine: true,
+                            linesDecorationsClassName: className
+                        },
+                        change: change
+                 };
+
+                 this.decorationsLeft = this.$refs.editor.getEditor().getOriginalEditor().deltaDecorations(this.decorationsLeft, Object.values(this.decorationsObjectsLeft));
+                 this.validateEditor();
+                 }
+
+                 for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++) {
+
+                 this.decorationsObjectsRight[j] = {
+                        range: new monaco.Range(j, 1, j, 1),
+                        options: {
+                            isWholeLine: true,
+                            linesDecorationsClassName: className
+                        },
+                        change: change
+                 };
+
+                 this.decorationsRight = this.$refs.editor.getEditor().getModifiedEditor().deltaDecorations(this.decorationsRight, Object.values(this.decorationsObjectsRight));
+                 this.validateEditor();
+                 }
+
+             }
         }
     }
 }
