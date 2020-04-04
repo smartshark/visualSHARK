@@ -224,9 +224,41 @@ export default {
                 header.className = "card-header";
              }
              return false;
+        },
+        getData: function(hash) {
+           var data = {};
+           var file = this.file;
+           console.log(hash + "_" + file.parent_revision_hash + "_" + file.filename);
+                     data[hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
+                     var lineDecorationsOrginal = this.decorationsObjectsLeft;
+                     for(var k = 0; k < lineDecorationsOrginal.length; k++)
+                     {
+                          if(typeof lineDecorationsOrginal[k] === 'undefined') {
+                              continue;
+                          }
+                          var dataPerLabel = {};
+                          dataPerLabel["label"] = lineDecorationsOrginal[k].options.linesDecorationsClassName;
+                          dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
+                          dataPerLabel["change"] = lineDecorationsOrginal[k].change;
+                          dataPerLabel["modified"] =false;
+                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
+                     }
+                     var lineDecorationsModified = this.decorationsObjectsRight;
+                     for(var k = 0; k < lineDecorationsModified.length; k++)
+                     {
+                          if(typeof lineDecorationsModified[k] === 'undefined') {
+                              continue;
+                          }
+                          var dataPerLabel = {};
+                          dataPerLabel["label"] = lineDecorationsModified[k].options.linesDecorationsClassName;
+                          dataPerLabel["line"] = lineDecorationsModified[k].range.startLineNumber;
+                          dataPerLabel["change"] = lineDecorationsModified[k].change;
+                          dataPerLabel["modified"] =true;
+                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
+                     }
+            return data;
         }
-    },
-  name: 'diffView'
+    }
 }
 </script>
 

@@ -50,10 +50,21 @@ export default {
             return editors;
         },
         validate: function() {
+            var correct = true;
             for(var i = 0; i < this.$refs.diffView.length; i++)
             {
-                this.$refs.diffView[i].validateEditor();
+                correct = this.$refs.diffView[i].validateEditor() && correct;
             }
+            return correct;
+        },
+        getData: function() {
+            var data = {};
+            var hash = this.commit.revision_hash;
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                data = Object.assign({}, data, this.$refs.diffView[i].getData(hash));
+            }
+            return data;
         }
     }
 }

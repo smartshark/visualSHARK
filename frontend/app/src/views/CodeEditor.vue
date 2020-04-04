@@ -204,8 +204,8 @@ export default {
         submitLabels : function() {
              // check if anything is missing
              var correct = true;
-             for (var i = 0; i < this.$refs.editor.length; i++) {
-                  correct = this.validateEditor(this.$refs.editor[i], i) && correct;
+             for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
+                  correct = this.$refs.commitDiffView[i].validate() && correct;
              }
              if(!correct)
              {
@@ -214,45 +214,10 @@ export default {
              }
              // else collect data for transmit
              var data = {};
-             var c = 0;
-             for (var i = 0; i < this.commits.length; i++) {
-                  var commit = this.commits[i];
-                  var hash = commit.id;
+             for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
+                 data = Object.assign({}, data, this.$refs.commitDiffView[i].getData());
+             }
 
-                  for(var j = 0; j < commit.changes.length; j++)
-                  {
-                     var file = commit.changes[j];
-                     console.log(hash + "_" + file.parent_revision_hash + "_" + file.filename);
-                     data[commit.revision_hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
-                     var lineDecorationsOrginal = this.decorationsObjectsLeft[c];
-                     for(var k = 0; k < lineDecorationsOrginal.length; k++)
-                     {
-                          if(typeof lineDecorationsOrginal[k] === 'undefined') {
-                              continue;
-                          }
-                          var dataPerLabel = {};
-                          dataPerLabel["label"] = lineDecorationsOrginal[k].options.linesDecorationsClassName;
-                          dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
-                          dataPerLabel["change"] = lineDecorationsOrginal[k].change;
-                          dataPerLabel["modified"] =false;
-                          data[commit.revision_hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
-                     }
-                     var lineDecorationsModified = this.decorationsObjectsRight[c];
-                     for(var k = 0; k < lineDecorationsModified.length; k++)
-                     {
-                          if(typeof lineDecorationsModified[k] === 'undefined') {
-                              continue;
-                          }
-                          var dataPerLabel = {};
-                          dataPerLabel["label"] = lineDecorationsModified[k].options.linesDecorationsClassName;
-                          dataPerLabel["line"] = lineDecorationsModified[k].range.startLineNumber;
-                          dataPerLabel["change"] = lineDecorationsModified[k].change;
-                          dataPerLabel["modified"] =true;
-                          data[commit.revision_hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
-                     }
-                     c++;
-                  }
-            }
             console.log(data);
             this.$store.dispatch('pushLoading')
             var result = { labels : data}
