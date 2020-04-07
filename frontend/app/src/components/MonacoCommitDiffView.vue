@@ -14,7 +14,7 @@
             </div>
             </div>
             <template v-for="c in commit.changes">
-                <DiffView :file="c" ref="diffView" />
+                <MonacoDiffView :file="c" ref="diffView" />
             </template>
             </div>
             </div>
@@ -22,11 +22,11 @@
 </template>
 <script>
 
-import DiffView from '@/components/DiffView.vue'
+import MonacoDiffView from '@/components/MonacoDiffView.vue'
 
 export default {
     components: {
-        DiffView
+        MonacoDiffView
     },
     props: {
     commit : Object

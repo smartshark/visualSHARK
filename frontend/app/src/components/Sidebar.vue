@@ -20,9 +20,6 @@
         <li class="nav-item" v-if="permissions.includes('view_people')">
           <router-link :to="'/people'" class="nav-link"><i class="fa fa-group"></i> People</router-link>
         </li>
-        <li class="nav-item" v-if="permissions.includes('view_people')">
-          <router-link :to="'/codeeditor'" class="nav-link"><i class="fa fa-group"></i> CodeEditor</router-link>
-        </li>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/labeling'}" disabled>
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-code"></i> Labeling</div>
             <ul class="nav-dropdown-items">

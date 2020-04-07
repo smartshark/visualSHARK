@@ -63,7 +63,7 @@
 import { mapGetters } from 'vuex'
 import { alert } from 'vue-strap'
 import rest from '../api/rest'
-import CommitDiffView from '@/components/CommitDiffView.vue'
+import MonacoCommitDiffView from '@/components/MonacoCommitDiffView.vue'
 
 export default {
     data() {
@@ -120,7 +120,7 @@ export default {
             });
     },
     components: {
-        CommitDiffView,
+        MonacoCommitDiffView,
         alert
     },
     methods: {
