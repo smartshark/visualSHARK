@@ -19,7 +19,7 @@
           <button v-if="!isComplete" v-on:click="scrollToNext()" class="btn btn-secondary">next change</button>
         </div>
         <div class="inline btn-group">
-        <dropdown class="inline">
+        <dropdown class="inline" v-model="showDropdown">
           <span slot="button">
             label file as
           </span>
@@ -110,6 +110,7 @@ export default {
       isTest: false,
       isUnrelated: false,
       showCode: true,
+      showDropdown: false,
       selectedModels: []
     }
   },
@@ -139,6 +140,7 @@ export default {
       if(this.isDocumentation === false) {
         this.setAllModels('label')
       }
+      this.showDropdown = false
     },
     isTest(oldValue, newValue) {
       if(this.isTest === true) {
@@ -147,6 +149,7 @@ export default {
       if(this.isTest === false) {
         this.setAllModels('label')
       }
+      this.showDropdown = false
     },
     isUnrelated(oldValue, newValue) {
       if(this.isUnrelated === true) {
@@ -155,6 +158,7 @@ export default {
       if(this.isUnrelated === false) {
         this.setAllModels('label')
       }
+      this.showDropdown = false
     }
   },
   methods: {
