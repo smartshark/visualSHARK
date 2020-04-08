@@ -14,7 +14,7 @@
     </div>
     <transition name="flip">
     <div class="card-block" v-show="showCode">
-      <div class="editor">
+      <div class="diffEditor">
         <div class="lineLabels">
           <div class="lineno" v-for="line in lines" v-bind:class="{'selectedModel': selectedModels.includes(line.number)}" @click.left.shift.exact.prevent="selectModel(line.number, $event)">
             <template v-if="line.new == '-'">
@@ -262,7 +262,7 @@ pre {
 .showCode {
   display: block;
 }
-.editor {
+.diffEditor {
   width: 100%;
   height: 800px;
   display: flex;
