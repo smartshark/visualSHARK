@@ -56,5 +56,4 @@ urlpatterns = [
     url(r'^labeling/lines', LineLabelSet.as_view()),
     url(r'^labeling/leaderboard', LeaderboardSet.as_view()),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
-
 ]

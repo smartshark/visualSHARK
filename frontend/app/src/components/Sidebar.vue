@@ -36,6 +36,9 @@
                 <router-link :to="'/labeling/lines'" class="nav-link"><i class="fa fa-file"></i> Changed Lines</router-link>
               </li>
               <li class="nav-item" v-if="permissions.includes('view_line_labels')">
+                <router-link :to="'/labeling/linesOld'" class="nav-link"><i class="fa fa-file"></i> Changed Lines Old</router-link>
+              </li>
+              <li class="nav-item" v-if="permissions.includes('view_line_labels')">
                 <router-link :to="'/labeling/leaderboard'" class="nav-link"><i class="fas fa-crown"></i> Leaderboard</router-link>
               </li>
             </ul>

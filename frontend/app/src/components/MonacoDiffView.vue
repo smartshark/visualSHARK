@@ -33,6 +33,7 @@ export default {
             return this.$refs.editor;
         },
         initEditor: function() {
+            console.log('init editor',this. file.before)
             var editor = this.$refs.editor;
             this.addActionToEditor(editor);
             this.setAutoFolding(editor);

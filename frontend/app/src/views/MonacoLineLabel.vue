@@ -51,7 +51,7 @@
             </div>
           </div>
               <template v-for="c in commits">
-                <CommitDiffView :commit="c" ref="commitDiffView" />
+                <MonacoCommitDiffView :commit="c" ref="commitDiffView" />
               </template>
           </div>
 
@@ -85,7 +85,7 @@ export default {
 
         // Start background request
         this.$store.dispatch('pushLoading')
-        rest.getIssueWithCommits('gora')
+        rest.getIssueWithCommits(this.currentProject.name)
             .then(response => {
                 this.$store.dispatch('popLoading')
 
