@@ -220,7 +220,7 @@ export default {
 
             console.log(data);
             this.$store.dispatch('pushLoading')
-            var result = { labels : data}
+            var result = {labels : data, issue_id: this.issue.id}
             rest.saveLabelsOfCommits({ data : result })
             .then(response => {
                 this.$store.dispatch('popLoading')
