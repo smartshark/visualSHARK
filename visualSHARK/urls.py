@@ -58,4 +58,3 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 
 ]
-
