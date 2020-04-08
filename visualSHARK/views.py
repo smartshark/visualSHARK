@@ -1297,11 +1297,6 @@ class LineLabelSet(APIView):
             print(errors)
             return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
 
-        # reset the issue id for sucessful labeling
-        up = UserProfile.objects.get(user=request.user)
-        up.line_label_last_issue_id = ''
-        up.save()
-
         # now save the final changes
         for change in new_changes:
             for key, changes in change.items():
@@ -1325,6 +1320,11 @@ class LineLabelSet(APIView):
                 for hunk_id, result in write_changes.items():
                     r = {'set__lines_manual__{}'.format(request.user.username): result[request.user.username]}
                     h = Hunk.objects.get(id=hunk_id).update(**r)
+
+        # reset the issue id for sucessful labeling
+        up = UserProfile.objects.get(user=request.user)
+        up.line_label_last_issue_id = ''
+        up.save()
 
         print('final changes')
         print(new_changes)
