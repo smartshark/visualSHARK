@@ -50,12 +50,21 @@ export default {
             return editors;
         },
         validate: function() {
-            var correct = true;
+            var correct = [];
             for(var i = 0; i < this.$refs.diffView.length; i++)
             {
-                correct = this.$refs.diffView[i].validateEditor() && correct;
+                if(!this.$refs.diffView[i].validateEditor())
+                {
+                    correct.push(this.commit.changes[i]);
+                }
             }
             return correct;
+        },
+        showValidation: function(show) {
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                this.$refs.diffView[i].changeValidation(show);
+            }
         },
         getData: function() {
             var data = {};

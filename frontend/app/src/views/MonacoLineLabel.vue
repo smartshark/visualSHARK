@@ -8,24 +8,38 @@
   </template>
 
     <div class="animated fadeIn">
+<div v-if="error.length > 0">
+    <alert placement="top-center" duration="5" type="warning">
+          <ul>
+             <li v-for="item in error">
+                Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
+                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+            </li>
+          </ul>
+    </alert>
+        </div>
+            <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
+            <div class="clearfix"></div>
      <div class="card">
             <div class="card-header">
               <i class="fa fa-tag"></i> Labels
             </div>
             <div class="card-block">
                 <div class="label"><span class="dot" style="background-color: #84142d;">1</span>bug fix</div>
-                <div class="label"><span class="dot">2</span>whitespace or comment</div>
-                <div class="label"><span class="dot" style="background-color: #142850;">3</span>refactoring</div>
-                <div class="label"><span class="dot" style="background-color: #ffbd69;">4</span>unrelated</div>
-                <div>Press the key of the color to label the current line with the belonging label, press 5 to remove the label</div>
+                <div class="label"><span class="dot">2</span>whitespace</div>
+                <div class="label"><span class="dot" style="background-color: #442727;">3</span>documentation</div>
+                <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
+                <div class="label"><span class="dot" style="background-color: #2b580c;">5</span>test</div>
+                <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
+                <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
+                <div>Press the key of the color to label the current line with the belonging label, press 7 to remove the label</div>
             </div>
       </div>
           <div class="card">
             <div class="card-header">
-              <i class="fa fa-bug"></i> General information
+              <i class="fa fa-bug"></i> <a :href="issue_url + issue.external_id" target="_blank">{{issue.external_id}}</a> - {{issue.title}}
             </div>
             <div class="card-block">
-
             <div class="row">
 <label class="col-sm-2">Issue title</label>
 
@@ -38,7 +52,7 @@
 <div class="row">
 <label class="col-sm-2">Issue description</label>
 <div class="col-sm-10">
-            <pre class="form-control">{{ issue.desc }}</pre>
+             <pre class="force-wrap">{{ issue.desc }}</pre>
             </div>
             </div>
                         <div class="row">
@@ -47,7 +61,6 @@
             <button v-for="commit in commits" v-on:click="scrollToCommit(commit)" class="btn btn-default" style="margin-right: 5px;">{{ commit.revision_hash }}</button>
             </div>
             </div>
-            <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right;">Submit labels</button>
             </div>
           </div>
               <template v-for="c in commits">
@@ -71,6 +84,9 @@ export default {
             commits: [],
             issue: '',
             flashes: [],
+            error: [],
+      vcs_url: '',
+      issue_url: '',
         }
     },
     computed: mapGetters({
@@ -95,8 +111,11 @@ export default {
                     return
                 }
 
+                window.commits = response.data['commits'];
                 this.commits = response.data['commits'];
                 this.issue = response.data['issue'];
+                this.vcs_url = response.data['vcs_url']
+                this.issue_url = response.data['issue_url']
                 setTimeout(() => {
                     // Register all editors
                     that.registerFoldingModel();
@@ -127,6 +146,10 @@ export default {
         scrollToCommit : function(commit) {
             document.getElementById('collapse' + commit.revision_hash).style.display = "block";
             document.getElementById(commit.revision_hash).scrollIntoView();
+        },
+        jumpToChange : function(change)
+        {
+            document.getElementById('file' + change.filename + change.parent_revision_hash).scrollIntoView();
         },
         getEditors : function() {
            var editors = [];
@@ -203,14 +226,17 @@ export default {
         },
         submitLabels : function() {
              // check if anything is missing
-             var correct = true;
+             var correct = [];
              for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
-                  correct = this.$refs.commitDiffView[i].validate() && correct;
+                  correct = correct.concat(this.$refs.commitDiffView[i].validate());
+                  this.$refs.commitDiffView[i].showValidation(true);
              }
-             if(!correct)
+             this.error = correct;
+             console.log(this.error);
+             if(correct.length > 0)
              {
-                // alert("Some labels are missing");
-                // return;
+                window.alert("Some labels are missing");
+                return;
              }
              // else collect data for transmit
              var data = {};
@@ -221,7 +247,7 @@ export default {
             console.log(data);
             this.$store.dispatch('pushLoading')
             var result = {labels : data, issue_id: this.issue.id}
-            rest.saveLabelsOfCommits({ data : result })
+            rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
             .then(response => {
                 this.$store.dispatch('popLoading')
 
@@ -247,6 +273,7 @@ export default {
 .label {
 display: inline-flex;
 align-items: center;
+margin-right: 10px;
 }
 .dot {
   margin: 2px;
@@ -270,8 +297,18 @@ align-items: center;
 	width: 5px !important;
 	margin-left: 3px;
 }
+.documentation {
+  background-color: #442727;
+	width: 5px !important;
+	margin-left: 3px;
+}
 .test {
-  background-color: #142850;
+  background-color: #2b580c;
+	width: 5px !important;
+	margin-left: 3px;
+}
+.refactoring {
+  background-color: #0779e4;
 	width: 5px !important;
 	margin-left: 3px;
 }
@@ -279,5 +316,12 @@ align-items: center;
   background-color: #ffbd69;
 	width: 5px !important;
 	margin-left: 3px;
+}
+pre.force-wrap {
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 </style>

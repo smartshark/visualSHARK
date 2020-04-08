@@ -1242,10 +1242,10 @@ class LineLabelSet(APIView):
                 nfile = nfile.replace('\r\n', '\n')
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
-                view_lines, has_changed, lines_before, lines_after = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
+                view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
 
                 if has_changed:
-                    changes.append({'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+                    changes.append({'hunks': hunks,'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
 
             commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 
@@ -1255,6 +1255,7 @@ class LineLabelSet(APIView):
     def post(self, request):
         issue_id = request.data['data']['issue_id']
         labels = request.data['data']['labels']
+        type = request.data['type']
         issue = Issue.objects.get(id=issue_id)
 
         its = IssueSystem.objects.get(id=issue.issue_system_id)
@@ -1281,10 +1282,16 @@ class LineLabelSet(APIView):
                 # check if every line that needs a label is in submitted labels and has a label
                 for line in lines_needing_labels:
                     line_number = str(line['number'])
-                    if line_number in labels[key] and labels[key][line_number] != 'label':
 
+                    if type == 'old_new':
+                        line_number = str(line['old'])
+                        if line_number == '-':
+                            line_number = str(line['new'])
+
+                    if line_number in labels[key] and labels[key][line_number] != 'label':
                         if line['hunk_id'] not in label_lines.keys():
                             label_lines[line['hunk_id']] = []
+
                         label_lines[line['hunk_id']].append({'label': labels[key][line_number], 'hunk_line': line['hunk_line'], 'line': line['code']})
                         # label_lines[line_number] = {'label': labels[key][line_number], 'user': request.user.username, 'hunk_id': line['hunk_id'], 'hunk_line': line['hunk_line']}
                     else:
@@ -1296,11 +1303,6 @@ class LineLabelSet(APIView):
         if errors:
             print(errors)
             return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
-
-        # reset the issue id for sucessful labeling
-        up = UserProfile.objects.get(user=request.user)
-        up.line_label_last_issue_id = ''
-        up.save()
 
         # now save the final changes
         for change in new_changes:
@@ -1325,6 +1327,11 @@ class LineLabelSet(APIView):
                 for hunk_id, result in write_changes.items():
                     r = {'set__lines_manual__{}'.format(request.user.username): result[request.user.username]}
                     h = Hunk.objects.get(id=hunk_id).update(**r)
+
+        # reset the issue id for sucessful labeling
+        up = UserProfile.objects.get(user=request.user)
+        up.line_label_last_issue_id = ''
+        up.save()
 
         print('final changes')
         print(new_changes)

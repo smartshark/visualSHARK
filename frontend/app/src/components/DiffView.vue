@@ -1,16 +1,45 @@
 <template>
-  <div class="card">
+  <div class="card diff-card">
     <div class="card-header" v-bind:class="{'complete': isComplete}">
       <i class="fa fa-file"></i> {{filename}}
 
       <!--Mark whole file as test <input type="checkbox" name="mark_test"/>
       Mark whole file as documentation <checkbox name="mark_documentation"/>-->
-      <input type="checkbox" value="mark_test" v-model="isTest">
-      Mark file as test
-      <input type="checkbox" value="mark_documentation" v-model="isDocumentation">
-      Mark file as documentation
-      <button v-on:click="showCode = !showCode">Toggle Code</button>
-      <button v-if="!isComplete" v-on:click="scrollToNext()">next</button>
+
+
+        <!--<button v-on:click="showCode = !showCode">Toggle Code</button>&nbsp;&nbsp;
+        <button v-if="!isComplete" v-on:click="scrollToNext()">next change</button>-->
+
+
+      <div class="card-actions2">
+        <div class="inline btn-group">
+          <button v-on:click="showCode = !showCode" class="btn btn-secondary">toggle code</button>
+        </div>
+        <div class="inline btn-group">
+          <button v-if="!isComplete" v-on:click="scrollToNext()" class="btn btn-secondary">next change</button>
+        </div>
+        <div class="inline btn-group">
+        <dropdown class="inline" v-model="showDropdown">
+          <span slot="button">
+            label file as
+          </span>
+          <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
+              <div class="input-group">
+                <input type="checkbox" v-model="isTest" class="checkbox-dropdown">
+                <div class="checkbox-label">test</div>
+              </div>
+              <div class="input-group">
+                <input type="checkbox" v-model="isDocumentation" class="checkbox-dropdown">
+                <div class="checkbox-label">documentation</div>
+              </div>
+              <div class="input-group">
+                <input type="checkbox" v-model="isUnrelated" class="checkbox-dropdown">
+                <div class="checkbox-label">unrelated</div>
+              </div>
+          </div>
+        </dropdown>
+      </div>
+      </div>
     </div>
     <transition name="flip">
     <div class="card-block" v-show="showCode">
@@ -60,7 +89,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
+import { alert, dropdown } from 'vue-strap'
 import hljs from 'highlight.js/lib/highlight';
 import java from 'highlight.js/lib/languages/java';
 import xml from 'highlight.js/lib/languages/xml';
@@ -79,12 +108,14 @@ export default {
       isComplete: false,
       isDocumentation: false,
       isTest: false,
+      isUnrelated: false,
       showCode: true,
+      showDropdown: false,
       selectedModels: []
     }
   },
   components: {
-    alert
+    alert, dropdown
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -109,6 +140,7 @@ export default {
       if(this.isDocumentation === false) {
         this.setAllModels('label')
       }
+      this.showDropdown = false
     },
     isTest(oldValue, newValue) {
       if(this.isTest === true) {
@@ -117,6 +149,16 @@ export default {
       if(this.isTest === false) {
         this.setAllModels('label')
       }
+      this.showDropdown = false
+    },
+    isUnrelated(oldValue, newValue) {
+      if(this.isUnrelated === true) {
+        this.setAllModels('unrelated')
+      }
+      if(this.isUnrelated === false) {
+        this.setAllModels('label')
+      }
+      this.showDropdown = false
     }
   },
   methods: {
@@ -240,6 +282,33 @@ export default {
 
 <style>
 @import '~highlight.js/styles/github-gist.css';
+
+.diff-card {
+  margin-bottom: 0rem;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
+}
+
+.card-actions2 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-top: 12px;
+}
+
+.btn-default {
+  color: #263238;
+  background-color: #fff;
+  border-color: #b0bec5;
+}
+
+.btn-default:hover {
+  color: #263238;
+  background-color: #cecece;
+  border-color: #b0bec5;
+}
+
 
 pre {
   font-size: 100%;
