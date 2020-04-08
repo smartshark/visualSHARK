@@ -12,8 +12,8 @@
     </div>
     <div class="card-block">
       <div class="submitLine">
-        <button v-if="result.length == 0" v-on:click="submit">Submit Labels</button>
-        <button v-else v-on:click="load">Load next issue</button>
+        <button v-if="result.length == 0" v-on:click="submit" class="btn btn-primary">Submit Labels</button>
+        <button v-else v-on:click="load" class="btn btn-primary">Load next issue</button>
       </div>
     </div>
   </div>
