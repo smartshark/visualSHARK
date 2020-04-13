@@ -1,7 +1,19 @@
 <template>
 <div>
  <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
-            {{ file.filename }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button> <button class="btn btn-default" v-on:click="labelTest()" style="float: right;">Label as test</button>
+ <div style="margin-bottom: 5px;">
+            {{ file.filename }}</div>
+                      <div class="btn-group" role="group" >
+  <button type="button" class="btn btn-secondary">Mark file as</button>
+     <button class="btn btn-primary" v-on:click="labelWhitespace()" style="background-color:#bbb;">whitespace</button>
+     <button class="btn btn-primary" v-on:click="labelDocumentation()" style="background-color:#442727;">documentation</button>
+     <button class="btn btn-primary" v-on:click="labelTest()" style="background-color:#2b580c;">test</button>
+     <button class="btn btn-primary" v-on:click="labelUnrelated()" style="background-color:#ffbd69;">unrelated</button>
+
+
+</div>
+             <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
+
  </div>
         <div>
              <MonacoEditor  class="editor"
@@ -92,10 +104,12 @@ export default {
         },
         addActionToEditor: function(editor) {
            this.addSingleActionToEditor(editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');
-           this.addSingleActionToEditor(editor, '2', 'Whitespace or comment', [ monaco.KeyCode.KEY_2 ], 'whitespace');
-           this.addSingleActionToEditor(editor, '3', 'Test', [ monaco.KeyCode.KEY_3 ], 'test');
-           this.addSingleActionToEditor(editor, '4', 'Unrelated', [ monaco.KeyCode.KEY_4 ], 'unrelated');
-           this.addSingleActionToEditor(editor, '5', 'Remove label', [ monaco.KeyCode.KEY_5 ], '');
+           this.addSingleActionToEditor(editor, '2', 'Whitespace', [ monaco.KeyCode.KEY_2 ], 'whitespace');
+           this.addSingleActionToEditor(editor, '3', 'Documentation', [ monaco.KeyCode.KEY_3 ], 'documentation');
+           this.addSingleActionToEditor(editor, '4', 'Refactoring', [ monaco.KeyCode.KEY_4 ], 'refactoring');
+           this.addSingleActionToEditor(editor, '5', 'Test', [ monaco.KeyCode.KEY_5 ], 'test');
+           this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');
+           this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
         },
         addSingleActionToEditor: function(editor, id, label, keybindings, className) {
             var that = this;
@@ -258,8 +272,19 @@ export default {
                      }
             return data;
         },
+        labelWhitespace: function() {
+          this.labelFileComplete('whitespace');
+        },
+        labelDocumentation: function() {
+          this.labelFileComplete('documentation');
+        },
         labelTest: function() {
-             var className = 'test';
+          this.labelFileComplete('test');
+        },
+        labelUnrelated: function() {
+          this.labelFileComplete('unrelated');
+        },
+        labelFileComplete: function(className) {
              var changes = this.$refs.editor.getEditor().getLineChanges();
              console.log(this.$refs.editor.getEditor());
              for (var i = 0; i < changes.length; i++) {
