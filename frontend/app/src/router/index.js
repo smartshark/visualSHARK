@@ -19,6 +19,8 @@ import Labeling from '@/views/Labeling'
 import IssueTypeLabeling from '@/views/IssueTypeLabeling'
 import IssueTypeConflicts from '@/views/IssueTypeConflicts'
 import CommitIssueLinks from '@/views/CommitIssueLinks'
+import LineLabels from '@/views/LineLabels'
+import Leaderboard from '@/views/Leaderboard'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -83,18 +85,6 @@ const router = new Router({
           component: People
         },
         {
-          path: 'monacolabel',
-          name: 'Monaco Editor Labeling',
-          component: MonacoLineLabel,
-          props: true,
-          children: [
-            {
-              path: ':id',
-              name: 'Person'
-            }
-          ]
-        },
-        {
           path: 'messages',
           name: 'Messages',
           component: Messages,
@@ -114,13 +104,13 @@ const router = new Router({
         },
         {
           path: 'labeling',
-          name: 'Labeling',
+          name: 'Manual Labels',
           component: Labeling,
           props: true,
           children: [
             {
               path: 'issuetype',
-              name: 'Issue Type Labeling',
+              name: 'Issue Types',
               component: IssueTypeLabeling
             },
             {
@@ -132,6 +122,21 @@ const router = new Router({
               path: 'commitissuelinks',
               name: 'Commit->Issue Links',
               component: CommitIssueLinks
+            },
+            {
+              path: 'lines',
+              name: 'Change Lines',
+              component: MonacoLineLabel
+            },
+            {
+              path: 'linesOld',
+              name: 'Change Lines Old',
+              component: LineLabels
+            },
+            {
+              path: 'leaderboard',
+              name: 'Leaderboard',
+              component: Leaderboard
             }
           ]
         },

@@ -42,3 +42,11 @@ export default {
   }
 }
 </script>
+<style>
+main.main {
+  max-width: calc(100% - 451px);
+}
+body.aside-menu-hidden main.main {
+  max-width: calc(100% - 200px);
+}
+</style>

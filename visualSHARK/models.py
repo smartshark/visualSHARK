@@ -70,6 +70,8 @@ class UserProfile(models.Model):
     """
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
     channel = models.UUIDField(default=uuid.uuid4, editable=False)
+    line_label_has_trained = models.BooleanField(default=False)
+    line_label_last_issue_id = models.CharField(max_length=255, default='')
 
     def __str__(self):
         return self.user.username
@@ -219,6 +221,8 @@ class RightsSupport(models.Model):
                     ('edit_issue_conflicts', 'Edit issue label conflicts'),
                     ('view_jobs', 'View jobs'),
                     ('edit_jobs', 'Edit jobs'),
+                    ('view_line_labels', 'View line labels'),
+                    ('edit_line_labels', 'Edit line labels'),
         )
 
 
@@ -230,3 +234,9 @@ class ProjectAttributes(models.Model):
 
     def __str__(self):
         return self.project_name
+
+
+class LeaderboardSnapshot(models.Model):
+    """Contains leaderboard snapshots."""
+    created_at = models.DateTimeField(auto_now_add=True, blank=False)
+    data = models.TextField()

@@ -161,14 +161,14 @@ export default {
     }})
   },
   getIssueWithCommits (project_name) {
-    let req = this.getUrl('labeling/commit/?project_name=' + project_name)
+    let req = this.getUrl('labeling/lines/?project_name=' + project_name)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
     }})
   },
   saveLabelsOfCommits (dat) {
-    let req = this.getUrl('labeling/commit/')
+    let req = this.getUrl('labeling/lines/')
     return axios.post(req, dat, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
@@ -488,8 +488,29 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getChangedLines (projectName) {
+    let req = this.getUrl('labeling/lines/?project_name=' + projectName)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  saveChangedLines (dat) {
+    let req = this.getUrl('labeling/lines/')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getStatsHistory () {
     let req = this.getUrl('statshistory/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getLeaderboard () {
+    let req = this.getUrl('labeling/leaderboard')
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

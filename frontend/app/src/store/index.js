@@ -48,10 +48,10 @@ const persist = (store) => {
     l.removeLocal('vcs')
     l.removeLocal('is')
     l.removeLocal('ml')
-    l.removeLocal('currentProject')
-    l.removeLocal('currentVcs')
-    l.removeLocal('currentIts')
-    l.removeLocal('currentMl')
+    //l.removeLocal('currentProject')
+    //l.removeLocal('currentVcs')
+    //l.removeLocal('currentIts')
+    //l.removeLocal('currentMl')
     store.dispatch('sessionLogin', {token, username, isSuperuser, channel, permissions})
   }
 
