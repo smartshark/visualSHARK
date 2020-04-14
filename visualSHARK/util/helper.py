@@ -747,15 +747,13 @@ def get_lines(hunk):
     for line in h.split('\n'):
         
         tmp = line[1:]
-        
         if line.startswith('+'):
             added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             del_line -= 1
-            i += 1
         if line.startswith('-'):
             deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             add_line -= 1
-            i += 1
+        i += 1
         
         del_line += 1
         add_line += 1        
