@@ -228,7 +228,7 @@ export default {
             console.log(data);
             this.$store.dispatch('pushLoading')
             var result = {labels : data, issue_id: this.issue.id}
-            rest.saveLabelsOfCommits({ data : result })
+            rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
             .then(response => {
                 this.$store.dispatch('popLoading')
 

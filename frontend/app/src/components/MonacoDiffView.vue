@@ -250,12 +250,9 @@ export default {
                           if(typeof lineDecorationsOrginal[k] === 'undefined') {
                               continue;
                           }
-                          var dataPerLabel = {};
-                          dataPerLabel["label"] = lineDecorationsOrginal[k].options.linesDecorationsClassName;
-                          dataPerLabel["line"] = lineDecorationsOrginal[k].range.startLineNumber;
-                          dataPerLabel["change"] = lineDecorationsOrginal[k].change;
-                          dataPerLabel["modified"] =false;
-                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
+                          var label = lineDecorationsOrginal[k].options.linesDecorationsClassName;
+                          var line = lineDecorationsOrginal[k].range.startLineNumber;
+                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][line] = label;
                      }
                      var lineDecorationsModified = this.decorationsObjectsRight;
                      for(var k = 0; k < lineDecorationsModified.length; k++)
@@ -263,12 +260,9 @@ export default {
                           if(typeof lineDecorationsModified[k] === 'undefined') {
                               continue;
                           }
-                          var dataPerLabel = {};
-                          dataPerLabel["label"] = lineDecorationsModified[k].options.linesDecorationsClassName;
-                          dataPerLabel["line"] = lineDecorationsModified[k].range.startLineNumber;
-                          dataPerLabel["change"] = lineDecorationsModified[k].change;
-                          dataPerLabel["modified"] =true;
-                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][dataPerLabel["line"]] = dataPerLabel;
+                          var label = lineDecorationsModified[k].options.linesDecorationsClassName;
+                          var line = lineDecorationsModified[k].range.startLineNumber;
+                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][line] = label;
                      }
             return data;
         },

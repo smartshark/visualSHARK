@@ -1255,6 +1255,7 @@ class LineLabelSet(APIView):
     def post(self, request):
         issue_id = request.data['data']['issue_id']
         labels = request.data['data']['labels']
+        type = request.data['type']
         issue = Issue.objects.get(id=issue_id)
 
         its = IssueSystem.objects.get(id=issue.issue_system_id)
@@ -1281,10 +1282,16 @@ class LineLabelSet(APIView):
                 # check if every line that needs a label is in submitted labels and has a label
                 for line in lines_needing_labels:
                     line_number = str(line['number'])
-                    if line_number in labels[key] and labels[key][line_number] != 'label':
 
+                    if type == 'old_new':
+                        line_number = str(line['old'])
+                        if line_number == '-':
+                            line_number = str(line['new'])
+
+                    if line_number in labels[key] and labels[key][line_number] != 'label':
                         if line['hunk_id'] not in label_lines.keys():
                             label_lines[line['hunk_id']] = []
+
                         label_lines[line['hunk_id']].append({'label': labels[key][line_number], 'hunk_line': line['hunk_line'], 'line': line['code']})
                         # label_lines[line_number] = {'label': labels[key][line_number], 'user': request.user.username, 'hunk_id': line['hunk_id'], 'hunk_line': line['hunk_line']}
                     else:
