@@ -47,11 +47,21 @@
     </div>
     <transition name="flip">
     <div class="card-block" v-show="showCode">
+      Change {{numberSelected}} to <select class="labelType" v-model="selected" @change="changeLinks()">
+        <option name="label" value="label">label</option>
+        <option name="test" value="test">test</option>
+        <option name="whitespace" value="whitespace">whitespace</option>
+        <option name="documentation" value="documentation">documentation</option>
+        <option name="refactoring" value="refactoring">refactoring</option>
+        <option name="unrelated" value="unrelated">unrelated</option>
+        <option name="bug" value="bug">bug</option>
+      </select>
       <div class="diffEditor">
-        <div class="lineLabels">
-          <div class="lineno" v-for="line in lines" v-bind:class="{'selectedModel': selectedModels.includes(line.number)}" @click.left.shift.exact.prevent="selectModel(line.number, $event)">
+        <div class="lineLabels noselect">
+            <div class="lineno" v-for="line in lines">
             <template v-if="line.new == '-'">
-              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)" @mousedown.left.shift.exact.prevent>
+              <input type="checkbox" v-model="selectedModels[line.number]" :name="'checkbox' + line.number" @change="selectOne($event)"/>
+              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)">
                 <option name="label" value="label">label</option>
                 <option name="test" value="test">test</option>
                 <option name="whitespace" value="whitespace">whitespace</option>
@@ -62,7 +72,8 @@
               </select>
             </template>
             <template v-if="line.old == '-'">
-              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)" @mousedown.left.shift.exact.prevent>
+              <input type="checkbox" v-model="selectedModels[line.number]" :name="'checkbox' + line.number" @change="selectOne($event)"/>
+              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)">
                 <option name="label" value="label">label</option>
                 <option name="test" value="test">test</option>
                 <option name="whitespace" value="whitespace">whitespace</option>
@@ -74,17 +85,17 @@
             </template>
           </div>
         </div>
-        <div class="linesOld">
+        <div class="linesOld noselect">
           <div class="lineno" v-for="line in lines">
             {{line.old}}
           </div>
         </div>
-        <div class="linesNew">
+        <div class="linesNew noselect">
           <div class="lineno" v-for="line in lines">
             {{line.new}}
           </div>
         </div>
-        <pre class="code" v-html="markedBlock"></pre>
+        <pre class="code" v-html="markedBlock" @mouseup="setSelected"></pre>
       </div>
     </div>
     </transition>
@@ -108,14 +119,17 @@ export default {
   data () {
     return {
       markedBlock: '',
+      plainText: '',
+      selected: 'label',
       models: {},
+      selectedModels: {},
       isComplete: false,
       isDocumentation: false,
       isTest: false,
       isUnrelated: false,
       showCode: true,
       showDropdown: false,
-      selectedModels: []
+      numberSelected: 0
     }
   },
   components: {
@@ -183,21 +197,74 @@ export default {
         if(this.models[el] === 'label') {
           let k = this.commit + '_' + this.filename + '_' + el
           document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'})
-          console.log('page offsets', window.pageXOffset, window.pageYOffset)
+          //console.log('page offsets', window.pageXOffset, window.pageYOffset)
           break
         }
       }
     },
+    selectOne(event) {
+      this.countSelected()
+    },
+    countSelected() {
+      let tmp = 0
+      for(let idx in this.selectedModels) {
+        if(this.selectedModels[idx] === true) {
+          tmp += 1
+        }
+      }
+      this.numberSelected = tmp
+    },
+    setSelected() {
+      var range = window.getSelection();     
+      var text = range.toString().replace(/\n\n/g, '\n');
+      if(text == "") {
+        return
+      }
+      //console.log(JSON.stringify({t: text}))
+
+      let cleaned = []
+      for(let line of text.split('\n')) {
+        cleaned.push(line)
+      }
+      // clean first line if empty
+      if(cleaned[0] == "") {
+        cleaned.shift()
+      }
+
+      let consecutiveFoundLines = []
+      let lines = this.plainText.split('\n')
+      let all_matched = true
+      for(let i=0; i < lines.length; i++) {
+        // found first match, lets see if we can find consecutive matches
+        if(lines[i].indexOf(cleaned[0]) != -1) {
+          for(let j=0; j < cleaned.length; j++) {
+            if(lines[i+j].indexOf(cleaned[j]) == -1) {
+              all_matched = false
+              break
+            }else {
+              consecutiveFoundLines.push(i+j+1)
+            }
+          }
+        }
+      }
+      if(all_matched !== true) {
+        consecutiveFoundLines = []
+      }else {
+        for(let m in this.selectedModels) {
+          if(consecutiveFoundLines.includes(parseInt(m))) {
+            this.selectedModels[m] = !this.selectedModels[m]
+          }
+        }
+      }
+      this.countSelected()
+    },
     initializeModel() {
       for(let line of this.lines) {
         // if new == - we are on a line only existing on old
-        if(line.new == '-') {
+        if(line.new == '-' || line.old == '-') {
           // see: https://vuejs.org/v2/guide/reactivity.html
           this.$set(this.models, line.number, 'label')
-          //this.models[this.lines[lineno].old] = 'label'
-        }
-        if(line.old == '-') {
-          this.$set(this.models, line.number, 'label')
+          this.$set(this.selectedModels, line.number, false)
         }
       }
     },
@@ -223,7 +290,7 @@ export default {
       // solution when syntax highlighting breaks
       // keep state https://github.com/highlightjs/highlight.js/issues/424
       let marked = []
-
+      let plain = []
       if(this.filename.toLowerCase().endsWith('.java')) {
         marked = this.loadSyntax('java')
       }else if(this.filename.toLowerCase().endsWith('.xml')) {
@@ -241,19 +308,26 @@ export default {
           }
         }
       }
+      for(let line of this.lines) {
+        plain.push(line.code)
+      }
       this.markedBlock = marked.join('\n')
+      this.plainText = plain.join('\n')
+    },
+    changeLinks() {
+      for(let idx in this.selectedModels) {
+        if(this.selectedModels[idx] == true) {
+          this.models[idx] = this.selected
+          this.selectedModels[idx] = false
+        }
+      }
+      this.selected = 'label'
+
+      // check completeness
+      this.checkComplete()
+      this.countSelected()
     },
     changeLabel(modelIdx) {
-      // check if we are linked, if we are changing all linked labels
-      if(this.selectedModels.includes(modelIdx)) {
-        for(let m of this.selectedModels) {
-          this.models[m] = this.models[modelIdx]
-        }
-
-        // reset linking
-        this.selectedModels = []
-      }
-
       // check completeness
       this.checkComplete()
     },
@@ -269,16 +343,6 @@ export default {
       if(this.isComplete === true) {
         this.showCode = false
       }
-    },
-    selectModel(modelIdx, event) {
-      if(typeof this.models[modelIdx] === 'undefined') {
-        return
-      }
-      if(this.selectedModels.includes(modelIdx)) {
-        this.selectedModels.splice(this.selectedModels.indexOf(modelIdx), 1)
-      }else {
-        this.selectedModels.push(modelIdx)
-      }
     }
   }
 }
@@ -286,6 +350,10 @@ export default {
 
 <style>
 @import '~highlight.js/styles/github-gist.css';
+
+.noselect {
+  user-select: none;
+}
 
 .diff-card {
   margin-bottom: 0rem;
