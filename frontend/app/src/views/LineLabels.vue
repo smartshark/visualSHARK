@@ -164,7 +164,7 @@ export default {
 
       if(isComplete === true) {
         this.$store.dispatch('pushLoading')
-        rest.saveChangedLines({data: {labels: result, issue_id: this.issue.id, type: 'combined'}})
+        rest.saveChangedLines({data: {labels: result, issue_id: this.issue.id}, type: 'combined'})
           .then(response => {
             this.isLoading = false
             this.$store.dispatch('popLoading')
