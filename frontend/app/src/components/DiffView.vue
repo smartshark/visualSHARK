@@ -12,18 +12,22 @@
 
 
       <div class="card-actions2">
-        <div class="inline btn-group">
-          <button v-on:click="showCode = !showCode" class="btn btn-secondary">toggle code</button>
+        <div class="switch-group">
+          Show code
+          <label class="w3c-switch">
+            <input type="checkbox" v-model="showCode">
+            <span class="w3c-slider"></span>
+          </label>
         </div>
-        <div class="inline btn-group">
+        <div class="dl-group">
           <button v-if="!isComplete" v-on:click="scrollToNext()" class="btn btn-secondary">next change</button>
         </div>
-        <div class="inline btn-group">
+        <div class="dl-group">
         <dropdown class="inline" v-model="showDropdown">
           <span slot="button">
             label file as
           </span>
-          <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
+          <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right dl-dropdown">
               <div class="input-group">
                 <input type="checkbox" v-model="isTest" class="checkbox-dropdown">
                 <div class="checkbox-label">test</div>
@@ -294,7 +298,6 @@ export default {
   position: absolute;
   top: 0;
   right: 0;
-  margin-top: 12px;
 }
 
 .btn-default {
@@ -391,5 +394,90 @@ pre {
   padding: 0px;
   max-width: 50px;
   scroll-margin: 20px;
+}
+/* The switch - the box around the slider */
+.w3c-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  margin-left: 5px;
+}
+
+/* Hide default HTML checkbox */
+.w3c-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.w3c-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.w3c-slider:before {
+  position: absolute;
+  content: "";
+  height: 15px;
+  width: 15px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .w3c-slider {
+  background-color: #2196F3;
+}
+
+input:focus + .w3c-slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .w3c-slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.w3c-slider.round {
+  border-radius: 30px;
+}
+
+.w3c-slider.round:before {
+  border-radius: 50%;
+}
+
+.switch-group {
+  float: left;
+  height: 35px;
+  margin-top: 5px;
+  margin-bottom: 0px;
+  background-color: white;
+  margin-right: 5px;
+  padding: 5px;
+  padding-right: 8px;
+  padding-top: 6px;
+  border: 1px solid #ccc;
+}
+
+.dl-group {
+  float: left;
+  margin-top: 13px;
+  margin-right: 5px;
+}
+
+.dl-dropdown {
+  padding-left: 5px;
 }
 </style>
