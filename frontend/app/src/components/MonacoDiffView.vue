@@ -18,6 +18,14 @@
 
  </div>
         <div>
+        <div v-if="showValidation">
+          <ul>
+             <li v-for="item in missingChanges">
+                Original: {{ item.originalStartLineNumber }} - {{ item.originalEndLineNumber }} / Modified: {{ item.modifiedStartLineNumber }} - {{ item.modifiedEndLineNumber }}
+                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+            </li>
+          </ul>
+        </div>
              <MonacoEditor  class="editor"
   :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
   </div>
@@ -34,7 +42,9 @@ export default {
             decorationsObjectsLeft: [],
             decorationsRight: [],
             decorationsObjectsRight: [],
+            missingChanges: [],
             folding: false,
+            showValidation: false,
         }
     },
     props: {
@@ -65,6 +75,16 @@ export default {
         },
         next : function() {
             this.runNext(this.$refs.editor.getEditor().getOriginalEditor(),this.$refs.editor);
+        },
+        jumpToChange : function(change)
+        {
+         var ed = this.$refs.editor.getEditor().getOriginalEditor();
+         ed.revealLineInCenter(change.originalStartLineNumber);
+         ed.setPosition({column: 1, lineNumber: change.originalStartLineNumber});
+        },
+        changeValidation(show)
+        {
+          this.showValidation = show;
         },
         runBack(ed, editor) {
                    var currentLine = ed.getPosition().lineNumber;
@@ -222,6 +242,7 @@ export default {
            this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
         },
         markLineInEditorLeft(lineNumber,className, editor,ed) {
+                    var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
                     var foundChange;
@@ -329,13 +350,16 @@ export default {
              var isSomethingMissing = false;
              var lineDecorationsOrginal = this.decorationsObjectsLeft;
              var lineDecorationsModified = this.decorationsObjectsRight;
+             this.missingChanges = [];
              for (var i = 0; i < changes.length; i++) {
                  var change = changes[i];
+                 var isThisMissing = false;
                  if(change.originalEndLineNumber != 0)
                  {
                     for(var j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++)
                     {
                     if(typeof lineDecorationsOrginal[j] === 'undefined') {
+                    isThisMissing = true;
                     isSomethingMissing = true;
                     }
                     }
@@ -345,11 +369,17 @@ export default {
                     for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
                     {
                     if(typeof lineDecorationsModified[j] === 'undefined') {
+                    isThisMissing = true;
                     isSomethingMissing = true;
                     }
                     }
                  }
+                 if(isThisMissing)
+                 {
+                    this.missingChanges.push(change);
+                 }
              }
+             console.log(this.missingChanges);
              var header = this.$refs.header;
              if(!isSomethingMissing && header)
              {

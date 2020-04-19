@@ -214,6 +214,7 @@ export default {
              var correct = true;
              for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
                   correct = this.$refs.commitDiffView[i].validate() && correct;
+                  this.$refs.commitDiffView[i].showValidation(true);
              }
              if(!correct)
              {

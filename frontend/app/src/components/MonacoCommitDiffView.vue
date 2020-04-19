@@ -57,6 +57,13 @@ export default {
             }
             return correct;
         },
+        showValidation: function(show) {
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                console.log(this.$refs.diffView[i]);
+                this.$refs.diffView[i].changeValidation(show);
+            }
+        },
         getData: function() {
             var data = {};
             var hash = this.commit.revision_hash;
