@@ -76,4 +76,7 @@ export default {
 .aside-options {
     padding-top: 15px;
 }
+.aside-menu { /* defaults to 999???*/
+  z-index: -1;
+}
 </style>
