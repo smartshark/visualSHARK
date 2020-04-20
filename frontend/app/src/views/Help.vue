@@ -14,7 +14,6 @@
           <strong>Labeling Information</strong>
           <p>
             The commits/lines that should be labeled are randomly drawn from all available and manually validated issues for the project that is selected on the right side.
-
           </p>
         </div>
       </div>
