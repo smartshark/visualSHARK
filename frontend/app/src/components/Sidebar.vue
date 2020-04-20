@@ -20,8 +20,8 @@
         <li class="nav-item" v-if="permissions.includes('view_people')">
           <router-link :to="'/people'" class="nav-link"><i class="fa fa-group"></i> People</router-link>
         </li>
-        <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/labeling'}" disabled>
-          <div class="nav-link nav-dropdown-toggle open" @click="handleClick"><i class="fa fa-tags"></i> Manual Labels</div>
+        <router-link tag="li" class="nav-item nav-dropdown open" :to="{ path: '/labeling'}" disabled>
+          <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-tags"></i> Manual Labels</div>
             <ul class="nav-dropdown-items">
               <li class="nav-item" v-if="permissions.includes('view_issue_labels')">
                 <router-link :to="'/labeling/issuetype'" class="nav-link"><i class="fa fa-bug"></i> Issue Types</router-link>
