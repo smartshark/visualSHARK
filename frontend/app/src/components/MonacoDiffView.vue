@@ -3,8 +3,8 @@
  <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
  <div style="margin-bottom: 5px;">
             {{ file.filename }}</div>
-                      <div class="btn-group" role="group" >
-  <button type="button" class="btn btn-secondary">Mark file as</button>
+                      <div class="btn-group" role="group" style="margin-top: 10px; margin-right: 10px;">
+  <div style="margin-right: 5px;">Mark file as</div>
      <button class="btn btn-primary" v-on:click="labelWhitespace()" style="background-color:#bbb;">whitespace</button>
      <button class="btn btn-primary" v-on:click="labelDocumentation()" style="background-color:#442727;">documentation</button>
      <button class="btn btn-primary" v-on:click="labelTest()" style="background-color:#2b580c;">test</button>
@@ -12,10 +12,20 @@
 
 
 </div>
+             <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next ></button>
+             <button class="btn btn-primary" v-on:click="back()" style="float: right;">< Previous</button>
              <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
 
  </div>
         <div>
+        <div v-if="showValidation">
+          <ul>
+             <li v-for="item in missingChanges">
+                Original: {{ item.originalStartLineNumber }} - {{ item.originalEndLineNumber }} / Modified: {{ item.modifiedStartLineNumber }} - {{ item.modifiedEndLineNumber }}
+                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+            </li>
+          </ul>
+        </div>
              <MonacoEditor  class="editor"
   :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
   </div>
@@ -32,6 +42,9 @@ export default {
             decorationsObjectsLeft: [],
             decorationsRight: [],
             decorationsObjectsRight: [],
+            missingChanges: [],
+            folding: false,
+            showValidation: false,
         }
     },
     props: {
@@ -48,8 +61,128 @@ export default {
             var editor = this.$refs.editor;
             this.addActionToEditor(editor);
             this.setAutoFolding(editor);
-            this.setFoldingModel(editor);
+            if(this.folding) {
+              this.setFoldingModel(editor);
+              this.foldAll(editor);
+            }
+            this.jumpActions(editor);
+        },
+        top : function() {
+            scroll(0,0)
+        },
+        back : function() {
+            this.runBack(this.$refs.editor.getEditor().getOriginalEditor(),this.$refs.editor);
+        },
+        next : function() {
+            this.runNext(this.$refs.editor.getEditor().getOriginalEditor(),this.$refs.editor);
+        },
+        jumpToChange : function(change)
+        {
+         var ed = this.$refs.editor.getEditor().getOriginalEditor();
+         ed.revealLineInCenter(change.originalStartLineNumber);
+         ed.setPosition({column: 1, lineNumber: change.originalStartLineNumber});
+        },
+        changeValidation(show)
+        {
+          this.showValidation = show;
+        },
+        runBack(ed, editor) {
+                   var currentLine = ed.getPosition().lineNumber;
+                   console.log(currentLine);
+                   var original = false;
+                   if(editor.getEditor().getOriginalEditor() == ed)
+                   {
+                      original = true;
+                   }
+                   var changes = editor.getEditor().getLineChanges();
+                   var foundChange = null;
+                   for (var i = 0; i < changes.length; i++) {
+                         var change = changes[i];
+                         if((original && change.originalStartLineNumber < currentLine) || (!original && change.modifiedStartLineNumber < currentLine))
+                         {
+                                 foundChange = change;
+                         }
+                   }
+                   if(foundChange != null)
+                   {
+                      if(original) {
+                      ed.revealLineInCenter(foundChange.originalStartLineNumber);
+                      ed.setPosition({column: 1, lineNumber: foundChange.originalStartLineNumber});
+                      } else {
+                      ed.revealLineInCenter(foundChange.modifiedStartLineNumber);
+                      ed.setPosition({column: 1, lineNumber: foundChange.modifiedStartLineNumber});
+                      }
+                   }
+        },
+        runNext(ed, editor) {
+             var currentLine = ed.getPosition().lineNumber;
+                   console.log(currentLine)
+                   var original = false;
+                   if(editor.getEditor().getOriginalEditor() == ed)
+                   {
+                      original = true;
+                   }
+                   var changes = editor.getEditor().getLineChanges();
+                   var foundChange = null;
+                   for (var i = 0; i < changes.length; i++) {
+                         var change = changes[i];
+                         if((original && change.originalStartLineNumber > currentLine) || (!original && change.modifiedStartLineNumber > currentLine))
+                         {
+                                 foundChange = change;
+                                 break;
+                         }
+                   }
+                   if(foundChange != null)
+                   {
+
+                      if(original) {
+                      ed.revealLineInCenter(foundChange.originalStartLineNumber);
+                      ed.setPosition({column: 1, lineNumber: foundChange.originalStartLineNumber});
+                      } else {
+                      ed.revealLineInCenter(foundChange.modifiedStartLineNumber);
+                      ed.setPosition({column: 1, lineNumber: foundChange.modifiedStartLineNumber});
+                      }
+                   }
+        },
+        jumpActions(editor) {
+            var that = this;
+            var action = {
+                id: 'backQ',
+                label: "Jump to previous diff",
+                keybindings: [ monaco.KeyCode.KEY_Q ],
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: '21',
+                run: function(ed) {
+                   that.runBack(ed,editor);
+                }
+            };
+            editor.getEditor().getOriginalEditor().addAction(action);
+            editor.getEditor().getModifiedEditor().addAction(action);
+
+             var action2 = {
+                id: 'nextW',
+                label: "Jump to next diff",
+                keybindings: [ monaco.KeyCode.KEY_W ],
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: '22',
+                run: function(ed) {
+                   that.runNext(ed,editor);
+                }
+            };
+            editor.getEditor().getOriginalEditor().addAction(action2);
+            editor.getEditor().getModifiedEditor().addAction(action2);
+        },
+        clickFoldAll: function() {
+            var editor = this.$refs.editor;
             this.foldAll(editor);
+        },
+        clickUnfoldAll: function() {
+            var editor = this.$refs.editor;
+            editor.getEditor().getOriginalEditor().trigger('fold', 'editor.unfoldAll');
         },
         foldAll: function(editor) {
             setTimeout(function() {
@@ -88,17 +221,14 @@ export default {
             });
         },
         setAutoFolding: function(editor) {
-            editor.getEditor().updateOptions({
-                ignoreTrimWhitespace: false,
-            });
             editor.getEditor().getModifiedEditor().updateOptions({
                 readOnly: true,
-                folding: true,
+                folding: this.folding,
                 automaticLayout: true
             });
             editor.getEditor().getOriginalEditor().updateOptions({
                 readOnly: true,
-                folding: true,
+                folding: this.folding,
                 automaticLayout: true
             });
         },
@@ -111,18 +241,8 @@ export default {
            this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');
            this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
         },
-        addSingleActionToEditor: function(editor, id, label, keybindings, className) {
-            var that = this;
-            var actionLeft = {
-                id: id,
-                label: label,
-                keybindings: keybindings,
-                precondition: null,
-                keybindingContext: null,
-                contextMenuGroupId: 'navigation',
-                contextMenuOrder: id,
-                run: function(ed) {
-                    var lineNumber = ed.getPosition().lineNumber;
+        markLineInEditorLeft(lineNumber,className, editor,ed) {
+                    var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
                     var foundChange;
@@ -152,22 +272,9 @@ export default {
                     that.decorationsLeft = ed.deltaDecorations(that.decorationsLeft, Object.values(that.decorationsObjectsLeft));
                         that.validateEditor();
                     }
-
-                    return null;
-                }
-            };
-            editor.getEditor().getOriginalEditor().addAction(actionLeft);
-
-             var actionRight = {
-                id: id,
-                label: label,
-                keybindings: keybindings,
-                precondition: null,
-                keybindingContext: null,
-                contextMenuGroupId: 'navigation',
-                contextMenuOrder: id,
-                run: function(ed) {
-                    var lineNumber = ed.getPosition().lineNumber;
+        },
+        markLineInEditorRight(lineNumber,className, editor,ed) {
+                    var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
                     var foundChange;
@@ -197,7 +304,42 @@ export default {
                     that.decorationsRight = ed.deltaDecorations(that.decorationsRight, Object.values(that.decorationsObjectsRight));
                         that.validateEditor();
                     }
+        },
+        addSingleActionToEditor: function(editor, id, label, keybindings, className) {
+            var that = this;
+            var actionLeft = {
+                id: id,
+                label: label,
+                keybindings: keybindings,
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: id,
+                run: function(ed) {
+                    var range = ed.getSelection();
+                     for(var i = range.startLineNumber; i <= range.endLineNumber; i++)
+                    {
+                        that.markLineInEditorLeft(i,className,editor,ed);
+                    }
+                    return null;
+                }
+            };
+            editor.getEditor().getOriginalEditor().addAction(actionLeft);
 
+             var actionRight = {
+                id: id,
+                label: label,
+                keybindings: keybindings,
+                precondition: null,
+                keybindingContext: null,
+                contextMenuGroupId: 'navigation',
+                contextMenuOrder: id,
+                run: function(ed) {
+                    var range = ed.getSelection();
+                    for(var i = range.startLineNumber; i <= range.endLineNumber; i++)
+                    {
+                        that.markLineInEditorRight(i,className,editor,ed);
+                    }
                     return null;
                 }
             };
@@ -208,13 +350,16 @@ export default {
              var isSomethingMissing = false;
              var lineDecorationsOrginal = this.decorationsObjectsLeft;
              var lineDecorationsModified = this.decorationsObjectsRight;
+             this.missingChanges = [];
              for (var i = 0; i < changes.length; i++) {
                  var change = changes[i];
+                 var isThisMissing = false;
                  if(change.originalEndLineNumber != 0)
                  {
                     for(var j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++)
                     {
                     if(typeof lineDecorationsOrginal[j] === 'undefined') {
+                    isThisMissing = true;
                     isSomethingMissing = true;
                     }
                     }
@@ -224,11 +369,17 @@ export default {
                     for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
                     {
                     if(typeof lineDecorationsModified[j] === 'undefined') {
+                    isThisMissing = true;
                     isSomethingMissing = true;
                     }
                     }
                  }
+                 if(isThisMissing)
+                 {
+                    this.missingChanges.push(change);
+                 }
              }
+             console.log(this.missingChanges);
              var header = this.$refs.header;
              if(!isSomethingMissing && header)
              {

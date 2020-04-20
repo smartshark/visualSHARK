@@ -22,6 +22,7 @@
                 <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
                 <div class="label"><span class="dot" style="background-color: #2b580c;">5</span>test</div>
                 <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
+                <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
                 <div>Press the key of the color to label the current line with the belonging label, press 7 to remove the label</div>
             </div>
       </div>
@@ -213,11 +214,12 @@ export default {
              var correct = true;
              for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
                   correct = this.$refs.commitDiffView[i].validate() && correct;
+                  this.$refs.commitDiffView[i].showValidation(true);
              }
              if(!correct)
              {
-                // alert("Some labels are missing");
-                // return;
+                window.alert("Some labels are missing");
+                return;
              }
              // else collect data for transmit
              var data = {};
@@ -254,6 +256,7 @@ export default {
 .label {
 display: inline-flex;
 align-items: center;
+margin-right: 10px;
 }
 .dot {
   margin: 2px;
