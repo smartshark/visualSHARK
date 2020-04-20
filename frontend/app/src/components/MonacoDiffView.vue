@@ -3,7 +3,19 @@
  <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
  <div style="margin-bottom: 5px;">
             {{ file.filename }}</div>
-                      <div class="btn-group" role="group" style="margin-top: 10px; margin-right: 10px;">
+            <div>
+                  <div class="label"><span class="dot" style="background-color: #84142d;">1</span>bug fix</div>
+                <div class="label"><span class="dot">2</span>whitespace</div>
+                <div class="label"><span class="dot" style="background-color: #442727;">3</span>documentation</div>
+                <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
+                <div class="label"><span class="dot" style="background-color: #2b580c;">5</span>test</div>
+                <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
+                <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
+                <br/>
+                Press the key of the color to label the current line with the belonging label, press 7 to remove the label
+            </div>
+
+  <div class="btn-group" role="group" style="margin-top: 10px; margin-right: 10px;">
   <div style="margin-right: 5px;">Mark file as</div>
      <button class="btn btn-primary" v-on:click="labelWhitespace()" style="background-color:#bbb;">whitespace</button>
      <button class="btn btn-primary" v-on:click="labelDocumentation()" style="background-color:#442727;">documentation</button>
