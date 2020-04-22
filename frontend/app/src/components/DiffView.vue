@@ -215,47 +215,38 @@ export default {
       this.numberSelected = tmp
     },
     setSelected() {
-      var range = window.getSelection();     
-      var text = range.toString().replace(/\n\n/g, '\n');
-      if(text == "") {
+      let sel = window.getSelection();
+      //console.log('sel nodes', sel.anchorNode, sel.focusNode)
+
+      let ap = sel.anchorNode.parentNode.closest("span.line-number-line")
+      let fp = sel.focusNode.parentNode.closest("span.line-number-line")
+      if(ap === null || sel.anchorNode.parentNode.className == 'code') {
+        ap = sel.anchorNode.previousElementSibling
+      }
+      if(fp === null|| sel.focusNode.parentNode.className == 'code') {
+        fp = sel.focusNode.previousElementSibling
+      }
+      let start = parseInt(ap.dataset.line)
+      let end = parseInt(fp.dataset.line)
+
+      let tmp = start
+      if(end > start) {
+      }
+      else if(end < start) {
+        start = end
+        end = tmp
+      }else {
         return
       }
-      //console.log(JSON.stringify({t: text}))
 
-      let cleaned = []
-      for(let line of text.split('\n')) {
-        cleaned.push(line)
-      }
-      // clean first line if empty
-      if(cleaned[0] == "") {
-        cleaned.shift()
-      }
+      sel.removeAllRanges()
 
-      let consecutiveFoundLines = []
-      let lines = this.plainText.split('\n')
-      let all_matched = true
-      for(let i=0; i < lines.length; i++) {
-        // found first match, lets see if we can find consecutive matches
-        if(lines[i].indexOf(cleaned[0]) != -1) {
-          for(let j=0; j < cleaned.length; j++) {
-            if(lines[i+j].indexOf(cleaned[j]) == -1) {
-              all_matched = false
-              break
-            }else {
-              consecutiveFoundLines.push(i+j+1)
-            }
-          }
+      for(let m in this.selectedModels) {
+        if(start <= parseInt(m) && parseInt(m) <= end) {
+          this.selectedModels[m] = !this.selectedModels[m]
         }
       }
-      if(all_matched !== true) {
-        consecutiveFoundLines = []
-      }else {
-        for(let m in this.selectedModels) {
-          if(consecutiveFoundLines.includes(parseInt(m))) {
-            this.selectedModels[m] = !this.selectedModels[m]
-          }
-        }
-      }
+      
       this.countSelected()
     },
     initializeModel() {
@@ -275,11 +266,11 @@ export default {
         let po = hljs.highlight(lang, line.code, true, state)
         state = po.top
         if(line.new == '-') {
-          marked.push('<div class="removedCode">' + po.value + '</div>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="removedCode">' + po.value + '</div></span>')
         }else if(line.old == '-') {
-          marked.push('<div class="addedCode">' + po.value + '</div>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="addedCode">' + po.value + '</div></span>')
         }else{
-          marked.push(po.value)
+          marked.push('<span data-line="' + line.number + '" class="line-number-line">' + po.value + '</span>')
         }
       }
       return marked
@@ -300,11 +291,11 @@ export default {
       }else {
         for(let line of this.lines) {
           if(line.new == '-') {
-            marked.push('<div class="removedCode">' + line.code + '</div>')
+            marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="removedCode">' + line.code + '</div></span>')
           }else if(line.old == '-') {
-            marked.push('<div class="addedCode">' + line.code + '</div>')
+            marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="addedCode">' + line.code + '</div></span>')
           }else{
-            marked.push(line.code)
+            marked.push('<span data-line="' + line.number + '" class="line-number-line">' + line.code + '</span>')
           }
         }
       }
@@ -422,6 +413,7 @@ pre {
   background-color: rgba(0,255,0,0.2);
 }
 .code {
+  width: 100%;
   padding-top: 5px;
   line-height: 22px;
   margin-left: 10px;
