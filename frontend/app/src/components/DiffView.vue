@@ -95,7 +95,7 @@
             {{line.new}}
           </div>
         </div>
-        <pre class="code" v-html="markedBlock" @mouseup="setSelected"></pre>
+        <pre :id="commit + '_' + filename" class="code" v-html="markedBlock" @mouseup="setSelected" spellcheck="false" contenteditable="true" oncut="return false" onpaste="return false" @keydown="codeKey($event)"></pre>
       </div>
     </div>
     </transition>
@@ -180,6 +180,69 @@ export default {
     }
   },
   methods: {
+    codeKey(event) {
+      const arrowKeys = [37,38,39,40]
+      const labelKeys = [49,50,51,52,53,54,55]
+      if(!arrowKeys.includes(event.keyCode)) {
+        event.preventDefault()
+      }
+
+      if(event.keyCode == 87) {
+        let codeElement = document.getElementById(this.commit + '_' + this.filename)
+
+        let number = this.scrollToNext()
+        let el = codeElement.querySelector("[data-line='" + number + "']")
+
+        // it is null if we have no next element
+        if(el !== null) {
+          // this sets the caret position
+          let sel = window.getSelection();
+          let range = document.createRange();
+          range.setStart(el, 0);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+
+      // get line if we are a labelKey (basically the same as the text selection)
+      let line = -1
+      if(labelKeys.includes(event.keyCode)) {
+        let pn = window.getSelection().getRangeAt(0).commonAncestorContainer
+        if(pn.className == 'line-number-line') {
+          line = pn.dataset.line
+        }
+        else if(pn.parentNode.className == "code") {
+          line = pn.previousElementSibling.dataset.line
+        }else {
+          line = pn.parentNode.closest("span.line-number-line").dataset.line
+        }
+      }
+
+      if(event.keyCode == 49) {
+        this.models[line] = 'bug'
+      }
+      if(event.keyCode == 50) {
+        this.models[line] = 'whitespace'
+      }
+      if(event.keyCode == 51) {
+        this.models[line] = 'documentation'
+      }
+      if(event.keyCode == 52) {
+        this.models[line] = 'refactoring'
+      }
+      if(event.keyCode == 53) {
+        this.models[line] = 'test'
+      }
+      if(event.keyCode == 54) {
+        this.models[line] = 'unrelated'
+      }
+      if(event.keyCode == 55) {
+        this.models[line] = 'label'
+      }
+
+      this.checkComplete()
+    },
     setAllModels(label) {
       for(let el in this.models) {
         this.$set(this.models, el, label)
@@ -198,7 +261,7 @@ export default {
           let k = this.commit + '_' + this.filename + '_' + el
           document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'})
           //console.log('page offsets', window.pageXOffset, window.pageYOffset)
-          break
+          return el
         }
       }
     },
@@ -223,7 +286,7 @@ export default {
       if(ap === null || sel.anchorNode.parentNode.className == 'code') {
         ap = sel.anchorNode.previousElementSibling
       }
-      if(fp === null|| sel.focusNode.parentNode.className == 'code') {
+      if(fp === null || sel.focusNode.parentNode.className == 'code') {
         fp = sel.focusNode.previousElementSibling
       }
       let start = parseInt(ap.dataset.line)
@@ -263,14 +326,22 @@ export default {
       let marked = []
       let state = null
       for(let line of this.lines) {
-        let po = hljs.highlight(lang, line.code, true, state)
-        state = po.top
+        let value = line.code
+        if(lang != "plain") {
+          let po = hljs.highlight(lang, line.code, true, state)
+          state = po.top
+          value = po.value
+        }
+
+        if(value == "") {
+          value = '&nbsp;'
+        }
         if(line.new == '-') {
-          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="removedCode">' + po.value + '</div></span>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="removedCode">' + value + '</div></span>')
         }else if(line.old == '-') {
-          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="addedCode">' + po.value + '</div></span>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="addedCode">' + value + '</div></span>')
         }else{
-          marked.push('<span data-line="' + line.number + '" class="line-number-line">' + po.value + '</span>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line">' + value + '</span>')
         }
       }
       return marked
@@ -289,15 +360,7 @@ export default {
       }else if(this.filename.toLowerCase().endsWith('.html')) {
         marked = this.loadSyntax('xml')
       }else {
-        for(let line of this.lines) {
-          if(line.new == '-') {
-            marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="removedCode">' + line.code + '</div></span>')
-          }else if(line.old == '-') {
-            marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="addedCode">' + line.code + '</div></span>')
-          }else{
-            marked.push('<span data-line="' + line.number + '" class="line-number-line">' + line.code + '</span>')
-          }
-        }
+        marked = this.loadSyntax('plain')
       }
       for(let line of this.lines) {
         plain.push(line.code)
@@ -419,6 +482,9 @@ pre {
   margin-left: 10px;
   overflow: unset !important;
   white-space: pre !important;
+}
+.code:focus {
+    outline: none;
 }
 .lineno {
   min-height: 22px;
