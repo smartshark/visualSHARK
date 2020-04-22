@@ -233,6 +233,9 @@ export default {
             });
         },
         setAutoFolding: function(editor) {
+            editor.getEditor().updateOptions({	
+                ignoreTrimWhitespace: false,	
+            });
             editor.getEditor().getModifiedEditor().updateOptions({
                 readOnly: true,
                 folding: this.folding,
