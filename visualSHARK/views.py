@@ -1242,10 +1242,10 @@ class LineLabelSet(APIView):
                 nfile = nfile.replace('\r\n', '\n')
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
-                view_lines, has_changed, lines_before, lines_after = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
+                view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
 
                 if has_changed:
-                    changes.append({'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+                    changes.append({'hunks': hunks,'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
 
             commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 

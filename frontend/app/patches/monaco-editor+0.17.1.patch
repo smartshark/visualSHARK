@@ -1,0 +1,96 @@
+diff --git a/node_modules/monaco-editor/esm/vs/editor/common/diff/diffComputer.js b/node_modules/monaco-editor/esm/vs/editor/common/diff/diffComputer.js
+index 3f245ea..de8a419 100644
+--- a/node_modules/monaco-editor/esm/vs/editor/common/diff/diffComputer.js
++++ b/node_modules/monaco-editor/esm/vs/editor/common/diff/diffComputer.js
+@@ -6,10 +6,18 @@ import { LcsDiff } from '../../../base/common/diff/diff.js';
+ import * as strings from '../../../base/common/strings.js';
+ var MAXIMUM_RUN_TIME = 5000; // 5 seconds
+ var MINIMUM_MATCHING_CHARACTER_LENGTH = 3;
+-function computeDiff(originalSequence, modifiedSequence, continueProcessingPredicate, pretty) {
++function computeDiff(originalSequence, modifiedSequence, continueProcessingPredicate, pretty, changesDB) {
++    if(changesDB != null) 
++    {
++        console.log("Database diff result",changesDB.hunks);
++	return changesDB.hunks;
++    }
+     var diffAlgo = new LcsDiff(originalSequence, modifiedSequence, continueProcessingPredicate);
+-    return diffAlgo.ComputeDiff(pretty);
++    var test = diffAlgo.ComputeDiff(pretty);
++    console.log("Editordiff result:",test);
++    return test;
+ }
++
+ var LineMarkerSequence = /** @class */ (function () {
+     function LineMarkerSequence(lines) {
+         var startColumns = [];
+@@ -200,7 +208,7 @@ var LineChange = /** @class */ (function () {
+         if (shouldComputeCharChanges && diffChange.originalLength !== 0 && diffChange.modifiedLength !== 0 && continueProcessingPredicate()) {
+             var originalCharSequence = originalLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.originalStart, diffChange.originalStart + diffChange.originalLength - 1);
+             var modifiedCharSequence = modifiedLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.modifiedStart, diffChange.modifiedStart + diffChange.modifiedLength - 1);
+-            var rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueProcessingPredicate, true);
++            var rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueProcessingPredicate, true, null);
+             if (shouldPostProcessCharChanges) {
+                 rawChanges = postProcessCharChanges(rawChanges);
+             }
+@@ -214,7 +222,7 @@ var LineChange = /** @class */ (function () {
+     return LineChange;
+ }());
+ var DiffComputer = /** @class */ (function () {
+-    function DiffComputer(originalLines, modifiedLines, opts) {
++    function DiffComputer(originalLines, modifiedLines, changesDB, opts) {
+         this.shouldComputeCharChanges = opts.shouldComputeCharChanges;
+         this.shouldPostProcessCharChanges = opts.shouldPostProcessCharChanges;
+         this.shouldIgnoreTrimWhitespace = opts.shouldIgnoreTrimWhitespace;
+@@ -222,6 +230,7 @@ var DiffComputer = /** @class */ (function () {
+         this.maximumRunTimeMs = MAXIMUM_RUN_TIME;
+         this.originalLines = originalLines;
+         this.modifiedLines = modifiedLines;
++	this.changesDB = changesDB;
+         this.original = new LineMarkerSequence(originalLines);
+         this.modified = new LineMarkerSequence(modifiedLines);
+     }
+@@ -265,7 +274,7 @@ var DiffComputer = /** @class */ (function () {
+                 }];
+         }
+         this.computationStartTime = (new Date()).getTime();
+-        var rawChanges = computeDiff(this.original, this.modified, this._continueProcessingPredicate.bind(this), this.shouldMakePrettyDiff);
++        var rawChanges = computeDiff(this.original, this.modified, this._continueProcessingPredicate.bind(this), this.shouldMakePrettyDiff,this.changesDB);
+         // The diff is always computed with ignoring trim whitespace
+         // This ensures we get the prettiest diff
+         if (this.shouldIgnoreTrimWhitespace) {
+diff --git a/node_modules/monaco-editor/esm/vs/editor/common/services/editorSimpleWorker.js b/node_modules/monaco-editor/esm/vs/editor/common/services/editorSimpleWorker.js
+index f9bb40b..778fdea 100644
+--- a/node_modules/monaco-editor/esm/vs/editor/common/services/editorSimpleWorker.js
++++ b/node_modules/monaco-editor/esm/vs/editor/common/services/editorSimpleWorker.js
+@@ -251,15 +251,30 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
+         if (!original || !modified) {
+             return Promise.resolve(null);
+         }
++
+         var originalLines = original.getLinesContent();
+         var modifiedLines = modified.getLinesContent();
+-        var diffComputer = new DiffComputer(originalLines, modifiedLines, {
++	var commits = window.commits;
++	var index; 
++	var changesDB;
++	for(index = 0; index < commits.length; ++index) {
++		var changes = commits[index].changes;
++		var indexB;		
++		for(indexB = 0; indexB < changes.length; ++indexB) {
++			if(changes[indexB].before == originalLines.join("\n") && changes[indexB].after == modifiedLines.join("\n")) 
++			{
++				changesDB = changes[indexB];
++			}
++		}
++	}
++        var diffComputer = new DiffComputer(originalLines, modifiedLines, changesDB, {
+             shouldComputeCharChanges: true,
+             shouldPostProcessCharChanges: true,
+             shouldIgnoreTrimWhitespace: ignoreTrimWhitespace,
+             shouldMakePrettyDiff: true
+         });
+         var changes = diffComputer.computeDiff();
++	console.log("Changes", changes);
+         var identical = (changes.length > 0 ? false : this._modelsAreIdentical(original, modified));
+         return Promise.resolve({
+             identical: identical,

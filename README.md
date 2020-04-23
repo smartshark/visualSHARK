@@ -96,6 +96,10 @@ cd /srv/www/visualSHARK/frontend/app
 # install dependencies
 npm install
 
+# install patch-package and apply patches for MonacoEditor
+npm install patch-package
+npx patch-pacakge
+
 # change local production settings, endpoints for RabbitMQ (websocket) and visualSHARK backend
 cp env.production.local .env.production.local
 nano .env.production.local
