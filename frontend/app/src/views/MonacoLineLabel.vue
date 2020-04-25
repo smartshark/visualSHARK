@@ -101,6 +101,7 @@ export default {
                     return
                 }
 
+                window.commits = response.data['commits'];
                 this.commits = response.data['commits'];
                 this.issue = response.data['issue'];
                 this.vcs_url = response.data['vcs_url']

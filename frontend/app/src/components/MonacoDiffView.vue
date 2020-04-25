@@ -259,7 +259,7 @@ export default {
                     if(className == '') {
                       delete that.decorationsObjectsLeft[lineNumber];
                     } else {
-                    that.decorationsObjectsLeft[lineNumber] = {
+                       that.decorationsObjectsLeft[lineNumber] = {
                         range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                         options: {
                             isWholeLine: true,
@@ -351,6 +351,8 @@ export default {
              var lineDecorationsOrginal = this.decorationsObjectsLeft;
              var lineDecorationsModified = this.decorationsObjectsRight;
              this.missingChanges = [];
+             if(changes == null)
+                return false;
              for (var i = 0; i < changes.length; i++) {
                  var change = changes[i];
                  var isThisMissing = false;

@@ -836,10 +836,12 @@ def get_change_view(file, hunks):
     view_lines = []
     lines_before = []
     lines_after = []
+    hunks_changes = []
     added_lines = {}
     deleted_lines = {}
 
     for hunk in hunks:
+        hunks_changes.append({'modifiedStart': hunk.new_start, 'modifiedLength': hunk.new_lines, 'originalLength': hunk.old_lines, 'originalStart': hunk.old_start })
         al, dl = get_lines(hunk)
         added_lines.update(al)
         deleted_lines.update(dl)
@@ -874,4 +876,4 @@ def get_change_view(file, hunks):
             idx_new += 1
             idx_old += 1
     
-    return view_lines, has_changed, lines_before, lines_after
+    return view_lines, has_changed, lines_before, lines_after, hunks_changes
