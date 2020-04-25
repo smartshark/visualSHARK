@@ -7,9 +7,9 @@ import * as strings from '../../../base/common/strings.js';
 var MAXIMUM_RUN_TIME = 5000; // 5 seconds
 var MINIMUM_MATCHING_CHARACTER_LENGTH = 3;
 function computeDiff(originalSequence, modifiedSequence, continueProcessingPredicate, pretty, changesDB) {
-    console.log("Database diff result",changesDB.hunks);
     if(changesDB != null) 
     {
+        console.log("Database diff result",changesDB.hunks);
 	return changesDB.hunks;
     }
     var diffAlgo = new LcsDiff(originalSequence, modifiedSequence, continueProcessingPredicate);
