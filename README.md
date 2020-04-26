@@ -132,5 +132,5 @@ python manage peon
 run frontend in dev mode
 ```bash
 cd /srv/www/visualSHARK/frontend/app
-npm run dev
+npm run serve
 ```
