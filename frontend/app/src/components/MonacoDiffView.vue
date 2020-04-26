@@ -1,6 +1,6 @@
 <template>
 <div>
- <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;">
+ <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;" :id="'file' + file.filename + file.parent_revision_hash">
  <div style="margin-bottom: 5px;">
             {{ file.filename }}</div>
                       <div class="btn-group" role="group" style="margin-top: 10px; margin-right: 10px;">

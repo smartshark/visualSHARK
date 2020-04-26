@@ -8,7 +8,16 @@
   </template>
 
     <div class="animated fadeIn">
-
+<div v-if="error.length > 0">
+    <alert placement="top-center" duration="5" type="warning">
+          <ul>
+             <li v-for="item in error">
+                Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
+                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+            </li>
+          </ul>
+    </alert>
+        </div>
             <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
             <div class="clearfix"></div>
      <div class="card">
@@ -75,6 +84,7 @@ export default {
             commits: [],
             issue: '',
             flashes: [],
+            error: [],
       vcs_url: '',
       issue_url: '',
         }
@@ -136,6 +146,10 @@ export default {
         scrollToCommit : function(commit) {
             document.getElementById('collapse' + commit.revision_hash).style.display = "block";
             document.getElementById(commit.revision_hash).scrollIntoView();
+        },
+        jumpToChange : function(change)
+        {
+            document.getElementById('file' + change.filename + change.parent_revision_hash).scrollIntoView();
         },
         getEditors : function() {
            var editors = [];
@@ -212,12 +226,14 @@ export default {
         },
         submitLabels : function() {
              // check if anything is missing
-             var correct = true;
+             var correct = [];
              for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
-                  correct = this.$refs.commitDiffView[i].validate() && correct;
+                  correct = correct.concat(this.$refs.commitDiffView[i].validate());
                   this.$refs.commitDiffView[i].showValidation(true);
              }
-             if(!correct)
+             this.error = correct;
+             console.log(this.error);
+             if(correct.length > 0)
              {
                 window.alert("Some labels are missing");
                 return;
