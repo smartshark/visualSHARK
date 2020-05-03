@@ -783,8 +783,11 @@ def get_lines(hunk):
 
         
         del_line += 1
-        add_line += 1        
-    
+        add_line += 1
+
+    hunks_changes.append({'modifiedStart': current_new_start, 'modifiedLength': count_new_lines,
+                          'originalStart': current_old_start, 'originalLength': count_old_lines})
+
     return added_lines, deleted_lines, hunks_changes
 
 
