@@ -865,8 +865,16 @@ def get_change_view(file, hunks):
     deleted_lines = {}
 
     for hunk in hunks:
+<<<<<<< HEAD
         al, dl, hunk_changes = get_lines(hunk)
         hunks_changes = hunks_changes + hunk_changes
+=======
+        old_start = hunk.old_start
+        if hunk.old_lines > 0:
+            old_start = hunk.old_start - 1
+        hunks_changes.append({'modifiedStart': hunk.new_start - 1, 'modifiedLength': hunk.new_lines, 'originalLength': hunk.old_lines, 'originalStart': old_start})
+        al, dl = get_lines(hunk)
+>>>>>>> 85e533f... change old hunkstart3
         added_lines.update(al)
         deleted_lines.update(dl)
 
