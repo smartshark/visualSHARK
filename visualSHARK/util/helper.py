@@ -768,7 +768,11 @@ def get_lines(hunk):
         else:
             # musst be context line
             if content_started:
-                hunks_changes.append({'modifiedStart': current_new_start, 'modifiedLength': count_new_lines,
+                if count_new_lines != 0:
+                    hunks_changes.append({'modifiedStart': current_new_start-1, 'modifiedLength': count_new_lines,
+                                      'originalStart': current_old_start, 'originalLength': count_old_lines})
+                else:
+                    hunks_changes.append({'modifiedStart': current_new_start, 'modifiedLength': count_new_lines,
                                       'originalStart': current_old_start, 'originalLength': count_old_lines})
                 current_new_start = current_new_start + count_new_lines
                 current_old_start = current_old_start + count_old_lines
@@ -782,7 +786,11 @@ def get_lines(hunk):
         del_line += 1
         add_line += 1
 
-    hunks_changes.append({'modifiedStart': current_new_start, 'modifiedLength': count_new_lines,
+    if count_new_lines != 0:
+        hunks_changes.append({'modifiedStart': current_new_start - 1, 'modifiedLength': count_new_lines,
+                              'originalStart': current_old_start, 'originalLength': count_old_lines})
+    else:
+        hunks_changes.append({'modifiedStart': current_new_start, 'modifiedLength': count_new_lines,
                           'originalStart': current_old_start, 'originalLength': count_old_lines})
 
     return added_lines, deleted_lines, hunks_changes
@@ -810,7 +818,7 @@ def get_file_lines(file, hunks):
     view_lines = {}
 
     for hunk in hunks:
-        al, dl = get_lines(hunk)
+        al, dl, hunk_changes = get_lines(hunk)
         added_lines.update(al)
         deleted_lines.update(dl)
 
@@ -901,5 +909,5 @@ def get_change_view(file, hunks):
             i += 1
             idx_new += 1
             idx_old += 1
-
+            
     return view_lines, has_changed, lines_before, lines_after, hunks_changes
