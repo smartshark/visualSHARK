@@ -739,25 +739,31 @@ TICKET_TYPE_MAPPING = {'bug': 'bug',
 def get_lines(hunk):
     added_lines = {}
     deleted_lines = {}
-<<<<<<< HEAD
     hunks_changes = []
-=======
->>>>>>> d622ac4... Revert "Bug fixing for context lines "
-
     del_line = hunk.old_start
     add_line = hunk.new_start
 
     h = normalize_line_endings(hunk.content)
     i = 0
+
+    content_started = False
+    current_old_start = hunk.old_start
+    count_old_lines = 0
+    current_new_start = hunk.new_start
+    count_new_lines = 0
+
     for line in h.split('\n'):
+
         tmp = line[1:]
         if line.startswith('+'):
+            content_started = True
             added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             del_line -= 1
-        if line.startswith('-'):
+            count_new_lines += 1
+        elif line.startswith('-'):
+            content_started = True
             deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             add_line -= 1
-<<<<<<< HEAD
             count_old_lines += 1
         else:
             # musst be context line
@@ -771,14 +777,15 @@ def get_lines(hunk):
             else:
                 current_old_start += 1
                 current_new_start += 1
-=======
->>>>>>> d622ac4... Revert "Bug fixing for context lines "
-        i += 1
 
+        i += 1
         del_line += 1
         add_line += 1
 
-    return added_lines, deleted_lines
+    hunks_changes.append({'modifiedStart': current_new_start, 'modifiedLength': count_new_lines,
+                          'originalStart': current_old_start, 'originalLength': count_old_lines})
+
+    return added_lines, deleted_lines, hunks_changes
 
 
 def normalize_line_endings(line):
@@ -859,22 +866,8 @@ def get_change_view(file, hunks):
     deleted_lines = {}
 
     for hunk in hunks:
-<<<<<<< HEAD
-<<<<<<< HEAD
         al, dl, hunk_changes = get_lines(hunk)
         hunks_changes = hunks_changes + hunk_changes
-=======
-=======
->>>>>>> d622ac4... Revert "Bug fixing for context lines "
-        old_start = hunk.old_start
-        if hunk.old_lines > 0:
-            old_start = hunk.old_start - 1
-        hunks_changes.append({'modifiedStart': hunk.new_start - 1, 'modifiedLength': hunk.new_lines, 'originalLength': hunk.old_lines, 'originalStart': old_start})
-        al, dl = get_lines(hunk)
-<<<<<<< HEAD
->>>>>>> 85e533f... change old hunkstart3
-=======
->>>>>>> d622ac4... Revert "Bug fixing for context lines "
         added_lines.update(al)
         deleted_lines.update(dl)
 
