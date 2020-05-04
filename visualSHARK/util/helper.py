@@ -734,12 +734,11 @@ TICKET_TYPE_MAPPING = {'bug': 'bug',
                        'dependency upgrade': 'other'}
 
 
-
 def get_lines(hunk):
     added_lines = {}
     deleted_lines = {}
     hunks_changes = []
-    
+
     del_line = hunk.old_start
     add_line = hunk.new_start
 
@@ -753,20 +752,16 @@ def get_lines(hunk):
     count_new_lines = 0
 
     for line in h.split('\n'):
-        
         tmp = line[1:]
-        
         if line.startswith('+'):
             content_started = True
             added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             del_line -= 1
-            i += 1
             count_new_lines += 1
         elif line.startswith('-'):
             content_started = True
             deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
             add_line -= 1
-            i += 1
             count_old_lines += 1
         else:
             # musst be context line
@@ -780,8 +775,7 @@ def get_lines(hunk):
             else:
                 current_old_start += 1
                 current_new_start += 1
-
-        
+        i += 1
         del_line += 1
         add_line += 1
 
@@ -816,7 +810,7 @@ def get_file_lines(file, hunks):
         al, dl, hunk_changes = get_lines(hunk)
         added_lines.update(al)
         deleted_lines.update(dl)
-    
+
     idx_old = idx_new = 1
     i = 0
     for l in file:
@@ -856,7 +850,7 @@ def get_file_lines(file, hunks):
 
             idx_new += 1
             idx_old += 1
-    
+
     return lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines
 
 

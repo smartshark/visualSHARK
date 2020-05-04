@@ -11,9 +11,26 @@
       <i class="fa fa-info"></i> Control
     </div>
     <div class="card-block">
+      <!--<div v-if="isSuperuser">
+        <input type="text" v-model="external_id"/> <button v-on:click="loadIssue" class="btn btn-primary">Load issue</button>
+      </div>-->
       <div class="submitLine">
         <button v-if="result.length == 0" v-on:click="submit" class="btn btn-primary">Submit Labels</button>
         <button v-else v-on:click="load" class="btn btn-primary">Load next issue</button>
+      </div>
+      <div v-if="result.length > 0">
+        Submitted and validated changes:
+        <div v-for="change in result">
+          <div v-for="(item, key, index) in change">
+            <strong>FileChange: {{key}}</strong><br/>
+            <div v-for="(item2, key2, index2) in item">
+              <strong>Hunk: {{key2}}</strong><br/>
+              <div v-for="l in item2">
+                {{l}}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -24,20 +41,6 @@
       </div>
       <div class="card-block">
         <pre class="force-wrap">{{issue.desc}}</pre>
-        <div v-if="result.length > 0">
-          Submitted and validated changes:
-          <div v-for="change in result">
-            <div v-for="(item, key, index) in change">
-              <strong>FileChange: {{key}}</strong><br/>
-              <div v-for="(item2, key2, index2) in item">
-                <strong>Hunk: {{key2}}</strong><br/>
-                <div v-for="l in item2">
-                  {{l}}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
@@ -84,6 +87,7 @@ export default {
     modal
   },
   computed: mapGetters({
+    isSuperuser: 'isSuperuser',
     currentProject: 'currentProject',
     projectsVcs: 'projectsVcs',
     projectsIts: 'projectsIts'
@@ -160,7 +164,7 @@ export default {
 
       if(isComplete === true) {
         this.$store.dispatch('pushLoading')
-        rest.saveChangedLines({data: {labels: result, issue_id: this.issue.id}})
+        rest.saveChangedLines({data: {labels: result, issue_id: this.issue.id}, type: 'combined'})
           .then(response => {
             this.isLoading = false
             this.$store.dispatch('popLoading')
