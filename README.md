@@ -98,7 +98,7 @@ npm install
 
 # install patch-package and apply patches for MonacoEditor
 npm install patch-package
-npx patch-pacakge
+npx patch-package
 
 # change local production settings, endpoints for RabbitMQ (websocket) and visualSHARK backend
 cp env.production.local .env.production.local
