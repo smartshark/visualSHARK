@@ -739,10 +739,7 @@ TICKET_TYPE_MAPPING = {'bug': 'bug',
 def get_lines(hunk):
     added_lines = {}
     deleted_lines = {}
-<<<<<<< HEAD
     hunks_changes = []
-=======
->>>>>>> a586e04... change hunkstart
 
     del_line = hunk.old_start
     add_line = hunk.new_start
@@ -757,10 +754,6 @@ def get_lines(hunk):
     count_new_lines = 0
 
     for line in h.split('\n'):
-<<<<<<< HEAD
-=======
-
->>>>>>> a586e04... change hunkstart
         tmp = line[1:]
         if line.startswith('+'):
             content_started = True
@@ -785,7 +778,6 @@ def get_lines(hunk):
                 current_old_start += 1
                 current_new_start += 1
         i += 1
-<<<<<<< HEAD
         del_line += 1
         add_line += 1
 
@@ -793,13 +785,6 @@ def get_lines(hunk):
                           'originalStart': current_old_start, 'originalLength': count_old_lines})
 
     return added_lines, deleted_lines, hunks_changes
-=======
-
-        del_line += 1
-        add_line += 1
-
-    return added_lines, deleted_lines
->>>>>>> a586e04... change hunkstart
 
 
 def normalize_line_endings(line):
@@ -916,8 +901,4 @@ def get_change_view(file, hunks):
             idx_new += 1
             idx_old += 1
 
-<<<<<<< HEAD
     return view_lines, has_changed, lines_before, lines_after, hunks_changes
-=======
-    return view_lines, has_changed, lines_before, lines_after, hunks_changes
->>>>>>> a586e04... change hunkstart
