@@ -33,7 +33,6 @@ export default {
       return this.show
     },
     optionalWidth () {
-      console.log(this.width)
       if (this.width === null) {
         return null
       } else if (Number.isInteger(this.width)) {
@@ -52,14 +51,14 @@ export default {
 <style>
 .modal-mask {
   position: fixed;
-  z-index: 9998;
   top: 0;
+  bottom: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, .5);
-  display: table;
-  transition: opacity .3s ease;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .modal-enter, .modal-leave {
@@ -73,11 +72,33 @@ export default {
 }
 
 .modal-dialog {
-  margin-top: 60px;
-  max-width: none;
-  max-height: 100%;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  max-height: 90%;
+    background: #FFFFFF;
+    box-shadow: 2px 2px 20px 1px;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
 }
+
+.modal-header,
+.modal-footer {
+  padding: 15px;
+  display: flex;
+}
+
+.modal-header {
+  border-bottom: 1px solid #eeeeee;
+  color: #4AAE9B;
+  justify-content: space-between;
+}
+
+.modal-footer {
+  border-top: 1px solid #eeeeee;
+  justify-content: flex-end;
+}
+
+.modal-body {
+  position: relative;
+  padding: 20px 10px;
+}
+
 </style>

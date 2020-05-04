@@ -217,6 +217,21 @@
             </div>
         </div>
     </div>
+    <modal :show="welcomeModal" @ok="welcomeModal = false" @close="welcomeModal = false">
+      <div slot="title">
+        Welcome to visualSHARK
+      </div>
+      <div slot="modal-body" class="modal-body">
+        This is an overview over all project which are currently in our database.
+        Not all of them are part of the labeling experiment due to no manually confirmed issue types und commit->issue links.<br/>
+        <br/>
+        Every project that is available for the labeling experiment is shown in the right menus drop-down field.
+        After closing this dialog you can select the project that you want to label in the dropdown on the right and then click on Changed Lines in the left menu. That takes you directly to the labeling and the issue/commits are then sampled from your selected project.
+      </div>
+      <div slot="modal-footer" class="modal-footer">
+        <input type="checkbox"/>Do not show this dialog again
+      </div>
+    </modal>
   </div>
 </template>
 
@@ -226,8 +241,18 @@ import moment from 'moment'
 
 import Chart from 'chart.js'
 
+import modal from '@/components/Modal'
+
 export default {
   name: 'dashboard',
+  data () {
+    return {
+      welcomeModal: true
+    }
+  },
+  components: {
+    modal
+  },
   computed: mapGetters({
     dashboardStats: 'dashboardStats',
     dashboardStatsHistory: 'dashboardStatsHistory',

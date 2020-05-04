@@ -20,11 +20,11 @@
         <li class="nav-item" v-if="permissions.includes('view_people')">
           <router-link :to="'/people'" class="nav-link"><i class="fa fa-group"></i> People</router-link>
         </li>
-        <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/labeling'}" disabled>
-          <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-code"></i> Labeling</div>
+        <router-link tag="li" class="nav-item nav-dropdown open" :to="{ path: '/labeling'}" disabled>
+          <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-tags"></i> Manual Labels</div>
             <ul class="nav-dropdown-items">
               <li class="nav-item" v-if="permissions.includes('view_issue_labels')">
-                <router-link :to="'/labeling/issuetype'" class="nav-link"><i class="fa fa-code"></i> Issue Type Labeling</router-link>
+                <router-link :to="'/labeling/issuetype'" class="nav-link"><i class="fa fa-bug"></i> Issue Types</router-link>
               </li>
               <li class="nav-item" v-if="permissions.includes('view_issue_conflicts')">
                 <router-link :to="'/labeling/issuetypeconflicts'" class="nav-link"><i class="fa fa-check"></i> Issue Type Conflicts</router-link>
@@ -80,6 +80,9 @@
             </li>
           </ul>
         </router-link>
+        <li class="nav-item">
+          <router-link :to="'/help'" class="nav-link"><i class="fa fa-question"></i> Help</router-link>
+        </li>
       </ul>
     </nav>
   </div>

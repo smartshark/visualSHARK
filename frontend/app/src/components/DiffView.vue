@@ -12,18 +12,22 @@
 
 
       <div class="card-actions2">
-        <div class="inline btn-group">
-          <button v-on:click="showCode = !showCode" class="btn btn-secondary">toggle code</button>
+        <div class="switch-group">
+          Show code
+          <label class="w3c-switch">
+            <input type="checkbox" v-model="showCode">
+            <span class="w3c-slider"></span>
+          </label>
         </div>
-        <div class="inline btn-group">
+        <div class="dl-group">
           <button v-if="!isComplete" v-on:click="scrollToNext()" class="btn btn-secondary">next change</button>
         </div>
-        <div class="inline btn-group">
+        <div class="dl-group">
         <dropdown class="inline" v-model="showDropdown">
           <span slot="button">
             label file as
           </span>
-          <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
+          <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right dl-dropdown">
               <div class="input-group">
                 <input type="checkbox" v-model="isTest" class="checkbox-dropdown">
                 <div class="checkbox-label">test</div>
@@ -43,11 +47,21 @@
     </div>
     <transition name="flip">
     <div class="card-block" v-show="showCode">
+      Change {{numberSelected}} to <select class="labelType" v-model="selected" @change="changeLinks()">
+        <option name="label" value="label">label</option>
+        <option name="test" value="test">test</option>
+        <option name="whitespace" value="whitespace">whitespace</option>
+        <option name="documentation" value="documentation">documentation</option>
+        <option name="refactoring" value="refactoring">refactoring</option>
+        <option name="unrelated" value="unrelated">unrelated</option>
+        <option name="bug" value="bug">bug</option>
+      </select>
       <div class="diffEditor">
-        <div class="lineLabels">
-          <div class="lineno" v-for="line in lines" v-bind:class="{'selectedModel': selectedModels.includes(line.number)}" @click.left.shift.exact.prevent="selectModel(line.number, $event)">
+        <div class="lineLabels noselect">
+            <div class="lineno" v-for="line in lines">
             <template v-if="line.new == '-'">
-              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)" @mousedown.left.shift.exact.prevent>
+              <input type="checkbox" v-model="selectedModels[line.number]" :name="'checkbox' + line.number" @change="selectOne($event)"/>
+              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)">
                 <option name="label" value="label">label</option>
                 <option name="test" value="test">test</option>
                 <option name="whitespace" value="whitespace">whitespace</option>
@@ -58,7 +72,8 @@
               </select>
             </template>
             <template v-if="line.old == '-'">
-              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)" @mousedown.left.shift.exact.prevent>
+              <input type="checkbox" v-model="selectedModels[line.number]" :name="'checkbox' + line.number" @change="selectOne($event)"/>
+              <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)">
                 <option name="label" value="label">label</option>
                 <option name="test" value="test">test</option>
                 <option name="whitespace" value="whitespace">whitespace</option>
@@ -70,17 +85,17 @@
             </template>
           </div>
         </div>
-        <div class="linesOld">
+        <div class="linesOld noselect">
           <div class="lineno" v-for="line in lines">
             {{line.old}}
           </div>
         </div>
-        <div class="linesNew">
+        <div class="linesNew noselect">
           <div class="lineno" v-for="line in lines">
             {{line.new}}
           </div>
         </div>
-        <pre class="code" v-html="markedBlock"></pre>
+        <pre :id="commit + '_' + filename" class="code" v-html="markedBlock" @mouseup="setSelected" spellcheck="false" contenteditable="true" oncut="return false" onpaste="return false" @keydown="codeKey($event)"></pre>
       </div>
     </div>
     </transition>
@@ -104,14 +119,17 @@ export default {
   data () {
     return {
       markedBlock: '',
+      plainText: '',
+      selected: 'label',
       models: {},
+      selectedModels: {},
       isComplete: false,
       isDocumentation: false,
       isTest: false,
       isUnrelated: false,
       showCode: true,
       showDropdown: false,
-      selectedModels: []
+      numberSelected: 0
     }
   },
   components: {
@@ -127,6 +145,8 @@ export default {
     hljs.registerLanguage('xml', xml)
     this.refreshCode()
     this.initializeModel()
+
+    window.addEventListener('keypress', this.globalShortcut);
   },
   watch: {
     lines: function(oldValue, newValue) {
@@ -161,7 +181,113 @@ export default {
       this.showDropdown = false
     }
   },
+  destroyed() {
+    window.removeEventListener('keypress', this.globalShortcut);
+  },
   methods: {
+    globalShortcut(event) {
+      let label = 'label'
+      if(event.keyCode == 49) {
+        label = 'bug'
+      }
+      else if(event.keyCode == 50) {
+        label = 'whitespace'
+      }
+      else if(event.keyCode == 51) {
+        label = 'documentation'
+      }
+      else if(event.keyCode == 52) {
+        label = 'refactoring'
+      }
+      else if(event.keyCode == 53) {
+        label = 'test'
+      }
+      else if(event.keyCode == 54) {
+        label = 'unrelated'
+      }
+      else if(event.keyCode == 55) {
+        label = 'label'
+      }
+
+      // set selected models to label
+      for(let m in this.selectedModels) {
+        if(this.selectedModels[m] == true) {
+          this.models[m] = label
+          this.selectedModels[m] = false
+        }
+      }
+
+      this.countSelected()
+      this.checkComplete()
+    },
+    codeKey(event) {
+      const arrowKeys = [37,38,39,40]
+      const labelKeys = [49,50,51,52,53,54,55]
+      if(!arrowKeys.includes(event.keyCode)) {
+        event.preventDefault()
+      }
+
+      if(event.keyCode == 87) {
+        let codeElement = document.getElementById(this.commit + '_' + this.filename)
+
+        let number = this.scrollToNext()
+        let el = codeElement.querySelector("[data-line='" + number + "']")
+
+        // it is null if we have no next element
+        if(el !== null) {
+          // this sets the caret position
+          let sel = window.getSelection();
+          let range = document.createRange();
+          range.setStart(el, 0);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+
+      // get line if we are a labelKey (basically the same as the text selection)
+      if(window.getSelection().focusNode === null && labelKeys.includes(event.keyCode)) {
+        this.globalShortcut(event)
+        return
+      }
+      // this case is only used for caret position
+      let line = -1
+      if(labelKeys.includes(event.keyCode)) {
+        let pn = window.getSelection().getRangeAt(0).commonAncestorContainer
+        if(pn.className == 'line-number-line') {
+          line = pn.dataset.line
+        }
+        else if(pn.parentNode.className == "code") {
+          line = pn.previousElementSibling.dataset.line
+        }else {
+          line = pn.parentNode.closest("span.line-number-line").dataset.line
+        }
+      }
+
+      if(event.keyCode == 49) {
+        this.models[line] = 'bug'
+      }
+      if(event.keyCode == 50) {
+        this.models[line] = 'whitespace'
+      }
+      if(event.keyCode == 51) {
+        this.models[line] = 'documentation'
+      }
+      if(event.keyCode == 52) {
+        this.models[line] = 'refactoring'
+      }
+      if(event.keyCode == 53) {
+        this.models[line] = 'test'
+      }
+      if(event.keyCode == 54) {
+        this.models[line] = 'unrelated'
+      }
+      if(event.keyCode == 55) {
+        this.models[line] = 'label'
+      }
+
+      this.checkComplete()
+    },
     setAllModels(label) {
       for(let el in this.models) {
         this.$set(this.models, el, label)
@@ -179,21 +305,65 @@ export default {
         if(this.models[el] === 'label') {
           let k = this.commit + '_' + this.filename + '_' + el
           document.getElementById(k).scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'})
-          console.log('page offsets', window.pageXOffset, window.pageYOffset)
-          break
+          //console.log('page offsets', window.pageXOffset, window.pageYOffset)
+          return el
         }
       }
+    },
+    selectOne(event) {
+      this.countSelected()
+    },
+    countSelected() {
+      let tmp = 0
+      for(let idx in this.selectedModels) {
+        if(this.selectedModels[idx] === true) {
+          tmp += 1
+        }
+      }
+      this.numberSelected = tmp
+    },
+    setSelected() {
+      let sel = window.getSelection();
+      //console.log('sel nodes', sel.anchorNode, sel.focusNode)
+
+      let ap = sel.anchorNode.parentNode.closest("span.line-number-line")
+      let fp = sel.focusNode.parentNode.closest("span.line-number-line")
+      if(ap === null || sel.anchorNode.parentNode.className == 'code') {
+        ap = sel.anchorNode.previousElementSibling
+      }
+      if(fp === null || sel.focusNode.parentNode.className == 'code') {
+        fp = sel.focusNode.previousElementSibling
+      }
+      let start = parseInt(ap.dataset.line)
+      let end = parseInt(fp.dataset.line)
+
+      let tmp = start
+      if(end > start) {
+      }
+      else if(end < start) {
+        start = end
+        end = tmp
+      }else {
+        return
+      }
+
+      sel.removeAllRanges()
+
+      for(let m in this.selectedModels) {
+        if(start <= parseInt(m) && parseInt(m) <= end) {
+          this.selectedModels[m] = !this.selectedModels[m]
+        }
+      }
+      
+      this.countSelected()
     },
     initializeModel() {
       for(let line of this.lines) {
         // if new == - we are on a line only existing on old
-        if(line.new == '-') {
+        if(line.new == '-' || line.old == '-') {
           // see: https://vuejs.org/v2/guide/reactivity.html
           this.$set(this.models, line.number, 'label')
-          //this.models[this.lines[lineno].old] = 'label'
-        }
-        if(line.old == '-') {
-          this.$set(this.models, line.number, 'label')
+          this.$set(this.selectedModels, line.number, false)
         }
       }
     },
@@ -201,14 +371,22 @@ export default {
       let marked = []
       let state = null
       for(let line of this.lines) {
-        let po = hljs.highlight(lang, line.code, true, state)
-        state = po.top
+        let value = line.code
+        if(lang != "plain") {
+          let po = hljs.highlight(lang, line.code, true, state)
+          state = po.top
+          value = po.value
+        }
+
+        if(value == "") {
+          value = '&nbsp;'
+        }
         if(line.new == '-') {
-          marked.push('<div class="removedCode">' + po.value + '</div>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="removedCode">' + value + '</div></span>')
         }else if(line.old == '-') {
-          marked.push('<div class="addedCode">' + po.value + '</div>')
+          marked.push('<span data-line="' + line.number + '" class="line-number-line"><div class="addedCode">' + value + '</div></span>')
         }else{
-          marked.push(po.value)
+          marked.push('<span data-line="' + line.number + '" class="line-number-line">' + value + '</span>')
         }
       }
       return marked
@@ -219,7 +397,7 @@ export default {
       // solution when syntax highlighting breaks
       // keep state https://github.com/highlightjs/highlight.js/issues/424
       let marked = []
-
+      let plain = []
       if(this.filename.toLowerCase().endsWith('.java')) {
         marked = this.loadSyntax('java')
       }else if(this.filename.toLowerCase().endsWith('.xml')) {
@@ -227,29 +405,28 @@ export default {
       }else if(this.filename.toLowerCase().endsWith('.html')) {
         marked = this.loadSyntax('xml')
       }else {
-        for(let line of this.lines) {
-          if(line.new == '-') {
-            marked.push('<div class="removedCode">' + line.code + '</div>')
-          }else if(line.old == '-') {
-            marked.push('<div class="addedCode">' + line.code + '</div>')
-          }else{
-            marked.push(line.code)
-          }
-        }
+        marked = this.loadSyntax('plain')
+      }
+      for(let line of this.lines) {
+        plain.push(line.code)
       }
       this.markedBlock = marked.join('\n')
+      this.plainText = plain.join('\n')
+    },
+    changeLinks() {
+      for(let idx in this.selectedModels) {
+        if(this.selectedModels[idx] == true) {
+          this.models[idx] = this.selected
+          this.selectedModels[idx] = false
+        }
+      }
+      this.selected = 'label'
+
+      // check completeness
+      this.checkComplete()
+      this.countSelected()
     },
     changeLabel(modelIdx) {
-      // check if we are linked, if we are changing all linked labels
-      if(this.selectedModels.includes(modelIdx)) {
-        for(let m of this.selectedModels) {
-          this.models[m] = this.models[modelIdx]
-        }
-
-        // reset linking
-        this.selectedModels = []
-      }
-
       // check completeness
       this.checkComplete()
     },
@@ -265,16 +442,6 @@ export default {
       if(this.isComplete === true) {
         this.showCode = false
       }
-    },
-    selectModel(modelIdx, event) {
-      if(typeof this.models[modelIdx] === 'undefined') {
-        return
-      }
-      if(this.selectedModels.includes(modelIdx)) {
-        this.selectedModels.splice(this.selectedModels.indexOf(modelIdx), 1)
-      }else {
-        this.selectedModels.push(modelIdx)
-      }
     }
   }
 }
@@ -282,6 +449,10 @@ export default {
 
 <style>
 @import '~highlight.js/styles/github-gist.css';
+
+.noselect {
+  user-select: none;
+}
 
 .diff-card {
   margin-bottom: 0rem;
@@ -294,7 +465,6 @@ export default {
   position: absolute;
   top: 0;
   right: 0;
-  margin-top: 12px;
 }
 
 .btn-default {
@@ -351,11 +521,15 @@ pre {
   background-color: rgba(0,255,0,0.2);
 }
 .code {
+  width: 100%;
   padding-top: 5px;
   line-height: 22px;
   margin-left: 10px;
   overflow: unset !important;
   white-space: pre !important;
+}
+.code:focus {
+    outline: none;
 }
 .lineno {
   min-height: 22px;
@@ -391,5 +565,90 @@ pre {
   padding: 0px;
   max-width: 50px;
   scroll-margin: 20px;
+}
+/* The switch - the box around the slider */
+.w3c-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  margin-left: 5px;
+}
+
+/* Hide default HTML checkbox */
+.w3c-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.w3c-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.w3c-slider:before {
+  position: absolute;
+  content: "";
+  height: 15px;
+  width: 15px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .w3c-slider {
+  background-color: #2196F3;
+}
+
+input:focus + .w3c-slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .w3c-slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.w3c-slider.round {
+  border-radius: 30px;
+}
+
+.w3c-slider.round:before {
+  border-radius: 50%;
+}
+
+.switch-group {
+  float: left;
+  height: 35px;
+  margin-top: 5px;
+  margin-bottom: 0px;
+  background-color: white;
+  margin-right: 5px;
+  padding: 5px;
+  padding-right: 8px;
+  padding-top: 6px;
+  border: 1px solid #ccc;
+}
+
+.dl-group {
+  float: left;
+  margin-top: 13px;
+  margin-right: 5px;
+}
+
+.dl-dropdown {
+  padding-left: 5px;
 }
 </style>

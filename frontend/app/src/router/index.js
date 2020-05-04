@@ -35,6 +35,8 @@ import System from '@/views/System'
 import Jobs from '@/views/Jobs'
 import SystemInfo from '@/views/SystemInfo'
 
+import Help from '@/views/Help'
+
 // import FileChanges from '@/views/FileChanges'
 
 Vue.use(Router)
@@ -216,6 +218,11 @@ const router = new Router({
               props: true
             }
           ]
+        },
+        {
+          path: 'help',
+          name: 'Help',
+          component: Help
         }
       ]
     },
