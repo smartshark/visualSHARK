@@ -145,6 +145,8 @@ export default {
     hljs.registerLanguage('xml', xml)
     this.refreshCode()
     this.initializeModel()
+
+    window.addEventListener('keypress', this.globalShortcut);
   },
   watch: {
     lines: function(oldValue, newValue) {
@@ -179,7 +181,45 @@ export default {
       this.showDropdown = false
     }
   },
+  destroyed() {
+    window.removeEventListener('keypress', this.globalShortcut);
+  },
   methods: {
+    globalShortcut(event) {
+      let label = 'label'
+      if(event.keyCode == 49) {
+        label = 'bug'
+      }
+      else if(event.keyCode == 50) {
+        label = 'whitespace'
+      }
+      else if(event.keyCode == 51) {
+        label = 'documentation'
+      }
+      else if(event.keyCode == 52) {
+        label = 'refactoring'
+      }
+      else if(event.keyCode == 53) {
+        label = 'test'
+      }
+      else if(event.keyCode == 54) {
+        label = 'unrelated'
+      }
+      else if(event.keyCode == 55) {
+        label = 'label'
+      }
+
+      // set selected models to label
+      for(let m in this.selectedModels) {
+        if(this.selectedModels[m] == true) {
+          this.models[m] = label
+          this.selectedModels[m] = false
+        }
+      }
+
+      this.countSelected()
+      this.checkComplete()
+    },
     codeKey(event) {
       const arrowKeys = [37,38,39,40]
       const labelKeys = [49,50,51,52,53,54,55]
@@ -206,6 +246,11 @@ export default {
       }
 
       // get line if we are a labelKey (basically the same as the text selection)
+      if(window.getSelection().focusNode === null && labelKeys.includes(event.keyCode)) {
+        this.globalShortcut(event)
+        return
+      }
+      // this case is only used for caret position
       let line = -1
       if(labelKeys.includes(event.keyCode)) {
         let pn = window.getSelection().getRangeAt(0).commonAncestorContainer
