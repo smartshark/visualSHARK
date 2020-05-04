@@ -126,7 +126,7 @@ class Label(object):
         rows = len(prevs) + 1
         cols = len(currs) + 1
         matrix = np.zeros((rows, cols))
-        
+
         matrix[0] = range(cols)
         matrix[:, 0] = range(rows)
 
@@ -140,7 +140,7 @@ class Label(object):
                 # if char is the same use character use previous diagonal element because nothing has changed
                 if prev == curr:
                     matrix[row, col] = matrix[row - 1, col - 1]
-                
+
                 # else use minval of upper, leftmost and previous diagonal element + 1
                 else:
                     # but we do not necessarily know which one
@@ -151,6 +151,7 @@ class Label(object):
                     matrix[row, col] = minval
         # print(matrix)
         return matrix[rows - 1, cols - 1]
+
     def _get_commit_utc(self, commit):
 
         # add/subtract offset to get utc
@@ -243,7 +244,7 @@ class Label(object):
                 #         defect_ids.append(issue_id)
 
             # issue does not exist in our Database, still it is a candidate
-            except Issue.DoesNotExist as e:
+            except Issue.DoesNotExist:
                 tmp = {'issue_id': None, 'issue': issue_id, 'exists': False, 'type': None, 'status': None, 'resolution': None, 'created_at': None, 'updated_at': None, 'confidence': 0, 'confidence_reasons': []}
                 tmp['confidence'] -= 1
                 tmp['confidence_reasons'].append({'score': -1, 'reason': 'No issue with this ID.'})
@@ -708,6 +709,7 @@ class OntdekBaan2(object):
                         path.append(node)
         return new_start, paths
 
+
 TICKET_TYPE_MAPPING = {'bug': 'bug',
                        'new feature': 'improvement',
                        'new jira project': 'other',
@@ -737,7 +739,10 @@ TICKET_TYPE_MAPPING = {'bug': 'bug',
 def get_lines(hunk):
     added_lines = {}
     deleted_lines = {}
+<<<<<<< HEAD
     hunks_changes = []
+=======
+>>>>>>> a586e04... change hunkstart
 
     del_line = hunk.old_start
     add_line = hunk.new_start
@@ -752,6 +757,10 @@ def get_lines(hunk):
     count_new_lines = 0
 
     for line in h.split('\n'):
+<<<<<<< HEAD
+=======
+
+>>>>>>> a586e04... change hunkstart
         tmp = line[1:]
         if line.startswith('+'):
             content_started = True
@@ -776,6 +785,7 @@ def get_lines(hunk):
                 current_old_start += 1
                 current_new_start += 1
         i += 1
+<<<<<<< HEAD
         del_line += 1
         add_line += 1
 
@@ -783,6 +793,13 @@ def get_lines(hunk):
                           'originalStart': current_old_start, 'originalLength': count_old_lines})
 
     return added_lines, deleted_lines, hunks_changes
+=======
+
+        del_line += 1
+        add_line += 1
+
+    return added_lines, deleted_lines
+>>>>>>> a586e04... change hunkstart
 
 
 def normalize_line_endings(line):
@@ -899,4 +916,8 @@ def get_change_view(file, hunks):
             idx_new += 1
             idx_old += 1
 
+<<<<<<< HEAD
     return view_lines, has_changed, lines_before, lines_after, hunks_changes
+=======
+    return view_lines, has_changed, lines_before, lines_after, hunks_changes
+>>>>>>> a586e04... change hunkstart
