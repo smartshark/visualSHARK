@@ -779,9 +779,9 @@ def get_lines(hunk):
                 count_new_lines = 0
                 count_old_lines = 0
                 content_started = False
-            else:
-                current_old_start += 1
-                current_new_start += 1
+
+            current_old_start += 1
+            current_new_start += 1
 
         i += 1
         del_line += 1
