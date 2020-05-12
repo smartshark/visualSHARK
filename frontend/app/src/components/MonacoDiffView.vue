@@ -335,7 +335,6 @@ export default {
                      for(var i = range.startLineNumber; i <= range.endLineNumber; i++)
                     {
                         that.markLineInEditorLeft(i,className,editor,ed);
-                        that.markLineInEditorRight(i,className,editor,editor.getEditor().getModifiedEditor());
                     }
                     return null;
                 }
@@ -355,7 +354,6 @@ export default {
                     for(var i = range.startLineNumber; i <= range.endLineNumber; i++)
                     {
                         that.markLineInEditorRight(i,className,editor,ed);
-                        that.markLineInEditorLeft(i,className,editor,editor.getEditor().getOriginalEditor());
                     }
                     return null;
                 }
