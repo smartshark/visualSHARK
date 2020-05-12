@@ -25,11 +25,11 @@
               <i class="fa fa-tag"></i> Labels
             </div>
             <div class="card-block">
-                <div class="label"><span class="dot" style="background-color: #84142d;">1</span>bug fix</div>
+                <div class="label"><span class="dot" style="background-color: #FF0000;">1</span>bug fix</div>
                 <div class="label"><span class="dot">2</span>whitespace</div>
                 <div class="label"><span class="dot" style="background-color: #442727;">3</span>documentation</div>
                 <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
-                <div class="label"><span class="dot" style="background-color: #2b580c;">5</span>test</div>
+                <div class="label"><span class="dot" style="background-color: #00FF00;">5</span>test</div>
                 <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
                 <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
                 <div>Press the key of the color to label the current line with the belonging label, press 7 to remove the label</div>
@@ -288,7 +288,7 @@ margin-right: 10px;
 }
 
 .bugfix {
-	background: #84142d;
+	background: #FF0000;
 	width: 5px !important;
 	margin-left: 3px;
 }
@@ -303,7 +303,7 @@ margin-right: 10px;
 	margin-left: 3px;
 }
 .test {
-  background-color: #2b580c;
+  background-color: #00FF00;
 	width: 5px !important;
 	margin-left: 3px;
 }

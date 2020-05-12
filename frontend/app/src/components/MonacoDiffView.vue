@@ -4,11 +4,11 @@
  <div style="margin-bottom: 5px;">
             {{ file.filename }}</div>
             <div>
-                  <div class="label"><span class="dot" style="background-color: #84142d;">1</span>bug fix</div>
+                  <div class="label"><span class="dot" style="background-color: #FF0000;">1</span>bug fix</div>
                 <div class="label"><span class="dot">2</span>whitespace</div>
                 <div class="label"><span class="dot" style="background-color: #442727;">3</span>documentation</div>
                 <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
-                <div class="label"><span class="dot" style="background-color: #2b580c;">5</span>test</div>
+                <div class="label"><span class="dot" style="background-color: #00FF00;">5</span>test</div>
                 <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
                 <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
                 <br/>
@@ -19,7 +19,7 @@
   <div style="margin-right: 5px;">Mark file as</div>
      <button class="btn btn-primary" v-on:click="labelWhitespace()" style="background-color:#bbb;">whitespace</button>
      <button class="btn btn-primary" v-on:click="labelDocumentation()" style="background-color:#442727;">documentation</button>
-     <button class="btn btn-primary" v-on:click="labelTest()" style="background-color:#2b580c;">test</button>
+     <button class="btn btn-primary" v-on:click="labelTest()" style="background-color:#00FF00;">test</button>
      <button class="btn btn-primary" v-on:click="labelUnrelated()" style="background-color:#ffbd69;">unrelated</button>
 
 
