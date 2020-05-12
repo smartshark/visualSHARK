@@ -1196,7 +1196,7 @@ class LineLabelSet(APIView):
                 break
 
         # overwrite sampling
-        issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
+        #issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
         return issue
 
     def _commit_data(self, issue, project_path):
@@ -1205,7 +1205,7 @@ class LineLabelSet(APIView):
         folder = tempfile.mkdtemp()
         git.repo.base.Repo.clone_from(project_path + "/", folder)
 
-        for commit in Commit.objects.filter(linked_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
+        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
             repo = git.Repo(folder)
             repo.git.reset('--hard', commit.revision_hash)
 
