@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 from mongoengine import connect
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch, Hunk
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch, Hunk, Refactoring
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
@@ -56,6 +56,7 @@ if not settings.TESTING:
     MynbouData._meta = remove_index(MynbouData)
     Branch._meta = remove_index(Branch)
     Hunk._meta = remove_index(Hunk)
+    Refactoring._meta = remove_index(Refactoring)
 
 
 if settings.TESTING:
