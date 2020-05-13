@@ -43,8 +43,7 @@
             <div class="row">
 <label class="col-sm-2">Issue title</label>
 
-<div class="col-sm-10">
-            <a href="#">{{ issue.title }}</a>
+<div class="col-sm-10">{{ issue.title }}
             </div>
             </div>
 
