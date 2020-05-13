@@ -235,7 +235,7 @@ export default {
              console.log(this.error);
              if(correct.length > 0)
              {
-                window.alert("Some labels are missing");
+                window.alert("Not all lines are labelled. You can find links to the locations you missed at the top of the page and the files.");
                 return;
              }
              // else collect data for transmit
