@@ -249,8 +249,8 @@ export default {
             var result = {labels : data, issue_id: this.issue.id}
             rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
             .then(response => {
-                this.$store.dispatch('popLoading')
-
+                this.$store.dispatch('popLoading');
+                window.location.replace(window.location.pathname + window.location.search + window.location.hash);
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)
