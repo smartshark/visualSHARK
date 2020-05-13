@@ -249,7 +249,7 @@ export default {
             rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
             .then(response => {
                 this.$store.dispatch('popLoading');
-                window.location.replace(window.location.pathname + window.location.search + window.location.hash);
+                window.location.reload(false);
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)
