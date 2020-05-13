@@ -78,6 +78,15 @@ export default {
               this.foldAll(editor);
             }
             this.jumpActions(editor);
+
+            var labelCssClass = [ 'bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
+            for(var i = 0; i < this.file.lines.length; i++)
+            {
+              var line = this.file.lines[i];
+              var label = labelCssClass[line.label];
+              this.markLineInEditorLeft(line.old,label,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
+              this.markLineInEditorRight(line.new,label,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());
+            }
         },
         top : function() {
             scroll(0,0)

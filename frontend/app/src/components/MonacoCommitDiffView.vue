@@ -32,7 +32,7 @@ export default {
     },
     props: {
     commit : Object,
-    vcs_url : Object,
+    vcs_url : String,
     },
     methods: {
         top : function() {
