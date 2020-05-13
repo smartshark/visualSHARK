@@ -217,7 +217,7 @@
             </div>
         </div>
     </div>
-    <modal :show="welcomeModal" @ok="welcomeModal = false" @close="welcomeModal = false">
+    <modal :show="welcomeModal && showWelcome" @ok="welcomeModal = false" @close="closeModal">
       <div slot="title">
         Welcome to visualSHARK
       </div>
@@ -229,7 +229,7 @@
         After closing this dialog you can select the project that you want to label in the dropdown on the right and then click on Changed Lines in the left menu. That takes you directly to the labeling and the issue/commits are then sampled from your selected project.
       </div>
       <div slot="modal-footer" class="modal-footer">
-        <input type="checkbox"/>Do not show this dialog again
+        <input type="checkbox" v-model="neverAgain"/>Do not show this dialog again
       </div>
     </modal>
   </div>
@@ -247,22 +247,30 @@ export default {
   name: 'dashboard',
   data () {
     return {
-      welcomeModal: true
+      welcomeModal: true,
+      neverAgain: false
     }
   },
   components: {
     modal
   },
-  computed: mapGetters({
+  computed: {
+    ...mapGetters({
     dashboardStats: 'dashboardStats',
     dashboardStatsHistory: 'dashboardStatsHistory',
-    projects: 'allProjectData'
-  }),
+    projects: 'allProjectData',
+    showWelcome: 'showWelcome'
+    })
+  },
   mounted () {
     // this.$store.dispatch('updateDashboard')
     this.$store.dispatch('updateDashboardStats')
     this.$store.dispatch('updateDashboardStatsHistory')
     // this.drawChart()
+    let sw = this.$store.state.showWelcome
+    if(sw !== null && typeof sw !== 'undefined') {
+      this.neverAgain = !this.$store.state.showWelcome
+    }
   },
   watch: {
     dashboardStats () {
@@ -273,6 +281,10 @@ export default {
     }
   },
   methods: {
+    closeModal() {
+      this.welcomeModal = false
+      this.$store.dispatch('setShowWelcome', !this.neverAgain)
+    },
     color (seed) {
       return '#' + Math.floor((Math.abs(Math.sin(seed) * 16777215)) % 16777215).toString(16)
     },

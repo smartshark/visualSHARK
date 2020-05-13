@@ -12,7 +12,7 @@ import numpy as np
 import networkx as nx
 from mongoengine.queryset.visitor import Q
 
-from visualSHARK.models import Commit, FileAction, File, Hunk, CodeEntityState, VCSSystem, IssueSystem, Issue
+from visualSHARK.models import Commit, FileAction, File, Hunk, CodeEntityState, VCSSystem, IssueSystem, Issue, Refactoring
 
 
 # TODO: split up date and message parsing
@@ -869,6 +869,37 @@ def get_file_lines(file, hunks):
     return lines, codes, lines_before, lines_after, only_deleted, only_added, view_lines
 
 
+def get_label(line):
+    # whitespace only line
+    if len(line.strip()) == 0:
+        return 2
+
+    # comment only
+    if line.strip().startswith('//') and '*/' not in line.strip():
+        return 3
+    if line.strip().startswith('/*') and '*/' not in line.strip():
+        return 3
+    if line.strip().startswith('*') and '*/' not in line.strip():
+        return 3
+    if line.strip().endswith('*/') and '/*' not in line.strip():
+        return 3
+    if line.strip().endswith('*/') and line.strip().startswith('/*'):
+        return 3
+    return 0
+
+
+def refactoring_lines(self, commit_id, file_action_id):
+    """Return lines from one file in one commit which are detected as Refactorings by rMiner.
+    """
+    refactorings = []
+    for r in Refactoring.objects.filter(commit_id=commit_id, detection_tool='rMiner'):
+        for h in r.hunks:
+            h2 = Hunk.objects.get(id=h['hunk_id'])
+            if h2.file_action_id == file_action_id:
+                refactorings.append(h)
+    return refactorings
+
+
 def get_change_view(file, hunks):
     view_lines = []
     lines_before = []
@@ -887,9 +918,9 @@ def get_change_view(file, hunks):
     i = 1
     has_changed = False
 
-    for l in file:
+    for line in file:
         while idx_old in deleted_lines.keys():
-            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']})
+            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'label': get_label(deleted_lines[idx_old]['code']), 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']})
             lines_before.append(deleted_lines[idx_old]['code'])
 
             i += 1
@@ -897,7 +928,7 @@ def get_change_view(file, hunks):
             has_changed = True
 
         if idx_new in added_lines.keys():
-            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']})
+            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'label': get_label(added_lines[idx_new]['code']), 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']})
             lines_after.append(added_lines[idx_new]['code'])
 
             i += 1
@@ -906,9 +937,9 @@ def get_change_view(file, hunks):
             continue
 
         if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
-            view_lines.append({'old': idx_old, 'new': idx_new, 'code': l, 'number': i})
-            lines_before.append(l)
-            lines_after.append(l)
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': line, 'label': get_label(line), 'number': i})
+            lines_before.append(line)
+            lines_after.append(line)
 
             i += 1
             idx_new += 1
