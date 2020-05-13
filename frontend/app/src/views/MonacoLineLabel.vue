@@ -25,12 +25,12 @@
               <i class="fa fa-tag"></i> Labels
             </div>
             <div class="card-block">
-                <div class="label"><span class="dot" style="background-color: #FF0000;">1</span>bug fix</div>
-                <div class="label"><span class="dot">2</span>whitespace</div>
-                <div class="label"><span class="dot" style="background-color: #442727;">3</span>documentation</div>
-                <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
-                <div class="label"><span class="dot" style="background-color: #00FF00;">5</span>test</div>
-                <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
+                <div class="label" data-toggle="tooltip" data-placement="top" title="The line contributes to the corrective change that is performed to address the issue that is described."><span class="dot" style="background-color: #FF0000;">1</span>bug fix</div>
+                <div class="label" data-toggle="tooltip" data-placement="top" title="The line only contains changes to whitespaces that do not affect the logic of the source code."><span class="dot">2</span>whitespace</div>
+                <div class="label" data-toggle="tooltip" data-placement="top" title="The line only contains changes to documentation of the software, including line comments or documentation files."><span class="dot" style="background-color: #442727;">3</span>documentation</div>
+                <div class="label" data-toggle="tooltip" data-placement="top" title="The change is a refactoring, e.g., a renaming of a variable or the extraction of a method."><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
+                <div class="label" data-toggle="tooltip" data-placement="top" title="The change is only to tests of the project, e.g., test code or test data."><span class="dot" style="background-color: #00FF00;">5</span>test</div>
+                <div class="label" data-toggle="tooltip" data-placement="top" title="The change is neither of the above, e.g., the addition of features unrelated to the described issue."><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
                 <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
                 <div>Press the key of the color to label the current line with the belonging label, press 7 to remove the label</div>
             </div>
@@ -64,7 +64,7 @@
             </div>
           </div>
               <template v-for="c in commits">
-                <MonacoCommitDiffView :commit="c" ref="commitDiffView" />
+                <MonacoCommitDiffView :commit="c" :vcs_url="vcs_url" ref="commitDiffView" />
               </template>
           </div>
 
