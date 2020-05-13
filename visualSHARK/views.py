@@ -783,6 +783,7 @@ class ReleaseView(APIView):
         # print(history)
         return Response(history)
 
+
 # todo: both classes can be refactored, affected entities could be part of CodeEntityStates, IssueLinkCandidates part of commit
 class IssueLinkCandidatesView(APIView):
     """Get list of Candidates for issue linking for one commit id."""
@@ -1173,14 +1174,14 @@ class LineLabelSet(APIView):
 
         issues = list(Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug').order_by('?'))
         random.shuffle(issues)
-        
+
         issue = None
         for i in issues:
-            
+
             # only consider issues which are linked to bug_fixing commits
             if Commit.objects.filter(fixed_issue_ids=i.id).count() > 0:
                 users = self._label_users(i)
-                
+
                 # skip issue if we already labeled it
                 if user in users:
                     continue
@@ -1196,7 +1197,8 @@ class LineLabelSet(APIView):
                 break
 
         # overwrite sampling
-        #issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
+        # issue = Issue.objects.get(id='5ca34d6c336b19134def9af2')
+        # issue = Issue.objects.get(external_id='IMAGING-99')
         return issue
 
     def _commit_data(self, issue, project_path):
@@ -1221,23 +1223,24 @@ class LineLabelSet(APIView):
 
                 source_file = folder + '/' + f.path
                 if not os.path.exists(source_file):
-                    #print('file', source_file, 'not existing, skipping')
+                    # print('file', source_file, 'not existing, skipping')
                     continue
 
-                #print('open file', source_file, end='')
+                # print('open file', source_file, end='')
                 # use libmagic to guess encoding
                 blob = open(source_file, 'rb').read()
                 m = magic.Magic(mime_encoding=True)
                 encoding = m.from_buffer(blob)
-                #print('encoding', encoding)
-                
+                # print('encoding', encoding)
+
                 # we open everything but binary
                 if encoding == 'binary':
                     continue
                 if encoding == 'unknown-8bit':
                     continue
 
-
+                # refactorings = refactorings(commit.id, fa.id)
+                # print(refactorings)
                 nfile = open(source_file, 'rb').read().decode(encoding)
                 nfile = nfile.replace('\r\n', '\n')
                 nfile = nfile.replace('\r', '\n')
@@ -1245,7 +1248,7 @@ class LineLabelSet(APIView):
                 view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
 
                 if has_changed:
-                    changes.append({'hunks': hunks,'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+                    changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
 
             commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 
@@ -1335,9 +1338,8 @@ class LineLabelSet(APIView):
         print(new_changes)
         return Response({'changes': new_changes})
 
-
     def get(self, request):
-        
+
         project_name = request.GET.get('project_name', None)
         if not project_name:
             log.error('got no project')
@@ -1347,7 +1349,7 @@ class LineLabelSet(APIView):
         load_last = False
         if not request.user.profile.line_label_last_issue_id:
             issue = self._sample_issue(request.user.username, project_name)
-            
+
             if issue:
                 up = UserProfile.objects.get(user=request.user)
                 up.line_label_last_issue_id = issue.id
@@ -1359,7 +1361,7 @@ class LineLabelSet(APIView):
             issue = Issue.objects.get(id=request.user.profile.line_label_last_issue_id)
             load_last = True
 
-        if issue == None:
+        if issue is None:
             return Response({'warning': 'no_more_issues'})
 
         # urls for issue system and git
@@ -1390,7 +1392,7 @@ class LineLabelSet(APIView):
         return Response(result)
 
 # tutorial issues:
-# -  IMAGING-99 
+# - IMAGING-99 
 # - imaging-82
 # -imaging-121
 # - codec-65

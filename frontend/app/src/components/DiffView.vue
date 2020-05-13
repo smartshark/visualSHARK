@@ -362,7 +362,17 @@ export default {
         // if new == - we are on a line only existing on old
         if(line.new == '-' || line.old == '-') {
           // see: https://vuejs.org/v2/guide/reactivity.html
-          this.$set(this.models, line.number, 'label')
+          if(line.label > 0) {
+            if(line.label === 2) {
+              this.$set(this.models, line.number, 'whitespace')
+            }else if (line.label === 3) {
+              this.$set(this.models, line.number, 'documentation')
+            }else {
+              this.$set(this.models, line.number, 'label')
+            }
+          }else {
+            this.$set(this.models, line.number, 'label')
+          }
           this.$set(this.selectedModels, line.number, false)
         }
       }

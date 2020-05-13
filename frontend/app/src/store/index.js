@@ -24,6 +24,8 @@ const persist = (store) => {
   const currentIts = l.getLocal('currentIts')
   const currentMl = l.getLocal('currentMl')
 
+  const sw = l.getLocal('showWelcome')
+
   let msgs = l.getLocal('userMessages')
   if (typeof msgs === 'undefined' || msgs === null) {
     msgs = []
@@ -157,6 +159,15 @@ const persist = (store) => {
       console.log(e)
     }
   }
+  if (typeof sw !== 'undefined' && sw !== null) {
+    try {
+      let showWelcome = JSON.parse(sw)
+      // console.log('setting currentMl from persist', ml)
+      store.commit('SET_WELCOME_MODAL', { showWelcome })
+    } catch (e) {
+      console.log(e)
+    }
+  }
   store.subscribe((mutation, state) => {
     const type = mutation.type
     if (type === 'SESSIONLOGIN') {
@@ -242,6 +253,10 @@ const persist = (store) => {
     if (type === 'SET_ML') {
       // console.log('updating persistent store with current ML', mutation.payload.ml)
       l.setLocal('currentMl', JSON.stringify(mutation.payload.ml))
+    }
+    if (type === 'SET_WELCOME_MODAL') {
+      // console.log('updating persistent store with current ML', mutation.payload.ml)
+      l.setLocal('showWelcome', JSON.stringify(mutation.payload.showWelcome))
     }
   })
 }

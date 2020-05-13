@@ -15,7 +15,8 @@ const state = {
   userMessages: [],
   conWorker: null,
   conRemote: null,
-  permissions: []
+  permissions: [],
+  showWelcome: true
 }
 
 const getters = {
@@ -31,7 +32,8 @@ const getters = {
   userMessages: state => state.userMessages,
   conWorker: state => state.conWorker,
   conRemote: state => state.conRemote,
-  permissions: state => state.permissions
+  permissions: state => state.permissions,
+  showWelcome: state => state.showWelcome
 }
 
 const actions = {
@@ -124,7 +126,10 @@ const actions = {
   },
   popError ({commit}, id) {
     commit(types.POP_ERROR, { id })
-  }
+  },
+  setShowWelcome ({commit}, showWelcome) {
+    commit(types.SET_WELCOME_MODAL, { showWelcome })
+  },
 }
 
 const mutations = {
@@ -197,6 +202,9 @@ const mutations = {
   },
   [types.POP_USER_MESSAGE] (state, { message }) {
     state.userMessages = state.userMessages.filter(item => item !== message)
+  },
+  [types.SET_WELCOME_MODAL] (state, { showWelcome }) {
+    state.showWelcome = showWelcome
   }
 }
 
