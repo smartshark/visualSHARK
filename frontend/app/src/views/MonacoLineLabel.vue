@@ -43,8 +43,7 @@
             <div class="row">
 <label class="col-sm-2">Issue title</label>
 
-<div class="col-sm-10">
-            <a href="#">{{ issue.title }}</a>
+<div class="col-sm-10">{{ issue.title }}
             </div>
             </div>
 
@@ -250,7 +249,7 @@ export default {
             rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
             .then(response => {
                 this.$store.dispatch('popLoading');
-                window.location.replace(window.location.pathname + window.location.search + window.location.hash);
+                window.location.reload(false);
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)
