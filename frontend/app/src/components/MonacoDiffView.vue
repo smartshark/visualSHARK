@@ -83,9 +83,11 @@ export default {
             for(var i = 0; i < this.file.lines.length; i++)
             {
               var line = this.file.lines[i];
-              var label = labelCssClass[line.label];
-              this.markLineInEditorLeft(line.old,label,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
-              this.markLineInEditorRight(line.new,label,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());
+              if(line.label > 0) {
+                var label = labelCssClass[line.label-1];
+                this.markLineInEditorLeft(line.old,label,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
+                this.markLineInEditorRight(line.new,label,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());
+              }
             }
         },
         top : function() {
