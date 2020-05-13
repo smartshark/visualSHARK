@@ -1,9 +1,11 @@
 <template>
 <div class="card" :id="commit.revision_hash">
 <div class="card-header">
-             <a role="button" data-toggle="collapse" v-on:click="scrollToCommit(commit)" aria-expanded="false" aria-controls="collapseExample">
-              <i class="fa fa-bug"></i> Commit {{ commit.revision_hash }} <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
-              </a>
+             <div v-on:click="scrollToCommit(commit)">
+              <i class="fa fa-bug"></i> Commit <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a>
+
+              <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
+              </div>
             </div>
             <div :id="'collapse' + commit.revision_hash">
             <div class="card-block">
@@ -29,7 +31,8 @@ export default {
         MonacoDiffView
     },
     props: {
-    commit : Object
+    commit : Object,
+    vcs_url : Object,
     },
     methods: {
         top : function() {

@@ -64,7 +64,7 @@
             </div>
           </div>
               <template v-for="c in commits">
-                <MonacoCommitDiffView :commit="c" ref="commitDiffView" />
+                <MonacoCommitDiffView :commit="c" :vcs_url="vcs_url" ref="commitDiffView" />
               </template>
           </div>
 
