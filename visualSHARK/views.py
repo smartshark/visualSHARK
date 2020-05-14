@@ -1136,6 +1136,7 @@ class IssueLinkSet(APIView):
 class LineLabelSet(APIView):
     read_perm = 'view_line_labels'
     write_perm = 'edit_line_labels'
+    training_issues = ['IO-276', 'IO-304', 'IO-136', 'IO-166', 'IO-274']
 
     def _open_issues(self):
         issue_ids = []
@@ -1160,6 +1161,15 @@ class LineLabelSet(APIView):
                         users.add(user)
         return list(users)
 
+    def _last_training_issue(self, user):
+        for external_id in self.training_issues:
+            i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
+            for c in Commit.objects.filter(fixed_issue_ids=i.id).only('id'):
+                for fa in FileAction.objects.filter(commit_id=c.id):
+                    for h in Hunk.objects.filter(file_action_id=fa.id):
+                        if not h.lines_manual or user.username not in h.lines_manual.keys():
+                            return i
+
     def _sample_issue(self, user, project_name):
         """Sample issue for user:
 
@@ -1169,9 +1179,15 @@ class LineLabelSet(APIView):
             - has verified_type bug
             - the user has not labeld it before
         """
+        if not user.profile.line_label_has_trained:
+            log.debug('loading training for user {}'.format(user.username))
+            tr = self._last_training_issue(user)
+            if tr:
+                log.debug('trianing issue loaded {}'.format(tr.external_id))
+                return tr
+
         p = Project.objects.get(name=project_name)
         its = IssueSystem.objects.get(project_id=p.id)
-
         issues = list(Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug').order_by('?'))
         random.shuffle(issues)
 
@@ -1183,7 +1199,7 @@ class LineLabelSet(APIView):
                 users = self._label_users(i)
 
                 # skip issue if we already labeled it
-                if user in users:
+                if user.username in users:
                     continue
 
                 open_issues = self._open_issues()
@@ -1302,7 +1318,7 @@ class LineLabelSet(APIView):
                 tmp = {key: label_lines}
                 new_changes.append(tmp)
         if errors:
-            print(errors)
+            log.error(errors)
             return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
 
         # now save the final changes
@@ -1332,10 +1348,15 @@ class LineLabelSet(APIView):
         # reset the issue id for sucessful labeling
         up = UserProfile.objects.get(user=request.user)
         up.line_label_last_issue_id = ''
+
+        # if we labeled the last training issue we are clear
+        if issue.external_id == self.training_issues[-1]:
+            up.line_label_has_trained = True
+
         up.save()
 
-        print('final changes')
-        print(new_changes)
+        log.debug('final changes')
+        log.debug(new_changes)
         return Response({'changes': new_changes})
 
     def get(self, request):
@@ -1348,7 +1369,7 @@ class LineLabelSet(APIView):
         # if the user has no last_issue_id sample one
         load_last = False
         if not request.user.profile.line_label_last_issue_id:
-            issue = self._sample_issue(request.user.username, project_name)
+            issue = self._sample_issue(request.user, project_name)
 
             if issue:
                 up = UserProfile.objects.get(user=request.user)
@@ -1357,7 +1378,7 @@ class LineLabelSet(APIView):
 
         # otherwise use the last unfinished one
         else:
-            print('loading last issue', request.user.profile.line_label_last_issue_id)
+            log.debug('loading last issue {} for user {}'.format(request.user.profile.line_label_last_issue_id, request.user.username))
             issue = Issue.objects.get(id=request.user.profile.line_label_last_issue_id)
             load_last = True
 

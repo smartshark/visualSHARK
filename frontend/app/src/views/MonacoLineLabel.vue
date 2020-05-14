@@ -115,6 +115,8 @@ export default {
                 this.issue = response.data['issue'];
                 this.vcs_url = response.data['vcs_url']
                 this.issue_url = response.data['issue_url']
+                this.has_trained = response.data['has_trained']
+                this.load_last = response.data['load_last']
                 setTimeout(() => {
                     // Register all editors
                     that.registerFoldingModel();
