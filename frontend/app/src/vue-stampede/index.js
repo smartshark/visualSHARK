@@ -17,7 +17,7 @@ export default {
         const data = JSON.parse(message.body)
         store.dispatch('pushUserMessage', data)
       }, f => {
-        store.dispatch('pushError', {message: 'websocket connection error', detail: f})
+        // store.dispatch('pushError', {message: 'websocket connection error', detail: f})
         console.log('connection failed', f)
       })
     }, fail => {
@@ -25,7 +25,7 @@ export default {
       if (channel === '') {
         return
       }
-      store.dispatch('pushError', {message: 'websocket connection error', detail: fail})
+      // store.dispatch('pushError', {message: 'websocket connection error', detail: fail})
       console.log('connection failed', fail)
     }, '/')
 
@@ -40,7 +40,7 @@ export default {
         const data = JSON.parse(message.body)
         store.dispatch('pushUserMessage', data)
       }, f => {
-        store.dispatch('pushError', {message: 'websocket connection error', detail: f})
+        // store.dispatch('pushError', {message: 'websocket connection error', detail: f})
         console.log('connection failed', f)
       })
     }
