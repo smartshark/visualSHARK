@@ -1136,7 +1136,7 @@ class IssueLinkSet(APIView):
 class LineLabelSet(APIView):
     read_perm = 'view_line_labels'
     write_perm = 'edit_line_labels'
-    training_issues = ['IO-276', 'IO-304', 'IO-136', 'IO-166', 'IO-274']
+    training_issues = ['IO-304', 'IO-276', 'IO-136', 'IO-166', 'IO-274']
 
     def _open_issues(self):
         issue_ids = []
