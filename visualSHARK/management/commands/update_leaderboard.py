@@ -17,7 +17,7 @@ class Command(BaseCommand):
         for h in Hunk.objects.filter(lines_manual__exists=True):
             for username, lines in h.lines_manual.items():
                 if username not in board.keys():
-                    board[username] = {'lines': 0, 'issues': set(), 'commits': set(), 'files': set()}
+                    board[username] = {'lines': 0, 'issues': set(), 'commits': set(), 'files': set(), 'projects': set()}
                     hunks[username] = set()
                 hunks[username].add(h)
                 for label, line_numbers in lines.items():
@@ -37,6 +37,7 @@ class Command(BaseCommand):
                         for h in Hunk.objects.filter(file_action_id=fa.id, lines_manual__exists=True):
                             for username, lines in h.lines_manual.items():
                                 board[username]['issues'].add(str(i.id))
+                                board[username]['projects'].add(str(c.vcs_system_id))
 
         # other counts outside of hunk lines
         for username, hunks in hunks.items():
@@ -51,6 +52,7 @@ class Command(BaseCommand):
             board[username]['commits'] = len(values['commits'])
             board[username]['files'] = len(values['files'])
             board[username]['issues'] = len(values['issues'])
+            board[username]['projects'] = len(values['projects'])
 
         ls = LeaderboardSnapshot()
         ls.data = json.dumps(board)
