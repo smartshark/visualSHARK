@@ -95,8 +95,12 @@ class Command(BaseCommand):
             board[username]['issues'] = len(values['issues'])
             board[username]['projects'] = len(values['projects'])
 
+        # only certain data allowed
         projects = self._projects()
+        tosave = {}
+        for project_name, values in projects.items():
+            tosave[project_name] = {'need_issues': values['need_issues'], 'partial': values['partial'], 'finished': values['finished']}
 
         ls = LeaderboardSnapshot()
-        ls.data = json.dumps({'users': board, 'projects': projects})
+        ls.data = json.dumps({'users': board, 'projects': tosave})
         ls.save()
