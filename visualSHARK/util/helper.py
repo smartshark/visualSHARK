@@ -888,7 +888,7 @@ def get_label(line):
     return 0
 
 
-def refactoring_lines(self, commit_id, file_action_id):
+def refactoring_lines(commit_id, file_action_id):
     """Return lines from one file in one commit which are detected as Refactorings by rMiner.
     """
     refactoring_lines_old = []
