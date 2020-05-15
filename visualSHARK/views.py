@@ -1413,7 +1413,7 @@ class LineLabelSet(APIView):
         return Response(result)
 
 # tutorial issues:
-# - IMAGING-99 
+# - IMAGING-99
 # - imaging-82
 # -imaging-121
 # - codec-65
@@ -1422,4 +1422,5 @@ class LeaderboardSet(APIView):
 
     def get(self, request):
         lb = LeaderboardSnapshot.objects.order_by('-created_at')[0]
-        return Response({'board': json.loads(lb.data), 'last_updated': lb.created_at})
+        tmp = json.loads(lb.data)
+        return Response({'board': tmp['users'], 'projects': tmp['projects'], 'last_updated': lb.created_at})

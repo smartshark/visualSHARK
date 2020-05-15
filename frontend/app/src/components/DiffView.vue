@@ -367,6 +367,8 @@ export default {
               this.$set(this.models, line.number, 'whitespace')
             }else if (line.label === 3) {
               this.$set(this.models, line.number, 'documentation')
+            }else if (line.label === 4) {
+              this.$set(this.models, line.number, 'refactoring')
             }else {
               this.$set(this.models, line.number, 'label')
             }

@@ -27,7 +27,32 @@
             </tbody>
           </table>
         </div>
-      </div>    
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fa fa-tasks"></i> Projects <span class="updated">{{last_updated}}</span>
+        </div>
+        <div class="card-block">
+          <table>
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Issues needed</th>
+                <th>Issues partially completed</th>
+                <th>Issues completed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, key, index) in projects">
+                <td>{{key}}</td>
+                <td>{{item.need_issues}}</td>
+                <td>{{item.partial}}</td>
+                <td>{{item.finished}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div> 
     </div>
   </div>
 </template>
@@ -55,6 +80,7 @@ export default {
       this.$store.dispatch('popLoading')
       this.last_updated = response.data['last_updated']
       this.board = response.data['board']
+      this.projects = response.data['projects']
     })
     .catch(e => {
       this.$store.dispatch('pushError', e)
