@@ -768,11 +768,11 @@ def get_lines(hunk):
         else:
             # musst be context line
             if content_started:
-                new_start_correction = (current_new_start if count_new_lines == 0 else current_new_start -1)
-                old_start_correction = (current_old_start if count_old_lines == 0 else current_old_start -1)
+                new_start_correction = (current_new_start if count_new_lines == 0 else current_new_start - 1)
+                old_start_correction = (current_old_start if count_old_lines == 0 else current_old_start - 1)
 
                 hunks_changes.append({'modifiedStart': new_start_correction, 'modifiedLength': count_new_lines,
-                                          'originalStart': old_start_correction, 'originalLength': count_old_lines})
+                                      'originalStart': old_start_correction, 'originalLength': count_old_lines})
 
                 current_new_start = current_new_start + count_new_lines
                 current_old_start = current_old_start + count_old_lines
@@ -891,16 +891,20 @@ def get_label(line):
 def refactoring_lines(self, commit_id, file_action_id):
     """Return lines from one file in one commit which are detected as Refactorings by rMiner.
     """
-    refactorings = []
+    refactoring_lines_old = []
+    refactoring_lines_new = []
     for r in Refactoring.objects.filter(commit_id=commit_id, detection_tool='rMiner'):
         for h in r.hunks:
             h2 = Hunk.objects.get(id=h['hunk_id'])
             if h2.file_action_id == file_action_id:
-                refactorings.append(h)
-    return refactorings
+                if h['mode'] == 'D':
+                    refactoring_lines_old += list(range(h['start_line'], h['end_line'] + 1))
+                if h['mode'] == 'A':
+                    refactoring_lines_new += list(range(h['start_line'], h['end_line'] + 1))
+    return refactoring_lines_old, refactoring_lines_new
 
 
-def get_change_view(file, hunks):
+def get_change_view(file, hunks, refactoring_lines_old, refactoring_lines_new):
     view_lines = []
     lines_before = []
     lines_after = []
@@ -920,7 +924,10 @@ def get_change_view(file, hunks):
 
     for line in file:
         while idx_old in deleted_lines.keys():
-            view_lines.append({'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'label': get_label(deleted_lines[idx_old]['code']), 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']})
+            tmp = {'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'label': get_label(deleted_lines[idx_old]['code']), 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']}
+            if idx_old in refactoring_lines_old:
+                tmp['label'] = 4
+            view_lines.append(tmp)
             lines_before.append(deleted_lines[idx_old]['code'])
 
             i += 1
@@ -928,7 +935,10 @@ def get_change_view(file, hunks):
             has_changed = True
 
         if idx_new in added_lines.keys():
-            view_lines.append({'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'label': get_label(added_lines[idx_new]['code']), 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']})
+            tmp = {'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'label': get_label(added_lines[idx_new]['code']), 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']}
+            if idx_new in refactoring_lines_new:
+                tmp['label'] = 4
+            view_lines.append(tmp)
             lines_after.append(added_lines[idx_new]['code'])
 
             i += 1

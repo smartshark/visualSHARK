@@ -51,7 +51,7 @@ from rest_framework.filters import OrderingFilter
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
-from .util.helper import get_file_lines, get_change_view
+from .util.helper import get_change_view, refactoring_lines
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1255,13 +1255,13 @@ class LineLabelSet(APIView):
                 if encoding == 'unknown-8bit':
                     continue
 
-                # refactorings = refactorings(commit.id, fa.id)
+                ref_old, ref_new = refactoring_lines(commit.id, fa.id)
                 # print(refactorings)
                 nfile = open(source_file, 'rb').read().decode(encoding)
                 nfile = nfile.replace('\r\n', '\n')
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
-                view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
+                view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new)
 
                 if has_changed:
                     changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
