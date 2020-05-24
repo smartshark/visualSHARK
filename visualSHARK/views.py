@@ -1266,7 +1266,8 @@ class LineLabelSet(APIView):
                 if has_changed:
                     changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
 
-            commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
+            if changes:
+                commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
 
         shutil.rmtree(folder)
         return commits
