@@ -18,7 +18,7 @@
             </thead>
             <tbody>
               <tr v-for="(item, key, index) in board">
-                <td>{{key}}</td>
+                <td>{{item.user}}</td>
                 <td>{{item.lines}}</td>
                 <td>{{item.files}}</td>
                 <td>{{item.commits}}</td>
@@ -67,6 +67,7 @@ export default {
   data () {
     return {
       board: {},
+      projects: {},
       last_updated: ''
     }
   },
@@ -79,7 +80,13 @@ export default {
     .then(response => {
       this.$store.dispatch('popLoading')
       this.last_updated = response.data['last_updated']
-      this.board = response.data['board']
+      
+      // change structure of leaderboard for sorting
+      let leaderboard = []
+      for(let user in response.data['board']) {
+        leaderboard.push({user: user, lines: response.data['board'][user].lines, commits: response.data['board'][user].commits, issues: response.data['board'][user].issues, files: response.data['board'][user].files})
+      }
+      this.board = leaderboard.sort((a, b) => (a.commits < b.commits) ? 1 : -1)
       this.projects = response.data['projects']
     })
     .catch(e => {

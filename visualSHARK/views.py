@@ -1416,12 +1416,26 @@ class LineLabelSet(APIView):
 # tutorial issues:
 # - IMAGING-99
 # - imaging-82
-# -imaging-121
+# - imaging-121
 # - codec-65
 class LeaderboardSet(APIView):
     read_perm = 'view_line_labels'
 
     def get(self, request):
         lb = LeaderboardSnapshot.objects.order_by('-created_at')[0]
-        tmp = json.loads(lb.data)
-        return Response({'board': tmp['users'], 'projects': tmp['projects'], 'last_updated': lb.created_at})
+        ret = {}
+        anon = 0
+        for k, v in json.loads(lb.data).items():
+            if k not in ret.keys():
+                ret[k] = {}
+            if k == 'users':
+                for user, values in v.items():
+                    if user in ['atrautsch', 'sherbold', 'bledel', request.user.username]:
+                        ret[k][user] = values
+                    else:
+                        ret[k]['anonymized{}'.format(anon)] = values
+                        anon += 1
+            else:
+                ret[k] = v
+
+        return Response({'board': ret['users'], 'projects': ret['projects'], 'last_updated': lb.created_at})
