@@ -1430,7 +1430,7 @@ class LeaderboardSet(APIView):
                 ret[k] = {}
             if k == 'users':
                 for user, values in v.items():
-                    if user in ['atrautsch', 'sherbold', 'bledel', request.user.username]:
+                    if user in ['atrautsch', 'sherbold', 'bledel', request.user.username] or request.user.is_superuser:
                         ret[k][user] = values
                     else:
                         ret[k]['anonymized{}'.format(anon)] = values
