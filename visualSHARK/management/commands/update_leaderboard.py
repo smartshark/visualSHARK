@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 labels = len(projects[project_name]['issues'][i.external_id])
                 if labels > 0 and labels < 4:
                     projects[project_name]['partial'] += 1
-                if labels == 4:
+                if labels >= 4:
                     projects[project_name]['finished'] += 1
         return projects
 
