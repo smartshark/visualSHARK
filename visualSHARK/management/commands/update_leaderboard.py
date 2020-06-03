@@ -24,7 +24,7 @@ class Command(BaseCommand):
         for project_name in PROJECTS:
 
             if project_name not in projects:
-                projects[project_name] = {'need_issues': 0, 'need_commits': 0, 'issues': {}, 'partial': 0, 'finished': 0}
+                projects[project_name] = {'need_issues': set(), 'need_commits': 0, 'issues': {}, 'partial': 0, 'finished': 0}
             p = Project.objects.get(name=project_name)
             its = IssueSystem.objects.get(project_id=p.id)
 
@@ -35,7 +35,6 @@ class Command(BaseCommand):
                 if Commit.objects.filter(fixed_issue_ids=i.id).count() == 0:
                     continue
 
-                projects[project_name]['need_issues'] += 1
                 projects[project_name]['issues'][i.external_id] = set()
 
                 for c in Commit.objects.filter(fixed_issue_ids=i.id).only('id'):
@@ -43,6 +42,7 @@ class Command(BaseCommand):
 
                     for fa in FileAction.objects.filter(commit_id=c.id).only('id'):
                         for h in Hunk.objects.filter(file_action_id=fa.id):
+                            projects[project_name]['need_issues'].add(str(i.id))
                             for username, lines in h.lines_manual.items():
                                 projects[project_name]['issues'][i.external_id].add(username)
                 labels = len(projects[project_name]['issues'][i.external_id])
@@ -50,6 +50,7 @@ class Command(BaseCommand):
                     projects[project_name]['partial'] += 1
                 if labels >= 4:
                     projects[project_name]['finished'] += 1
+            projects[project_name]['need_issues'] = len(projects[project_name]['need_issues'])
         return projects
 
     def handle(self, *args, **options):
