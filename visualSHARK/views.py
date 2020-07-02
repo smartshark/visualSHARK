@@ -1145,6 +1145,9 @@ class LineLabelSet(APIView):
                 issue_ids.append(up.line_label_last_issue_id)
         return issue_ids
 
+    def _escape_user(self, user):
+        return user.replace('.', '')
+
     def _label_users(self, issue):
         """Return all users which have labeled this issue"""
         users = set()
@@ -1161,13 +1164,13 @@ class LineLabelSet(APIView):
                         users.add(user)
         return list(users)
 
-    def _last_training_issue(self, user):
+    def _last_training_issue(self, username):
         for external_id in self.training_issues:
             i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
             for c in Commit.objects.filter(fixed_issue_ids=i.id).only('id'):
                 for fa in FileAction.objects.filter(commit_id=c.id):
                     for h in Hunk.objects.filter(file_action_id=fa.id):
-                        if not h.lines_manual or user.username not in h.lines_manual.keys():
+                        if not h.lines_manual or username not in h.lines_manual.keys():
                             return i
 
     def _sample_issue(self, user, project_name):
@@ -1181,7 +1184,7 @@ class LineLabelSet(APIView):
         """
         if not user.profile.line_label_has_trained:
             log.debug('loading training for user {}'.format(user.username))
-            tr = self._last_training_issue(user)
+            tr = self._last_training_issue(self._escape_user(user.username))
             if tr:
                 log.debug('trianing issue loaded {}'.format(tr.external_id))
                 return tr
@@ -1199,7 +1202,7 @@ class LineLabelSet(APIView):
                 users = self._label_users(i)
 
                 # skip issue if we already labeled it
-                if user.username in users:
+                if self._escape_user(user.username) in users:
                     continue
 
                 open_issues = self._open_issues()
@@ -1343,7 +1346,7 @@ class LineLabelSet(APIView):
                         write_changes[hunk_id][request.user.username][line['label']].append(line['hunk_line'])
 
                 for hunk_id, result in write_changes.items():
-                    r = {'set__lines_manual__{}'.format(request.user.username): result[request.user.username]}
+                    r = {'set__lines_manual__{}'.format(self._escape_user(request.user.username)): result[request.user.username]}
                     h = Hunk.objects.get(id=hunk_id).update(**r)
 
         # reset the issue id for sucessful labeling
@@ -1430,8 +1433,11 @@ class LeaderboardSet(APIView):
                 ret[k] = {}
             if k == 'users':
                 for user, values in v.items():
-                    if user in ['atrautsch', 'sherbold', 'bledel', request.user.username] or request.user.is_superuser:
-                        ret[k][user] = values
+                    if user in ['atrautsch', 'sherbold', 'bledel', self._escape_user(request.user.username)] or request.user.is_superuser:
+                        if self._escape_user(request.user.username) == user:
+                            ret[k][request.user.username] = values  # display value, in case of escaped user
+                        else:
+                            ret[k][user] = values
                     else:
                         ret[k]['anonymized{}'.format(anon)] = values
                         anon += 1
