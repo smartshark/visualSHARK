@@ -1424,6 +1424,9 @@ class LineLabelSet(APIView):
 class LeaderboardSet(APIView):
     read_perm = 'view_line_labels'
 
+    def _escape_user(self, user):
+        return user.replace('.', '')  # duplicate! also in LineLabelSet
+
     def get(self, request):
         lb = LeaderboardSnapshot.objects.order_by('-created_at')[0]
         ret = {}
