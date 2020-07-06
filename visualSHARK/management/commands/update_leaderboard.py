@@ -24,7 +24,7 @@ class Command(BaseCommand):
         for project_name in PROJECTS:
 
             if project_name not in projects:
-                projects[project_name] = {'need_issues': set(), 'need_commits': 0, 'issues': {}, 'partial': 0, 'finished': 0}
+                projects[project_name] = {'need_issues': set(), 'need_commits': 0, 'issues': {}, 'partial': 0, 'finished': 0, 'partial_1': 0, 'partial_2': 0, 'partial_3': 0}
             p = Project.objects.get(name=project_name)
             its = IssueSystem.objects.get(project_id=p.id)
 
@@ -48,6 +48,14 @@ class Command(BaseCommand):
                 labels = len(projects[project_name]['issues'][i.external_id])
                 if labels > 0 and labels < 4:
                     projects[project_name]['partial'] += 1
+
+                    # add additional information about how many users labeled partially (added 2020-07-06)
+                    if labels == 1:
+                        projects[project_name]['partial_1'] += 1
+                    elif labels == 2:
+                        projects[project_name]['partial_2'] += 1
+                    elif labels == 3:
+                        projects[project_name]['partial_3'] += 1
                 if labels >= 4:
                     projects[project_name]['finished'] += 1
             projects[project_name]['need_issues'] = len(projects[project_name]['need_issues'])
