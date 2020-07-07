@@ -108,7 +108,7 @@ class Command(BaseCommand):
         projects = self._projects()
         tosave = {}
         for project_name, values in projects.items():
-            tosave[project_name] = {'need_issues': values['need_issues'], 'partial': values['partial'], 'finished': values['finished']}
+            tosave[project_name] = {'need_issues': values['need_issues'], 'partial': values['partial'], 'finished': values['finished'], 'partial_1': values['partial_1'], 'partial_2': values['partial_2'], 'partial_3': values['partial_3']}
 
         ls = LeaderboardSnapshot()
         ls.data = json.dumps({'users': board, 'projects': tosave})
