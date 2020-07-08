@@ -36,18 +36,28 @@
           <table>
             <thead>
               <tr>
+                <th></th>
+                <th></th>
+                <th colspan="3" style="text-align: center;">Issues partially completed</th>
+                <th></th>
+              </tr>
+              <tr>
                 <th>Project</th>
                 <th>Issues needed</th>
-                <th>Issues partially completed</th>
+                <th>1 participant</th>
+                <th>2 participants</th>
+                <th>3 participants</th>
                 <th>Issues completed</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(item, key, index) in projects">
                 <td>{{key}}</td>
-                <td>{{item.need_issues}}</td>
-                <td>{{item.partial}}</td>
-                <td>{{item.finished}}</td>
+                <td class="td-number">{{item.need_issues}}</td>
+                <td class="td-number">{{item.partial_1}}</td>
+                <td class="td-number">{{item.partial_2}}</td>
+                <td class="td-number">{{item.partial_3}}</td>
+                <td class="td-number">{{item.finished}}</td>
               </tr>
             </tbody>
           </table>
@@ -108,5 +118,8 @@ export default {
 }
 .updated:before {
     content: "last update ";
+}
+td.td-number {
+    text-align: right;
 }
 </style>
