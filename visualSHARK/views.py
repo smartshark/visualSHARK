@@ -1257,6 +1257,8 @@ class LineLabelSet(APIView):
                     continue
                 if encoding == 'unknown-8bit':
                     continue
+                if encoding == 'application/mswordbinary':
+                    continue
 
                 ref_old, ref_new = refactoring_lines(commit.id, fa.id)
                 # print(refactorings)
