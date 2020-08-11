@@ -88,7 +88,6 @@ export default {
     this.$store.dispatch('pushLoading')
     rest.getLeaderboard()
     .then(response => {
-      this.$store.dispatch('popLoading')
       this.last_updated = response.data['last_updated']
       
       // change structure of leaderboard for sorting
@@ -98,6 +97,7 @@ export default {
       }
       this.board = leaderboard.sort((a, b) => (a.commits < b.commits) ? 1 : -1)
       this.projects = response.data['projects']
+      this.$store.dispatch('popLoading')
     })
     .catch(e => {
       this.$store.dispatch('pushError', e)

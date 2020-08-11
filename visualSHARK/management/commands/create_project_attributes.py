@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from datetime import date
-
 from django.core.management.base import BaseCommand
 
 from visualSHARK.models import Project
@@ -20,6 +18,5 @@ class Command(BaseCommand):
 
             if created:
                 self.stdout.write(self.style.SUCCESS('[OK]') + ' Creating Attribute for Project {}'.format(pro.name))
-
 
             ps.save()
