@@ -1261,8 +1261,12 @@ class LineLabelSet(APIView):
                     continue
 
                 ref_old, ref_new = refactoring_lines(commit.id, fa.id)
-                # print(refactorings)
-                nfile = open(source_file, 'rb').read().decode(encoding)
+
+                # unknown encoding error
+                try:
+                    nfile = open(source_file, 'rb').read().decode(encoding)
+                except LookupError:
+                    continue
                 nfile = nfile.replace('\r\n', '\n')
                 nfile = nfile.replace('\r', '\n')
                 nfile = nfile.split('\n')
