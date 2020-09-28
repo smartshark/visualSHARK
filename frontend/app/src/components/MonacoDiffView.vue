@@ -48,7 +48,7 @@
 import MonacoEditor from 'vue-monaco'
 
 export default {
- data() {
+    data() {
         return {
             decorationsLeft: [],
             decorationsObjectsLeft: [],
@@ -457,7 +457,7 @@ export default {
         labelUnrelated: function() {
           this.labelFileComplete('unrelated');
         },
-        labelFileComplete: function(className) {
+        labelFileCompleteOld: function(className) {
              var changes = this.$refs.editor.getEditor().getLineChanges();
              console.log(this.$refs.editor.getEditor());
              for (var i = 0; i < changes.length; i++) {
@@ -473,7 +473,6 @@ export default {
                         },
                         change: change
                  };
-
                  this.decorationsLeft = this.$refs.editor.getEditor().getOriginalEditor().deltaDecorations(this.decorationsLeft, Object.values(this.decorationsObjectsLeft));
                  this.validateEditor();
                  }
@@ -494,8 +493,43 @@ export default {
                  }
 
              }
+        },
+        labelFileComplete: function(className) {
+          const changes = this.$refs.editor.getEditor().getLineChanges()
+          const origEditor = this.$refs.editor.getEditor().getOriginalEditor()
+          const modEditor = this.$refs.editor.getEditor().getModifiedEditor()
+
+          let newDecorationsLeft = []
+          let newDecorationsRight = []
+          for (let change of changes) {  // change is a hunk
+            // we have to do this line-wise because this.decorationsObjectsLeft/Right are used to aggregate the data for the backend
+            for(let line = change.originalStartLineNumber; line <= change.originalEndLineNumber; line++) {
+              newDecorationsLeft.push({
+                range: new monaco.Range(line, 1, line, 1),
+                options: {
+                  isWholeLine: true,
+                  linesDecorationsClassName: className
+                },
+                change: change
+              })
+              this.decorationsObjectsLeft[line] = newDecorationsLeft[newDecorationsLeft.length - 1]
+            }
+            for(let line = change.modifiedStartLineNumber; line <= change.modifiedEndLineNumber; line++) {
+              newDecorationsRight.push({
+                range: new monaco.Range(line, 1, line, 1),
+                options: {
+                  isWholeLine: true,
+                  linesDecorationsClassName: className
+                },
+                change: change
+              })
+              this.decorationsObjectsRight[line] = newDecorationsRight[newDecorationsRight.length - 1]
+            }
+          }
+          this.decorationsLeft = origEditor.deltaDecorations(this.decorationsLeft, newDecorationsLeft)
+          this.decorationsRight = modEditor.deltaDecorations(this.decorationsRight, newDecorationsRight)
+          this.validateEditor()
         }
-    }
+      }
 }
 </script>
-
