@@ -66,6 +66,9 @@ Installation
 Install Backend
 ---------------
 
+The backend assumes that a MySQL database is already existing for visualSHARK (can be empty).
+If that is not the case create a database with your favorite tool before running migrate.
+
 ```bash
 apt-get install libmysqlclient-dev
 git clone https://github.com/smartshark/visualSHARK.git
@@ -101,6 +104,7 @@ npm install patch-package
 npx patch-package
 
 # change local production settings, endpoints for RabbitMQ (websocket) and visualSHARK backend
+# This is only necessary for a production environment, i.e., not running with npm run serve
 cp env.production.local .env.production.local
 nano .env.production.local
 
