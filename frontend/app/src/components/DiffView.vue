@@ -54,11 +54,14 @@
         <option name="documentation" value="documentation">documentation</option>
         <option name="refactoring" value="refactoring">refactoring</option>
         <option name="unrelated" value="unrelated">unrelated</option>
-        <option name="bug" value="bug">bug</option>
+        <option name="bugfix" value="bugfix">bugfix</option>
       </select>
       <div class="diffEditor">
         <div class="lineLabels noselect">
             <div class="lineno" v-for="line in lines">
+            <template v-if="line.consensus_label">
+              <div>{{line.consensus_label}}</div>
+            </template>
             <template v-if="line.new == '-'">
               <input type="checkbox" v-model="selectedModels[line.number]" :name="'checkbox' + line.number" @change="selectOne($event)"/>
               <select :id="commit + '_' + filename + '_' + line.number" v-model="models[line.number]" class="labelType"  @change="changeLabel(line.number)">
@@ -68,7 +71,7 @@
                 <option name="documentation" value="documentation">documentation</option>
                 <option name="refactoring" value="refactoring">refactoring</option>
                 <option name="unrelated" value="unrelated">unrelated</option>
-                <option name="bug" value="bug">bug</option>
+                <option name="bugfix" value="bugfix">bugfix</option>
               </select>
             </template>
             <template v-if="line.old == '-'">
@@ -80,7 +83,7 @@
                 <option name="documentation" value="documentation">documentation</option>
                 <option name="refactoring" value="refactoring">refactoring</option>
                 <option name="unrelated" value="unrelated">unrelated</option>
-                <option name="bug" value="bug">bug</option>
+                <option name="bugfix" value="bugfix">bugfix</option>
               </select>
             </template>
           </div>
@@ -152,6 +155,7 @@ export default {
     lines: function(oldValue, newValue) {
       this.refreshCode()
       this.initializeModel()
+      console.log(newValue)
     },
     isDocumentation(oldValue, newValue) {
       if(this.isDocumentation === true) {
@@ -188,7 +192,7 @@ export default {
     globalShortcut(event) {
       let label = 'label'
       if(event.keyCode == 49) {
-        label = 'bug'
+        label = 'bugfix'
       }
       else if(event.keyCode == 50) {
         label = 'whitespace'
@@ -265,7 +269,7 @@ export default {
       }
 
       if(event.keyCode == 49) {
-        this.models[line] = 'bug'
+        this.models[line] = 'bugfix'
       }
       if(event.keyCode == 50) {
         this.models[line] = 'whitespace'

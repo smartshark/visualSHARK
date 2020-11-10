@@ -27,28 +27,7 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="row">
-        <div class="col-sm-6 col-md-4 col-lg-4">
-
-        </div>
-        <div class="col-sm-6 col-md-4 col-lg-4">
-          <div class="card">
-            <div class="card-header">
-              <i class="fa fa-bug"></i> Issues
-            </div>
-            <div class="card-block">
-             Buggy Issues [TODO]<br/>
-             Non linked buggy issues which are also closed [TODO]
-
-             <MonacoEditor class="editor" v-model="code" language="javascript" />
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-md-4 col-lg-4">
-
-        </div>
-      </div>        
+      </div>       
     </div>
   </div>
 </template>
@@ -56,18 +35,15 @@
 <script>
 import { mapGetters } from 'vuex'
 import { alert } from 'vue-strap'
-import MonacoEditor from 'vue-monaco'
 
 export default {
   name: 'project',
   data () {
     return {
-      code: 'const noop = () => {}'
     }
   },
   components: {
-    alert,
-    MonacoEditor
+    alert
   },
   computed: mapGetters({
     currentProject: 'currentProject',

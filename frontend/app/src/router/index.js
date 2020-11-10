@@ -21,6 +21,7 @@ import IssueTypeConflicts from '@/views/IssueTypeConflicts'
 import CommitIssueLinks from '@/views/CommitIssueLinks'
 import LineLabels from '@/views/LineLabels'
 import Leaderboard from '@/views/Leaderboard'
+import InspectBugfix from '@/views/InspectBugfix'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -134,6 +135,11 @@ const router = new Router({
               path: 'linesOld',
               name: 'Change Lines Old',
               component: LineLabels
+            },
+            {
+              path: 'inspectBugfix',
+              name: 'Inspect Bugfix',
+              component: InspectBugfix
             },
             {
               path: 'leaderboard',

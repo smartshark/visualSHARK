@@ -1,9 +1,13 @@
-0.1.3 (in progress)
+0.1.4 (in progress)
+- merged line labeling branch
+[ ] include feature flags in backend and frontend to deactivate functionality that is in development
+[ ] fix warning for loading attribute of grid
+[ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
+
+0.1.3
 - add VERY basic rights management
 - update all dependencies
 - make commit graph (almost) use the full available size
-[ ] fix warning for loading attribute of grid
-[ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
 
 0.1.2
 - Grid does now switch to first page if entries to display is changed

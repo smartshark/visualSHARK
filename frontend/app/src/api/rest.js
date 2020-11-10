@@ -495,6 +495,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getBugfix (projectName, externalId) {
+    let req = this.getUrl('labeling/bugfix/?project_name=' + projectName + '&external_id=' + externalId)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   saveChangedLines (dat) {
     let req = this.getUrl('labeling/lines/')
     return axios.post(req, dat, {headers: {

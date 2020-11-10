@@ -52,6 +52,7 @@ from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
 from .util.helper import get_change_view, refactoring_lines
+from .util.line_label import get_commit_data
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -356,7 +357,10 @@ class ProjectViewSet(MongoReadOnlyModelViewSet):
             query = ProjectAttributes.objects.all()
 
         for pro in query.order_by('project_name'):
-            projects.append(Project.objects.get(name=pro.project_name))
+            try:
+                projects.append(Project.objects.get(name=pro.project_name))
+            except Project.DoesNotExist:
+                pass
 
         serializer = self.serializer_class(projects, many=True)
         response = {}
@@ -1133,6 +1137,60 @@ class IssueLinkSet(APIView):
         return Response(result)
 
 
+class BugfixLines(APIView):
+    """Access full bug-fixes
+
+    includes: code, issue, everything that is validated
+    contains also all PMD warnings
+    """
+    read_perm = 'view_line_labels'
+    write_perm = 'edit_line_labels'
+
+    def get(self, request):
+        external_id = request.GET.get('external_id', None)
+        project_name = request.GET.get('project_name', None)
+
+        if not external_id:
+            log.error('got no external_id')
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not project_name:
+            log.error('got no project')
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+        issue = Issue.objects.get(external_id=external_id)
+
+        # urls for issue system and git
+        issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
+        p = Project.objects.get(id=issue_system.project_id)
+        if 'jira' in issue_system.url:
+            issue_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not issue_url.endswith('/'):
+                issue_url += '/'
+
+        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        result = {'warning': '',
+                  'commits': get_commit_data(issue, project_path, consensus=True),
+                  'issue_url': issue_url,
+                  'vcs_url': vcs_url}
+
+        serializer = IssueSerializer(issue, many=False)
+        data = serializer.data
+        result['issue'] = data
+
+        return Response(result)
+
+
 class LineLabelSet(APIView):
     read_perm = 'view_line_labels'
     write_perm = 'edit_line_labels'
@@ -1422,11 +1480,7 @@ class LineLabelSet(APIView):
 
         return Response(result)
 
-# tutorial issues:
-# - IMAGING-99
-# - imaging-82
-# - imaging-121
-# - codec-65
+
 class LeaderboardSet(APIView):
     read_perm = 'view_line_labels'
 

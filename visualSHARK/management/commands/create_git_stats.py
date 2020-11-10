@@ -34,8 +34,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('project', help='which project')
 
-    def get_version_tags(self, vcs_id):
-        versions = tag_filter(Tag.objects.filter(vcs_system_id=vcs_id), discard_qualifiers=True, discard_patch=True)
+    def get_version_tags(self, project_name, vcs_id):
+        versions = tag_filter(project_name, Tag.objects.filter(vcs_system_id=vcs_id), discard_qualifiers=True, discard_patch=True)
 
         cg = CommitGraph.objects.get(vcs_system_id=vcs_id)
         dg = nx.read_gpickle(cg.directed_pickle.path)
@@ -146,7 +146,7 @@ class Command(BaseCommand):
         stats['other_lines'] = stats['other_lines_added'] - stats['other_lines_deleted']
         pp(stats)
 
-        ret = self.get_version_tags(vcs_id)
+        ret = self.get_version_tags(project.name, vcs_id)
         pp(ret)
 
         end = timeit.default_timer() - start
