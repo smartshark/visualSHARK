@@ -196,8 +196,7 @@ export default {
       this.$store.dispatch('pushLoading')
       rest.getProductFile(version.id)
         .then(response => {
-          this.$store.dispatch('popLoading')
-          let data = response.data.product
+          let data = response.data.instances
           this.currentProductData = data
           this.currentProductComplete = response.data
 
@@ -230,14 +229,16 @@ export default {
               // console.log('gui: ', row['gui'])
               if (row[tp] === true) {
                 t = types.indexOf(tp)
-                if (row.label === true) {
+                //if (row.label === true) {
+                if (row.BUGFIX_count > 0) {
                   datasets[1].data[t] += 1
                 } else {
                   datasets[0].data[t] += 1
                 }
               }
             }
-            if (row.label === true) {
+            //if (row.label === true) {
+            if (row.BUGFIX_count > 0) {
               datasets[1].data[0] += 1
             } else {
               datasets[0].data[0] += 1
@@ -245,6 +246,7 @@ export default {
           }
           this.drawChart(datasets, types)
         })
+        this.$store.dispatch('popLoading')
         .catch(e => {
           this.$store.dispatch('pushError', e)
         })

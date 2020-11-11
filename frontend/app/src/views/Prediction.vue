@@ -286,11 +286,11 @@ export default {
       this.$store.dispatch('pushLoading')
       rest.predict({ training: this.trainingProducts, test: this.testProducts, model: this.predictionModel })
         .then(response => {
-          this.$store.dispatch('popLoading')
           let data = response.data.product
           this.currentProductData = data
           this.gridData = data.slice(0, 15)
           this.gridDataCount = data.length
+          this.$store.dispatch('popLoading')
         })
         .catch(e => {
           this.$store.dispatch('pushError', e)

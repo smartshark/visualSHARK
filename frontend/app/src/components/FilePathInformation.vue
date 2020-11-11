@@ -158,9 +158,9 @@ export default {
       let biggestBugs = 0
       this.release.forEach((row) => {
         // do we match our current path
-        if (row.long_name.startsWith(this.currentPath)) {
+        if (row.file.startsWith(this.currentPath)) {
           // remove the current prefix
-          let tmp = row.long_name.replace(this.currentPath, '')
+          let tmp = row.file.replace(this.currentPath, '')
 
           // split the path of the file
           tmp = tmp.split('/')

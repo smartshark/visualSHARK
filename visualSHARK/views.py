@@ -109,7 +109,7 @@ class Auth(APIView):
 
         # we just try to avoid ReconnectErrors here
         try:
-            _ = Project.objects.count()
+            Project.objects.count()
         except:
             pass
 

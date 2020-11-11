@@ -149,11 +149,14 @@ DROP_METRICS += ['enum_AD',
  'enum_TNS',
  'enum_WMC']
 
+DROP_METRICS += [
+'imports'
+]
 
 def combine(tlist):
     ret = []
     for tl in tlist:
-        ret += tl['product']
+        ret += tl['instances']
     return pd.DataFrame(ret)
 
 
@@ -176,10 +179,17 @@ def predict(train, test, prediction_type='NB'):
     train = train.dropna()
     test = test.dropna()
 
-    train_data = train.drop(['long_name', 'bugs', 'label'], axis=1).values
+    remove_columns = set(train.columns) ^ set(test.columns)
+    train.drop(remove_columns, axis=1, errors='ignore', inplace=True)
+    test.drop(remove_columns, axis=1, errors='ignore', inplace=True)
+
+    train['label'] = train['BUGFIX_count'] > 0
+    test['label'] = test['BUGFIX_count'] > 0
+
+    train_data = train.drop(['file', 'BUGFIX_count', 'label'], axis=1).values
     train_labels = train['label'].values
 
-    test_data = test.drop(['long_name', 'bugs', 'label'], axis=1).values
+    test_data = test.drop(['file', 'BUGFIX_count', 'label'], axis=1).values
     test_labels = test['label'].values
 
     if prediction_type == 'NB':
@@ -194,7 +204,7 @@ def predict(train, test, prediction_type='NB'):
     results = []
     for i, l in enumerate(pred_labels):
         row = test.iloc[i]
-        results.append({'long_name': row['long_name'], 'bugs': row['bugs'], 'label': l})
+        results.append({'long_name': row['file'], 'bugs': row['BUGFIX_count'], 'label': l})
 
     return {'product': results}
 
@@ -210,10 +220,17 @@ def predict_evaluate(train, test, prediction_type='NB'):
     train = train.dropna()
     test = test.dropna()
 
-    train_data = train.drop(['long_name', 'bugs', 'label'], axis=1).values
+    remove_columns = set(train.columns) ^ set(test.columns)
+    train.drop(remove_columns, axis=1, errors='ignore', inplace=True)
+    test.drop(remove_columns, axis=1, errors='ignore', inplace=True)
+
+    train['label'] = train['BUGFIX_count'] > 0
+    test['label'] = test['BUGFIX_count'] > 0
+
+    train_data = train.drop(['file', 'BUGFIX_count', 'label'], axis=1).values
     train_labels = train['label'].values
 
-    test_data = test.drop(['long_name', 'bugs', 'label'], axis=1).values
+    test_data = test.drop(['file', 'BUGFIX_count', 'label'], axis=1).values
     test_labels = test['label'].values
 
     if prediction_type == 'NB':
