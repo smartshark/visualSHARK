@@ -39,6 +39,7 @@ from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, File
     Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 from .models import LeaderboardSnapshot
+from .models import CorrectionIssues
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -51,8 +52,8 @@ from rest_framework.filters import OrderingFilter
 from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
-from .util.helper import get_change_view, refactoring_lines
-from .util.line_label import get_commit_data
+from .util.helper import get_change_view, refactoring_lines, get_correction_view, get_control_view
+from .util.line_label import get_commit_data, get_technology_commit
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1191,6 +1192,72 @@ class BugfixLines(APIView):
         return Response(result)
 
 
+class TechnologyLabeling(APIView):
+    """Access full bug-fixes
+
+    includes: code, issue, everything that is validated
+    contains also all PMD warnings
+    """
+    read_perm = 'view_technology_labels'
+    write_perm = 'edit_technology_labels'
+
+    def get(self, request):
+        project_name = request.GET.get('project_name', None)
+
+        if not project_name:
+            log.error('got no project')
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+        p = Project.objects.get(name=project_name)
+        vcs = VCSSystem.objects.get(project_id=p.id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # sample commits, very simple, get first commit which changes at least one java file
+        sample_commit = None
+        for c in Commit.objects.filter(vcs_system_id=vcs.id, parents__1__exists=False).only('revision_hash', 'parents', 'message'):
+            for fa in FileAction.objects.filter(commit_id=c.id):
+                f = File.objects.get(id=fa.file_id)
+                if f.path.lower().endswith('.java'):
+                    sample_commit = c
+                    break
+            if sample_commit:
+                break
+
+        sample_commit = Commit.objects.get(revision_hash='f3bd0b79313c65d41260a7dfec6e041cc5e24674')
+        result = {'warning': '',
+                  'commits': get_technology_commit(project_path, sample_commit),
+                  'vcs_url': vcs_url}
+
+        return Response(result)
+
+
+class Technologies(APIView):
+    """Return list of technologies, maybe restricted by project.
+    This populates the Multiselect
+    """
+    read_perm = 'view_technology_labels'
+    write_perm = 'edit_technology_labels'
+
+    def get(self, request):
+        project_name = request.GET.get('project_name', None)
+
+        if not project_name:
+            log.error('got no project')
+            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+
+        # p = Project.objects.get(name=project_name)
+
+        result = {'technologies': ['springboot', 'log4j']}
+
+        return Response(result)
+
+
 class LineLabelSet(APIView):
     read_perm = 'view_line_labels'
     write_perm = 'edit_line_labels'
@@ -1370,11 +1437,6 @@ class LineLabelSet(APIView):
                 for line in lines_needing_labels:
                     line_number = str(line['number'])
 
-                    if line_addr == 'old_new':
-                        line_number = str(line['old'])
-                        if line_number == '-':
-                            line_number = str(line['new'])
-
                     if line_number in labels[key] and labels[key][line_number] != 'label':
                         if line['hunk_id'] not in label_lines.keys():
                             label_lines[line['hunk_id']] = []
@@ -1479,6 +1541,298 @@ class LineLabelSet(APIView):
         result['issue'] = data
 
         return Response(result)
+
+
+class LineLabelCorrectionSet(APIView):
+    """Only used for correcting line labels that were overwritten,
+    will be removed later"""
+    read_perm = 'view_line_label_corrections'
+    write_perm = 'edit_line_label_corrections'
+
+    def _escape_user(self, user):
+        return user.replace('.', '')
+
+    def _commit_data(self, issue, project_path, username):
+        commits = []
+
+        folder = tempfile.mkdtemp()
+        git.repo.base.Repo.clone_from(project_path + "/", folder)
+
+        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
+            repo = git.Repo(folder)
+            repo.git.reset('--hard', commit.revision_hash)
+
+            if commit.parents:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+            else:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id)
+
+            # print('commit', commit.revision_hash)
+            changes = []
+            for fa in fa_qry:
+                f = File.objects.get(id=fa.file_id)
+
+                source_file = folder + '/' + f.path
+                if not os.path.exists(source_file):
+                    # print('file', source_file, 'not existing, skipping')
+                    continue
+
+                # print('open file', source_file, end='')
+                # use libmagic to guess encoding
+                blob = open(source_file, 'rb').read()
+                m = magic.Magic(mime_encoding=True)
+                encoding = m.from_buffer(blob)
+                # print('encoding', encoding)
+
+                # we open everything but binary
+                if encoding == 'binary':
+                    continue
+                if encoding == 'unknown-8bit':
+                    continue
+                if encoding == 'application/mswordbinary':
+                    continue
+
+                ref_old, ref_new = refactoring_lines(commit.id, fa.id)
+
+                # unknown encoding error
+                try:
+                    nfile = open(source_file, 'rb').read().decode(encoding)
+                except LookupError:
+                    continue
+                nfile = nfile.replace('\r\n', '\n')
+                nfile = nfile.replace('\r', '\n')
+                nfile = nfile.split('\n')
+
+                view_lines, has_changed, lines_before, lines_after, hunks = get_correction_view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new, username)
+
+                if has_changed:
+                    changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+
+            if changes:
+                commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
+
+        shutil.rmtree(folder)
+        return commits
+
+    def _commit_data_normal(self, issue, project_path):
+        commits = []
+
+        folder = tempfile.mkdtemp()
+        git.repo.base.Repo.clone_from(project_path + "/", folder)
+
+        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
+            repo = git.Repo(folder)
+            repo.git.reset('--hard', commit.revision_hash)
+
+            if commit.parents:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+            else:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id)
+
+            # print('commit', commit.revision_hash)
+            changes = []
+            for fa in fa_qry:
+                f = File.objects.get(id=fa.file_id)
+
+                source_file = folder + '/' + f.path
+                if not os.path.exists(source_file):
+                    # print('file', source_file, 'not existing, skipping')
+                    continue
+
+                # print('open file', source_file, end='')
+                # use libmagic to guess encoding
+                blob = open(source_file, 'rb').read()
+                m = magic.Magic(mime_encoding=True)
+                encoding = m.from_buffer(blob)
+                # print('encoding', encoding)
+
+                # we open everything but binary
+                if encoding == 'binary':
+                    continue
+                if encoding == 'unknown-8bit':
+                    continue
+                if encoding == 'application/mswordbinary':
+                    continue
+
+                ref_old, ref_new = refactoring_lines(commit.id, fa.id)
+
+                # unknown encoding error
+                try:
+                    nfile = open(source_file, 'rb').read().decode(encoding)
+                except LookupError:
+                    continue
+                nfile = nfile.replace('\r\n', '\n')
+                nfile = nfile.replace('\r', '\n')
+                nfile = nfile.split('\n')
+
+                view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new)
+
+                if has_changed:
+                    changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+
+            if changes:
+                commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
+
+        shutil.rmtree(folder)
+        return commits
+
+    def _load_issue(self, user):
+        p = None
+        issue = None
+
+        ci = CorrectionIssues.objects.filter(user=user, is_corrected=False, is_skipped=False).first()
+        if not ci:
+            return issue, p
+
+        project_key = ci.external_id.split('-')[0]
+        for its in IssueSystem.objects.all():
+            if project_key in its.url:
+                p = Project.objects.get(id=its.project_id)
+
+        if not p:
+            return issue, p
+
+        its = IssueSystem.objects.get(project_id=p.id)
+        issue = Issue.objects.get(external_id=ci.external_id, issue_system_id=its.id)
+        return issue, p
+
+    def get(self, request):
+
+        issue, project = self._load_issue(request.user)
+        if issue is None:
+            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssues.objects.filter(user=request.user, is_skipped=True).count()})
+
+        # urls for issue system and git
+        issue_system = IssueSystem.objects.get(project_id=project.id)
+        if 'jira' in issue_system.url:
+            issue_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not issue_url.endswith('/'):
+                issue_url += '/'
+
+        vcs = VCSSystem.objects.get(project_id=project.id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + project.name
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        username = self._escape_user(request.user.username)
+
+        if request.user.username == 'atx':
+            username = 'atrautsch'
+
+        result = {'warning': '',
+                  'commits': self._commit_data(issue, project_path, username),
+                  'issue_url': issue_url,
+                  'vcs_url': vcs_url}
+
+        serializer = IssueSerializer(issue, many=False)
+        data = serializer.data
+        result['issue'] = data
+
+        # include additional information about skipped / corrected issus
+        result['all'] = CorrectionIssues.objects.filter(user=request.user).count()
+        result['skipped'] = CorrectionIssues.objects.filter(user=request.user, is_skipped=True).count()
+        result['corrected'] = CorrectionIssues.objects.filter(user=request.user, is_corrected=True).count()
+
+        return Response(result)
+
+    def post(self, request):
+        if 'unskip_issues' in request.data['data'].keys() and request.data['data']['unskip_issues']:
+            for ci in CorrectionIssues.objects.filter(user=request.user):
+                ci.is_skipped = False
+                ci.save()
+            return Response({'unskipped_issues': True})
+
+        issue_id = request.data['data']['issue_id']
+        issue = Issue.objects.get(id=issue_id)
+
+        if 'skip_issue' in request.data['data'].keys() and request.data['data']['skip_issue']:
+            ci = CorrectionIssues.objects.get(user=request.user, external_id=issue.external_id)
+            ci.is_skipped = True
+            ci.save()
+            return Response({'skipped_issue': issue.external_id})
+
+        username = request.user.username
+        if request.user.username == 'atx':
+            username = 'atrautsch'
+
+        labels = request.data['data']['labels']
+
+        its = IssueSystem.objects.get(id=issue.issue_system_id)
+        p = Project.objects.get(id=its.project_id)
+        vcs = VCSSystem.objects.get(project_id=p.id)
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
+
+        # check if we have a label for every line that is deleted
+        commits = self._commit_data_normal(issue, project_path)
+        new_changes = []
+        errors = []
+        for c in commits:
+            for change in c['changes']:
+                key = c['revision_hash'] + '_' + change['parent_revision_hash'] + '_' + change['filename']
+                label_lines = {}
+
+                # load all lines that need a label
+                lines_needing_labels = []
+                for line in change['lines']:
+                    if line['old'] == '-' or line['new'] == '-':
+                        lines_needing_labels.append(line)
+
+                # check if every line that needs a label is in submitted labels and has a label
+                for line in lines_needing_labels:
+                    line_number = str(line['number'])
+
+                    if line_number in labels[key] and labels[key][line_number] != 'label':
+                        if line['hunk_id'] not in label_lines.keys():
+                            label_lines[line['hunk_id']] = []
+
+                        label_lines[line['hunk_id']].append({'label': labels[key][line_number], 'hunk_line': line['hunk_line'], 'line': line['code']})
+                    else:
+                        errors.append('error, line {} not found or wrong label in key {}'.format(line_number, key))
+
+                tmp = {key: label_lines}
+                new_changes.append(tmp)
+        if errors:
+            log.error(errors)
+            return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
+
+        # now save the final changes
+        for change in new_changes:
+            for key, changes in change.items():
+                revision_hash, parent_revision_hash, file_name = key.split('_')[0], key.split('_')[1], '_'.join(key.split('_')[2:])  # ugly :-(
+
+                # these are just sanity checks, the only important informaiton is the hunk_id
+                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_id=vcs.id)
+                f = File.objects.get(path=file_name, vcs_system_id=vcs.id)
+                fa = FileAction.objects.get(commit_id=c.id, file_id=f.id, parent_revision_hash=parent_revision_hash)
+
+                write_changes = {}
+                for hunk_id, lines in changes.items():
+                    if hunk_id not in write_changes.keys():
+                        write_changes[hunk_id] = {}
+                        write_changes[hunk_id][username] = {}
+                    for line in lines:
+                        if line['label'] not in write_changes[hunk_id][username].keys():
+                            write_changes[hunk_id][username][line['label']] = []
+                        write_changes[hunk_id][username][line['label']].append(line['hunk_line'])
+
+                for hunk_id, result in write_changes.items():
+                    r = {'set__lines_manual__{}'.format(self._escape_user(username)): result[username]}
+                    h = Hunk.objects.get(id=hunk_id).update(**r)
+
+        ci = CorrectionIssues.objects.get(user=request.user, external_id=issue.external_id)
+        ci.is_corrected = True
+        ci.save()
+
+        log.debug('final changes')
+        log.debug(new_changes)
+        return Response({'changes': new_changes})
 
 
 class LeaderboardSet(APIView):

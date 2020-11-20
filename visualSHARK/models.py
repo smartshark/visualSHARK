@@ -198,6 +198,14 @@ class IssueValidationUser(models.Model):
     label = models.TextField()
 
 
+class CorrectionIssues(models.Model):
+    """MySQL Overlay for correcting issues for line-labeling"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    external_id = models.CharField(max_length=255)
+    is_corrected = models.BooleanField(default=False)
+    is_skipped = models.BooleanField(default=False)
+
+
 class RightsSupport(models.Model):
 
     class Meta:
@@ -224,6 +232,11 @@ class RightsSupport(models.Model):
                     ('edit_jobs', 'Edit jobs'),
                     ('view_line_labels', 'View line labels'),
                     ('edit_line_labels', 'Edit line labels'),
+
+                    ('view_technology_labels', 'View technology labels'),
+                    ('edit_technology_labels', 'Edit technology labels'),
+                    ('view_line_label_corrections', 'View line label corrections'),
+                    ('edit_line_label_corrections', 'Set line label corrections'),
         )
 
 

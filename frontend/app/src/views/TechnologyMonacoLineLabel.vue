@@ -1,72 +1,57 @@
 <template>
   <div class="wrapper">
-  <template v-if="flashes">
-    <alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" type="success" dismissable>
-      <span class="icon-info-circled alert-icon-float-left"></span>
-      <p>{{flash.message}}</p>
-    </alert>
-  </template>
-
+    <template v-if="flashes">
+      <alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" type="success" dismissable>
+        <span class="icon-info-circled alert-icon-float-left"></span>
+        <p>{{flash.message}}</p>
+      </alert>
+    </template>
     <div class="animated fadeIn">
-<div v-if="error.length > 0">
-    <alert placement="top-center" duration="5" type="warning">
+      <div v-if="error.length > 0">
+        <alert placement="top-center" duration="5" type="warning">
           <ul>
-             <li v-for="item in error">
-                Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
-                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+            <li v-for="item in error">
+              Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
+              <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
             </li>
           </ul>
-    </alert>
-        </div>
-            <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
-            <div class="clearfix"></div>
-     <div class="card">
-            <div class="card-header">
-              <i class="fa fa-tag"></i> Labels
-            </div>
-            <div class="card-block">
-                <div class="label" data-toggle="tooltip" data-placement="top" title="The line contributes to the corrective change that is performed to address the issue that is described."><span class="dot" style="background-color: #FF0000;">1</span>bug fix</div>
-                <div class="label" data-toggle="tooltip" data-placement="top" title="The line only contains changes to whitespaces that do not affect the logic of the source code."><span class="dot">2</span>whitespace</div>
-                <div class="label" data-toggle="tooltip" data-placement="top" title="The line only contains changes to documentation of the software, including line comments or documentation files."><span class="dot" style="background-color: #442727;">3</span>documentation</div>
-                <div class="label" data-toggle="tooltip" data-placement="top" title="The change is a refactoring, e.g., a renaming of a variable or the extraction of a method."><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
-                <div class="label" data-toggle="tooltip" data-placement="top" title="The change is only to tests of the project, e.g., test code or test data."><span class="dot" style="background-color: #00FF00;">5</span>test</div>
-                <div class="label" data-toggle="tooltip" data-placement="top" title="The change is neither of the above, e.g., the addition of features unrelated to the described issue."><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
-                <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
-                <div>Press the key of the color to label the current line with the belonging label, press 7 to remove the label</div>
-            </div>
+        </alert>
       </div>
-          <div class="card">
-            <div class="card-header">
-              <i class="fa fa-bug"></i> <a :href="issue_url + issue.external_id" target="_blank">{{issue.external_id}}</a> - {{issue.title}}
+      <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
+      <div class="clearfix"></div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fa fa-tag"></i> Most used technologies
+        </div>
+        <div class="card-block">
+          TAG CLOUD: <template v-for="tech in technologies">{{tech}}&nbsp;</template>
+        </div>
+      </div>
+      <template v-for="c in commits">
+        <div class="card" :id="c.revision_hash">
+          <div class="card-header">
+            <div v-on:click="scrollToCommit(c)">
+              <i class="fa fa-bug"></i> Commit <a :href="vcs_url + c.revision_hash" target="_blank">{{c.revision_hash}}</a>
+              <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
             </div>
+          </div>
+          <div :id="'collapse' + c.revision_hash">
             <div class="card-block">
-            <div class="row">
-<label class="col-sm-2">Issue title</label>
-
-<div class="col-sm-10">{{ issue.title }}
+              <div class="row">
+                <label class="col-sm-2">Commit Message</label>
+                <div class="col-sm-10">
+                  <pre class="form-control">{{ c.message }}</pre>
+                </div>
+              </div>
             </div>
-            </div>
-
-
-<div class="row">
-<label class="col-sm-2">Issue description</label>
-<div class="col-sm-10">
-             <pre class="force-wrap">{{ issue.desc }}</pre>
-            </div>
-            </div>
-                        <div class="row">
-<label class="col-sm-2">Commits</label>
-<div class="col-sm-10">
-            <button v-for="commit in commits" v-on:click="scrollToCommit(commit)" class="btn btn-default" style="margin-right: 5px;">{{ commit.revision_hash }}</button>
-            </div>
-            </div>
-            </div>
-          </div>
-              <template v-for="c in commits">
-                <MonacoCommitDiffView :commit="c" :vcs_url="vcs_url" ref="commitDiffView" />
+            <div>
+              <template v-for="f in c.changes">
+                <TechnologyMonacoDiffView :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" ref="diffView" />
               </template>
+            </div>
           </div>
-
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -75,32 +60,44 @@
 import { mapGetters } from 'vuex'
 import { alert } from 'vue-strap'
 import rest from '../api/rest'
-import MonacoCommitDiffView from '@/components/MonacoCommitDiffView.vue'
+import TechnologyMonacoDiffView from '@/components/TechnologyMonacoDiffView.vue'
+import Multiselect from 'vue-multiselect'
 
 export default {
     data() {
-        return {
-            commits: [],
-            issue: '',
-            flashes: [],
-            error: [],
-      vcs_url: '',
-      issue_url: '',
-        }
+      return {
+        commits: [],
+        issue: '',
+        flashes: [],
+        error: [],
+        vcs_url: '',
+        issue_url: '',
+        technologies: []
+      }
     },
     computed: mapGetters({
-        currentProject: 'currentProject',
-        projectsVcs: 'projectsVcs',
-        projectsIts: 'projectsIts',
-        projectsMl: 'projectsMl'
+      currentProject: 'currentProject',
+      projectsVcs: 'projectsVcs',
+      projectsIts: 'projectsIts',
+      projectsMl: 'projectsMl'
     }),
     mounted() {
+
+        this.$store.dispatch('pushLoading')
+        rest.getTechnologiesForTechnologyLabeling(this.currentProject.name)
+            .then(response => {
+                this.$store.dispatch('popLoading')
+                this.technologies = response.data['technologies']
+            })
+            .catch(e => {
+                this.$store.dispatch('pushError', e)
+            });
 
         var that = this;
 
         // Start background request
         this.$store.dispatch('pushLoading')
-        rest.getIssueWithCommits(this.currentProject.name)
+        rest.sampleCommitForTechnologyLabeling(this.currentProject.name)
             .then(response => {
                 this.$store.dispatch('popLoading')
 
@@ -119,12 +116,9 @@ export default {
                 this.load_last = response.data['load_last']
                 setTimeout(() => {
                     // Register all editors
-                    that.registerFoldingModel();
-                    for(var i = 0; i < that.$refs.commitDiffView.length; i++)
-                    {
-                    that.$refs.commitDiffView[i].initEditors();
-                    }
-                    that.validateAll();
+                    this.registerFoldingModel();
+                    this.initEditors();
+                    this.validateAll();
                 }, 25);
 
                 if(this.has_trained !== true) {
@@ -140,23 +134,64 @@ export default {
             });
     },
     components: {
-        MonacoCommitDiffView,
-        alert
+        TechnologyMonacoDiffView,
+        alert,
+        Multiselect
     },
     methods: {
-        scrollToCommit : function(commit) {
-            document.getElementById('collapse' + commit.revision_hash).style.display = "block";
-            document.getElementById(commit.revision_hash).scrollIntoView();
+        top : function() {
+            scroll(0,0)
         },
+        initEditors: function() {     
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                this.$refs.diffView[i].initEditor();
+            }
+        },
+        getEditors : function() {
+            var editors = [];
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                editors.push(this.$refs.diffView[i].getEditor());
+            }
+            return editors;
+        },
+        validate: function() {
+            var correct = [];
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                if(!this.$refs.diffView[i].validateEditor())
+                {
+                    correct.push(this.commit.changes[i]);
+                }
+            }
+            return correct;
+        },
+        showValidation: function(show) {
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                this.$refs.diffView[i].changeValidation(show);
+            }
+        },
+        getData: function() {
+            var data = {};
+            var hash = this.commit.revision_hash;
+            for(var i = 0; i < this.$refs.diffView.length; i++)
+            {
+                data = Object.assign({}, data, this.$refs.diffView[i].getData(hash));
+            }
+            return data;
+        },
+
         jumpToChange : function(change)
         {
             document.getElementById('file' + change.filename + change.parent_revision_hash).scrollIntoView();
         },
         getEditors : function() {
            var editors = [];
-           for(var i = 0; i < this.$refs.commitDiffView.length; i++)
+           for(var i = 0; i < this.$refs.diffView.length; i++)
            {
-           editors = editors.concat(this.$refs.commitDiffView[i].getEditors());
+           editors = editors.concat(this.$refs.diffView[i].getEditors());
            }
            return editors;
         },
@@ -220,29 +255,28 @@ export default {
         validateAll: function () {
             var that = this;
             setTimeout(() => {
-                    for (var i = 0; i < that.$refs.commitDiffView.length; i++) {
-                        that.$refs.commitDiffView[i].validate()
+                    for (var i = 0; i < that.$refs.diffView.length; i++) {
+                        that.$refs.diffView[i].validateEditor()
                     }
              }, 1000);
         },
         submitLabels : function() {
              // check if anything is missing
              var correct = [];
-             for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
-                  correct = correct.concat(this.$refs.commitDiffView[i].validate());
-                  this.$refs.commitDiffView[i].showValidation(true);
+             for (var i = 0; i < this.$refs.diffView.length; i++) {
+                  correct = correct.concat(this.$refs.diffView[i].validateEditor());
+                  this.$refs.diffView[i].changeValidation(true);
              }
              this.error = correct;
              console.log(this.error);
-             if(correct.length > 0)
-             {
+             if(correct.length > 0) {
                 window.alert("Not all lines are labelled. You can find links to the locations you missed at the top of the page and the files.");
                 return;
              }
              // else collect data for transmit
              var data = {};
-             for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
-                 data = Object.assign({}, data, this.$refs.commitDiffView[i].getData());
+             for (var i = 0; i < this.$refs.diffView.length; i++) {
+                 data = Object.assign({}, data, this.$refs.diffView[i].getData());
              }
 
             console.log(data);
@@ -289,65 +323,34 @@ margin-right: 10px;
 }
 
 .bugfix {
-	background: #FF0000;
-	width: 5px !important;
-	margin-left: 3px;
+    background: #FF0000;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .whitespace {
   background-color: #bbb;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .documentation {
   background-color: #442727;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .test {
   background-color: #00FF00;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .refactoring {
   background-color: #0779e4;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .unrelated {
   background-color: #ffbd69;
-	width: 5px !important;
-	margin-left: 3px;
-}
-.bugfix-pre {
-  width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #FF0000;
-}
-.whitespace-pre {
-  width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #bbb;
-}
-.documentation-pre {
-  width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #442727;
-}
-.test-pre {
-  background-color: #00FF00;
-  width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #00FF00;
-}
-.refactoring-pre {
-  width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #0779e4;
-}
-.unrelated-pre {
-  width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #ffbd69;
+    width: 5px !important;
+    margin-left: 3px;
 }
 pre.force-wrap {
   white-space: pre-wrap;       /* Since CSS 2.1 */

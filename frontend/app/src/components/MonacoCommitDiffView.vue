@@ -16,7 +16,7 @@
             </div>
             </div>
             <template v-for="c in commit.changes">
-                <MonacoDiffView :file="c" ref="diffView" />
+                <MonacoDiffView :file="c" :lines="c.lines" ref="diffView" />
             </template>
             </div>
             </div>

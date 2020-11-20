@@ -736,7 +736,7 @@ TICKET_TYPE_MAPPING = {'bug': 'bug',
                        'dependency upgrade': 'other'}
 
 
-def get_lines(hunk):
+def get_lines(hunk, user=None):
     added_lines = {}
     deleted_lines = {}
     hunks_changes = []
@@ -752,17 +752,28 @@ def get_lines(hunk):
     current_new_start = hunk.new_start
     count_new_lines = 0
 
+    # if we get a user
+    user_labels = {}
+    if user:
+        for lbl, lines in hunk.lines_manual[user].items():
+            for line in lines:
+                user_labels[line] = lbl
+
     for line in h.split('\n'):
+
+        user_label = None
+        if i in user_labels.keys():
+            user_label = user_labels[i]
 
         tmp = line[1:]
         if line.startswith('+'):
             content_started = True
-            added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
+            added_lines[add_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i, 'user_label': user_label}
             del_line -= 1
             count_new_lines += 1
         elif line.startswith('-'):
             content_started = True
-            deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i}
+            deleted_lines[del_line] = {'code': tmp, 'hunk_id': hunk.id, 'hunk_line': i, 'user_label': user_label}
             add_line -= 1
             count_old_lines += 1
         else:
@@ -948,6 +959,159 @@ def get_change_view(file, hunks, refactoring_lines_old, refactoring_lines_new):
 
         if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
             view_lines.append({'old': idx_old, 'new': idx_new, 'code': line, 'label': get_label(line), 'number': i})
+            lines_before.append(line)
+            lines_after.append(line)
+
+            i += 1
+            idx_new += 1
+            idx_old += 1
+
+    return view_lines, has_changed, lines_before, lines_after, hunks_changes
+
+
+def get_label_number(label):
+    labels = ['bugfix', 'whitespace', 'documentation', 'refactoring', 'test', 'unrelated']
+    if label in labels:
+        return labels.index(label) + 1
+    else:
+        return 0
+
+
+def get_control_view(file, hunks, refactoring_lines_old, refactoring_lines_new, username):
+    """Correction view for line labeling"""
+    view_lines = []
+    lines_before = []
+    lines_after = []
+    hunks_changes = []
+    added_lines = {}
+    deleted_lines = {}
+
+    for hunk in hunks:
+        al, dl, hunk_changes = get_lines(hunk, username)
+        hunks_changes = hunks_changes + hunk_changes
+        added_lines.update(al)
+        deleted_lines.update(dl)
+
+    idx_old = idx_new = 1
+    i = 1
+    has_changed = False
+
+    overwritten_lines = set()
+    added_line_numbers = set()
+    for added in added_lines.keys():
+        added_line_numbers.add(added)
+
+    for deleted in deleted_lines.keys():
+        if deleted in added_line_numbers:
+            overwritten_lines.add(deleted)
+
+    for line in file:
+        while idx_old in deleted_lines.keys():
+
+            label = get_label_number(deleted_lines[idx_old]['user_label'])
+            label_pre = get_label(deleted_lines[idx_old]['code'])
+
+            tmp = {'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'label': label, 'label_pre': label_pre, 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']}
+            if idx_old in refactoring_lines_old:
+                tmp['label_pre'] = 4
+            view_lines.append(tmp)
+            lines_before.append(deleted_lines[idx_old]['code'])
+
+            i += 1
+            idx_old += 1
+            has_changed = True
+
+        if idx_new in added_lines.keys():
+            label = get_label_number(added_lines[idx_new]['user_label'])
+            label_pre = get_label(added_lines[idx_new]['code'])
+
+            tmp = {'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'label': label, 'label_pre': label_pre, 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']}
+            if idx_new in refactoring_lines_new:
+                tmp['label_pre'] = 4
+            view_lines.append(tmp)
+            lines_after.append(added_lines[idx_new]['code'])
+
+            i += 1
+            idx_new += 1
+            has_changed = True
+            continue
+
+        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': line, 'label_pre': get_label(line), 'number': i})
+            lines_before.append(line)
+            lines_after.append(line)
+
+            i += 1
+            idx_new += 1
+            idx_old += 1
+
+    return view_lines, has_changed, lines_before, lines_after, hunks_changes
+
+
+def get_correction_view(file, hunks, refactoring_lines_old, refactoring_lines_new, username):
+    """Correction view for line labeling"""
+    view_lines = []
+    lines_before = []
+    lines_after = []
+    hunks_changes = []
+    added_lines = {}
+    deleted_lines = {}
+
+    for hunk in hunks:
+        al, dl, hunk_changes = get_lines(hunk, username)
+        hunks_changes = hunks_changes + hunk_changes
+        added_lines.update(al)
+        deleted_lines.update(dl)
+
+    idx_old = idx_new = 1
+    i = 1
+    has_changed = False
+
+    overwritten_lines = set()
+    added_line_numbers = set()
+    for added in added_lines.keys():
+        added_line_numbers.add(added)
+
+    for deleted in deleted_lines.keys():
+        if deleted in added_line_numbers:
+            overwritten_lines.add(deleted)
+
+    for line in file:
+        while idx_old in deleted_lines.keys():
+
+            label = get_label_number(deleted_lines[idx_old]['user_label'])
+            label_pre = None
+            if idx_old in overwritten_lines:
+                label = None
+                label_pre = get_label(deleted_lines[idx_old]['code'])
+
+            tmp = {'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'label': label, 'label_pre': label_pre, 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']}
+            if idx_old in refactoring_lines_old:
+                tmp['label_pre'] = 4
+            view_lines.append(tmp)
+            lines_before.append(deleted_lines[idx_old]['code'])
+
+            i += 1
+            idx_old += 1
+            has_changed = True
+
+        if idx_new in added_lines.keys():
+            label = get_label_number(added_lines[idx_new]['user_label'])
+            label_pre = None
+
+            tmp = {'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'label': label, 'label_pre': label_pre, 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']}
+            if idx_new in refactoring_lines_new:
+                tmp['label_pre'] = 4
+            view_lines.append(tmp)
+            lines_after.append(added_lines[idx_new]['code'])
+
+            i += 1
+            idx_new += 1
+            has_changed = True
+            continue
+
+        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': line, 'label_pre': get_label(line), 'number': i})
             lines_before.append(line)
             lines_after.append(line)
 

@@ -60,7 +60,10 @@
         <div class="lineLabels noselect">
             <div class="lineno" v-for="line in lines">
             <template v-if="line.consensus_label">
-              <div>{{line.consensus_label}}</div>
+              <div data-consensus="line.consensus_label">C</div>
+            </template>
+            <template v-if="!line.consensus_label">
+              <div>NC</div>
             </template>
             <template v-if="line.new == '-'">
               <input type="checkbox" v-model="selectedModels[line.number]" :name="'checkbox' + line.number" @change="selectOne($event)"/>

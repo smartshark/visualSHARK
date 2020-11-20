@@ -8,19 +8,31 @@
   </template>
 
     <div class="animated fadeIn">
-<div v-if="error.length > 0">
-    <alert placement="top-center" duration="5" type="warning">
-          <ul>
-             <li v-for="item in error">
-                Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
-                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
-            </li>
-          </ul>
-    </alert>
+      <div v-if="error.length > 0">
+          <alert placement="top-center" duration="5" type="warning">
+                <ul>
+                   <li v-for="item in error">
+                      Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
+                      <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+                  </li>
+                </ul>
+          </alert>
+      </div>
+      <button class="btn btn-secondary" v-on:click="unskipIssues()" style="float: right; margin-bottom: 5px; margin-right: 5px:">Unskip issues</button>
+      <button class="btn btn-secondary" v-on:click="skipIssue()" style="float: right; margin-bottom: 5px; margin-right: 5px:">Skip issue</button>
+      <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
+      <div class="clearfix"></div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fa fa-cog"></i> Correction View
         </div>
-            <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
-            <div class="clearfix"></div>
-     <div class="card">
+        <div class="card-block">
+          <template v-if="all > -1">
+            Of {{ all }} issues assigned to you, you have corrected {{ corrected }} and skipped {{ skipped }}.
+          </template>
+        </div>
+      </div>
+      <div class="card">
             <div class="card-header">
               <i class="fa fa-tag"></i> Labels
             </div>
@@ -79,14 +91,17 @@ import MonacoCommitDiffView from '@/components/MonacoCommitDiffView.vue'
 
 export default {
     data() {
-        return {
-            commits: [],
-            issue: '',
-            flashes: [],
-            error: [],
-      vcs_url: '',
-      issue_url: '',
-        }
+      return {
+        commits: [],
+        issue: '',
+        flashes: [],
+        error: [],
+        vcs_url: '',
+        issue_url: '',
+        corrected: 0,
+        skipped: 0,
+        all: -1
+      }
     },
     computed: mapGetters({
         currentProject: 'currentProject',
@@ -97,17 +112,21 @@ export default {
     mounted() {
 
         var that = this;
-
         // Start background request
         this.$store.dispatch('pushLoading')
-        rest.getIssueWithCommits(this.currentProject.name)
+        rest.getIssueForCorrection(this.currentProject.name)
             .then(response => {
                 this.$store.dispatch('popLoading')
 
                  // maybe we are finished for this project
                 if(response.data['warning'] == 'no_more_issues') {
-                    this.flashes.push({id: 'no_more_issues', message: 'No more issues for this project available, select next project.'})
-                    return
+                  this.skipped = response.data['skipped']
+                  if(response.data['skipped'] > 0) {
+                    this.flashes.push({id: 'no_more_issues', message: 'No more issues to correct. Thank you! If you want to take a look at your ' + response.data['skipped'] + ' skipped issues again, press unskip issues!'})
+                  } else{
+                    this.flashes.push({id: 'no_more_issues', message: 'No more issues to correct. Thank you!'})
+                  }
+                  return
                 }
 
                 window.commits = response.data['commits'];
@@ -115,8 +134,10 @@ export default {
                 this.issue = response.data['issue'];
                 this.vcs_url = response.data['vcs_url']
                 this.issue_url = response.data['issue_url']
-                this.has_trained = response.data['has_trained']
-                this.load_last = response.data['load_last']
+                this.all = response.data['all']
+                this.corrected = response.data['corrected']
+                this.skipped = response.data['skipped']
+
                 setTimeout(() => {
                     // Register all editors
                     that.registerFoldingModel();
@@ -126,14 +147,6 @@ export default {
                     }
                     that.validateAll();
                 }, 25);
-
-                if(this.has_trained !== true) {
-                    this.flashes.push({id: 'train', message: 'You have not finished the training! Loading training issues first!'})
-                }
-
-                if(this.load_last === true) {
-                     this.flashes.push({id: 'last', message: 'You have not finished labeling the last issue, loading last issue first.'})
-                }
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)
@@ -225,6 +238,30 @@ export default {
                     }
              }, 1000);
         },
+        skipIssue: function() {
+            this.$store.dispatch('pushLoading')
+            var result = {skip_issue: true, issue_id: this.issue.id}
+            rest.saveIssueForCorrection({data : result})
+            .then(response => {
+                this.$store.dispatch('popLoading');
+                window.location.reload(false);
+            })
+            .catch(e => {
+                this.$store.dispatch('pushError', e)
+            });
+        },
+        unskipIssues: function() {
+            this.$store.dispatch('pushLoading')
+            var result = {unskip_issues: true, issue_id: this.issue.id}
+            rest.saveIssueForCorrection({data : result})
+            .then(response => {
+                this.$store.dispatch('popLoading');
+                window.location.reload(false);
+            })
+            .catch(e => {
+                this.$store.dispatch('pushError', e)
+            });
+        },
         submitLabels : function() {
              // check if anything is missing
              var correct = [];
@@ -248,10 +285,11 @@ export default {
             console.log(data);
             this.$store.dispatch('pushLoading')
             var result = {labels : data, issue_id: this.issue.id}
-            rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
+            rest.saveIssueForCorrection({ data : result})
             .then(response => {
                 this.$store.dispatch('popLoading');
-                window.location.reload(false);
+                console.log(response.data['changes'])
+                // window.location.reload(false);
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)
@@ -289,65 +327,58 @@ margin-right: 10px;
 }
 
 .bugfix {
-	background: #FF0000;
-	width: 5px !important;
-	margin-left: 3px;
+    background: #FF0000;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .whitespace {
   background-color: #bbb;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .documentation {
   background-color: #442727;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .test {
   background-color: #00FF00;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .refactoring {
   background-color: #0779e4;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .unrelated {
   background-color: #ffbd69;
-	width: 5px !important;
-	margin-left: 3px;
+    width: 5px !important;
+    margin-left: 3px;
 }
 .bugfix-pre {
   width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #FF0000;
+  background-color: #FF0000;
 }
 .whitespace-pre {
   width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #bbb;
+  background-color: #bbb;
 }
 .documentation-pre {
   width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #442727;
+  background-color:#442727;
 }
 .test-pre {
-  background-color: #00FF00;
   width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #00FF00;
+  background-color: #00FF00;
 }
 .refactoring-pre {
   width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #0779e4;
+  background-color: #0779e4;
 }
 .unrelated-pre {
   width: 5px !important;
-  margin-left: 3px;
-  border-right: 5px solid #ffbd69;
+  background-color: #ffbd69;
 }
 pre.force-wrap {
   white-space: pre-wrap;       /* Since CSS 2.1 */

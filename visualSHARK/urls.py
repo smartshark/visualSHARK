@@ -11,7 +11,7 @@ from .views import Auth, StatsView
 
 from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet, HunkViewSet
 from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView, IssueLabelSet, IssueConflictSet, IssueLinkSet, LineLabelSet
-from .views import LeaderboardSet, BugfixLines
+from .views import LeaderboardSet, BugfixLines, TechnologyLabeling, Technologies, LineLabelCorrectionSet
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -56,5 +56,8 @@ urlpatterns = [
     url(r'^labeling/lines', LineLabelSet.as_view()),
     url(r'^labeling/leaderboard', LeaderboardSet.as_view()),
     url(r'^labeling/bugfix', BugfixLines.as_view()),
+    url(r'^labeling/technology', TechnologyLabeling.as_view()),
+    url(r'^labeling/technologies', Technologies.as_view()),
+    url(r'^labeling/line_correction', LineLabelCorrectionSet.as_view()),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 ]

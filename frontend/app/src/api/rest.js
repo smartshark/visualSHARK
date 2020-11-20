@@ -167,6 +167,34 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getIssueForCorrection (project_name) {
+    let req = this.getUrl('labeling/line_correction/?project_name=' + project_name)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  saveIssueForCorrection (dat) {
+    let req = this.getUrl('labeling/line_correction/')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  sampleCommitForTechnologyLabeling (project_name) {
+    let req = this.getUrl('labeling/technology/?project_name=' + project_name)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getTechnologiesForTechnologyLabeling (project_name) {
+    let req = this.getUrl('labeling/technologies/?project_name=' + project_name)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   saveLabelsOfCommits (dat) {
     let req = this.getUrl('labeling/lines/')
     return axios.post(req, dat, {headers: {

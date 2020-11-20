@@ -1,7 +1,11 @@
 from django.contrib import admin
 
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
-    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot
+    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssues
+
+
+class CorrectionIssuesAdmin(admin.ModelAdmin):
+    list_display = ('user', 'external_id', 'is_corrected', 'is_skipped')
 
 
 class CommitGraphAdmin(admin.ModelAdmin):
@@ -23,17 +27,21 @@ class VSJobTypeAdmin(admin.ModelAdmin):
 class VSJobAdmin(admin.ModelAdmin):
     list_display = ('job_type', 'requested_by', 'created_at', 'executed_at')
 
+
 class IssueValidationAdmin(admin.ModelAdmin):
     list_display = ('project_id', 'issue_system_id', 'issue_id', 'issue_type', 'issue_type_unified', 'linked', 'resolution')
     list_filter = ('linked', 'resolution', 'issue_type_unified')
     search_fields = ('issue_id',)
 
+
 class IssueValidationUserAdmin(admin.ModelAdmin):
     list_display = ('user', 'issue_validation', 'label')
     list_filter = ('user',)
 
+
 class LeaderboardSnapshotAdmin(admin.ModelAdmin):
     list_display = ('created_at',)
+
 
 admin.site.register(CommitGraph, CommitGraphAdmin)
 admin.site.register(CommitLabelField, CommitLabelFieldAdmin)
@@ -45,3 +53,4 @@ admin.site.register(IssueValidation, IssueValidationAdmin)
 admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
 admin.site.register(ProjectAttributes)
 admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
+admin.site.register(CorrectionIssues, CorrectionIssuesAdmin)

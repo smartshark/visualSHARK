@@ -1,76 +1,133 @@
 <template>
 <div>
- <div class="card-header" ref="header" style="margin-top: 20px; border-top:5px solid #000;" :id="'file' + file.filename + file.parent_revision_hash">
- <div style="margin-bottom: 5px;">
-            {{ file.filename }}</div>
-            <div>
-                  <div class="label"><span class="dot" style="background-color: #FF0000;">1</span>bug fix</div>
-                <div class="label"><span class="dot">2</span>whitespace</div>
-                <div class="label"><span class="dot" style="background-color: #442727;">3</span>documentation</div>
-                <div class="label"><span class="dot" style="background-color: #0779e4;">4</span>refactoring</div>
-                <div class="label"><span class="dot" style="background-color: #00FF00;">5</span>test</div>
-                <div class="label"><span class="dot" style="background-color: #ffbd69;">6</span>unrelated</div>
-                <div class="label"><span class="dot" style="background-color: #fff; color:#000; border: #000 solid 1px;">7</span>remove current label</div>
-                <br/>
-                Press the key of the color to label the current line with the belonging label, press 7 to remove the label
-            </div>
+  <div class="card-header" ref="header" :id="'file' + file.filename + file.parent_revision_hash">
+    <div style="margin-bottom: 5px;">{{ file.filename }}</div>
+    <div>
+      <div class="label">
+        Selected lines <template v-if="currentRange">{{currentRange}}</template><multiselect :id="'technologySelector' + file.filename + file.parent_revision_hash" v-model="selectedTechnologies" @tag="addTechnology" :taggable="true" :options="technologies" :multiple="true"></multiselect>
+        <button v-if="currentRange.length > 0" v-on:click="setTechnologies()">Set</button>
+      </div>
 
-  <div class="btn-group" role="group" style="margin-top: 10px; margin-right: 10px;">
-  <div style="margin-right: 5px;">Mark file as</div>
-     <button class="btn btn-primary" v-on:click="labelWhitespace()" style="background-color:#bbb;">whitespace</button>
-     <button class="btn btn-primary" v-on:click="labelDocumentation()" style="background-color:#442727;">documentation</button>
-     <button class="btn btn-primary" v-on:click="labelTest()" style="background-color:#00FF00;">test</button>
-     <button class="btn btn-primary" v-on:click="labelUnrelated()" style="background-color:#ffbd69;">unrelated</button>
-
-
-</div>
-             <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next ></button>
-             <button class="btn btn-primary" v-on:click="back()" style="float: right;">< Previous</button>
-             <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
-
- </div>
-        <div>
-        <div v-if="showValidation">
-          <ul>
-             <li v-for="item in missingChanges">
-                Original: {{ item.originalStartLineNumber }} - {{ item.originalEndLineNumber }} / Modified: {{ item.modifiedStartLineNumber }} - {{ item.modifiedEndLineNumber }}
-                <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
-            </li>
-          </ul>
-        </div>
-             <MonacoEditor  class="editor"
-  :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" :options="options" />
+      <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next ></button>
+      <button class="btn btn-primary" v-on:click="back()" style="float: right;">< Previous</button>
+      <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
+    </div>
+    <div>
+      <div v-if="showValidation">
+        <ul>
+           <li v-for="item in missingChanges">
+              Original: {{ item.originalStartLineNumber }} - {{ item.originalEndLineNumber }} / Modified: {{ item.modifiedStartLineNumber }} - {{ item.modifiedEndLineNumber }}
+              <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card-block" style="padding: 0px">
+    <MonacoEditor  class="editor" :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
   </div>
 </div>
 </template>
 <script>
 
 import MonacoEditor from 'vue-monaco'
+import Multiselect from 'vue-multiselect'
+
 
 export default {
     data() {
-        return {
-            decorationsLeft: [],
-            decorationsObjectsLeft: {},
-            decorationsRight: [],
-            decorationsObjectsRight: [],
-            decorationsObjectsLeftPre: {},
-            originalRequiredLines: [],
-            modifiedRequiredLines: [],
-            missingChanges: [],
-            folding: false,
-            showValidation: false,
-            options: {glyphMargin: true}
-        }
+      return {
+        decorationsLeft: [],
+        decorationsObjectsLeft: [],
+        decorationsRight: [],
+        decorationsObjectsRight: [],
+        missingChanges: [],
+        folding: false,
+        showValidation: false,
+        selectedTechnologies: [],
+        addedTechnologies: [],
+        currentRange: [],
+        selectedEditorType: null
+      }
     },
     props: {
-        file : Object,
-        lines: Array
+      file : Object,
+      commit : Object,
+      lines: Array,
+      existingTechnologies: Array
     },
     components: {
-        MonacoEditor
+      MonacoEditor,
+      Multiselect
+    },
+    computed: {
+      technologies: function () {
+        return this.existingTechnologies.concat(this.addedTechnologies)
+      }
     },
     methods: {
+        getOriginalChangeForLine(lineNumber) {
+          let changes = this.$refs.editor.getEditor().getLineChanges()
+          for(let hunk of changes) {
+            if(hunk.originalStartLineNumber <= lineNumber && lineNumber <= hunk.originalEndLineNumber) {
+              return hunk
+            }
+          }
+        },
+        getModifiedChangeForLine(lineNumber) {
+          let changes = this.$refs.editor.getEditor().getLineChanges()
+          for(let hunk of changes) {
+            if(hunk.modifiedStartLineNumber <= lineNumber && lineNumber <= hunk.modifiedEndLineNumber) {
+              return hunk
+            }
+          }
+        },
+        setTechnologies: function(click) {
+          const isOriginal = this.selectedEditorType === this.$refs.editor.getEditor().getOriginalEditor()
+
+          if(isOriginal) {
+            console.log('setting', this.selectedTechnologies, 'on', this.currentRange, 'on original?', isOriginal)
+            for(let lineNumber of this.currentRange) {
+              let hunk = this.getOriginalChangeForLine(lineNumber)
+              this.decorationsObjectsLeft[lineNumber] = {
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                options: {
+                    isWholeLine: true,
+                    linesDecorationsClassName: 'bugfix',  // this.selectedTechnologies.join()
+                    technologies: this.selectedTechnologies.join()
+                },
+                change: hunk // this is the hunk, do we need it here?
+              }
+            }
+            this.decorationsLeft = this.selectedEditorType.deltaDecorations(this.decorationsLeft, Object.values(this.decorationsObjectsLeft))
+          }else {
+            for(let lineNumber of this.currentRange) {
+              let hunk = this.getModifiedChangeForLine(lineNumber)
+              this.decorationsObjectsRight[lineNumber] = {
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                options: {
+                    isWholeLine: true,
+                    linesDecorationsClassName: 'bugfix',  // this.selectedTechnologies.join()
+                    technologies: this.selectedTechnologies.join()
+                },
+                change: hunk // this is the hunk, do we need it here?
+              }
+            }
+            this.decorationsRight = this.selectedEditorType.deltaDecorations(this.decorationsRight, Object.values(this.decorationsObjectsRight))
+          }
+
+          this.validateEditor()
+
+          this.selectedTechnologies = []
+          this.currentRange = []
+          this.selectedEditorType = null
+
+          console.log(this.getData(this.commit.revision_hash))
+        },
+        addTechnology: function(newTechnology) {
+          this.addedTechnologies.push(newTechnology)
+          this.selectedTechnologies.push(newTechnology)
+        },
         getEditor: function() {
             return this.$refs.editor;
         },
@@ -84,30 +141,14 @@ export default {
             }
             this.jumpActions(editor);
 
-            var labelCssClass = ['bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
-            var labelCssClassPre = ['bugfix-pre', 'whitespace-pre','documentation-pre', 'refactoring-pre', 'test-pre', 'unrelated-pre'];
-
-            for(var i = 0; i < this.file.lines.length; i++) {
+            var labelCssClass = [ 'bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
+            for(var i = 0; i < this.file.lines.length; i++)
+            {
               var line = this.file.lines[i];
               if(line.label > 0) {
-                var label = labelCssClass[line.label - 1];
-                this.markLineInEditorLeft(line.old, label, this.$refs.editor, this.$refs.editor.getEditor().getOriginalEditor());
-                this.markLineInEditorRight(line.new, label, this.$refs.editor, this.$refs.editor.getEditor().getModifiedEditor());
-              }
-            }
-            for(let line of this.file.lines) {
-              // only exists in one of both versions
-              if(line.new == '-') {
-                this.originalRequiredLines.push(line.old)
-              }
-              if(line.old == '-') {
-                this.modifiedRequiredLines.push(line.new)
-              }
-
-              // do we have a pre-label
-              if(line.label_pre > 0 && this.originalRequiredLines.includes(line.old)) {
-                let label = labelCssClassPre[line.label_pre - 1];
-                this.markLineInEditorLeftPre(line.old, label, this.$refs.editor, this.$refs.editor.getEditor().getOriginalEditor());
+                var label = labelCssClass[line.label-1];
+                this.markLineInEditorLeft(line.old,label,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
+                this.markLineInEditorRight(line.new,label,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());
               }
             }
         },
@@ -279,58 +320,76 @@ export default {
                 automaticLayout: true
             });
         },
-        addActionToEditor: function(editor) {
-           this.addSingleActionToEditor(editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');
-           this.addSingleActionToEditor(editor, '2', 'Whitespace', [ monaco.KeyCode.KEY_2 ], 'whitespace');
-           this.addSingleActionToEditor(editor, '3', 'Documentation', [ monaco.KeyCode.KEY_3 ], 'documentation');
-           this.addSingleActionToEditor(editor, '4', 'Refactoring', [ monaco.KeyCode.KEY_4 ], 'refactoring');
-           this.addSingleActionToEditor(editor, '5', 'Test', [ monaco.KeyCode.KEY_5 ], 'test');
-           this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');
-           this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
-        },
-        markLineInEditorLeftPre(lineNumber, className, editor, ed) {
-          if(this.originalRequiredLines.includes(lineNumber)) {
-            if(lineNumber in this.decorationsObjectsLeft) {
-              this.decorationsObjectsLeft[lineNumber].options.glyphMarginClassName = className
+        labelTechnologyAction: function(editor, ed) {
+          const range = ed.getSelection()
+          const isOriginal = ed === this.$refs.editor.getEditor().getOriginalEditor()
+          let lines = []
 
-            // in case there is no label only a pre label
-            }else {
-              this.decorationsObjectsLeft[lineNumber] = {
-                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
-                options: {
-                    isWholeLine: true,
-                    glyphMarginClassName: className
+          for(let hunk of editor.getEditor().getLineChanges()) {
+            for(let lineNumber = range.startLineNumber; lineNumber <= range.endLineNumber; lineNumber++) {
+
+              // are changed lines part of the hunk lines?
+              if(isOriginal) {
+                if(hunk.originalStartLineNumber <= lineNumber && lineNumber <= hunk.originalEndLineNumber) {
+                  lines.push(lineNumber)
+                }
+              }else {
+                  if(hunk.modifiedStartLineNumber <= lineNumber && lineNumber <= hunk.modifiedEndLineNumber) {
+                  lines.push(lineNumber)
                 }
               }
             }
-            this.decorationsLeft = ed.deltaDecorations(this.decorationsLeft, Object.values(this.decorationsObjectsLeft))
-            this.validateEditor()
           }
+
+          if(lines.length > 0) {
+            this.currentRange = lines
+            this.selectedEditorType = ed
+            document.getElementById("technologySelector" + this.file.filename + this.file.parent_revision_hash).focus();
+          }
+          return null
+        },
+        addActionToEditor: function(editor) {
+          this.addSingleActionToEditor2(editor, '1', 'Set Label', [ monaco.KeyCode.KEY_1 ], this.labelTechnologyAction)
+          /*this.addSingleActionToEditor(editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');
+          this.addSingleActionToEditor(editor, '2', 'Whitespace', [ monaco.KeyCode.KEY_2 ], 'whitespace');
+          this.addSingleActionToEditor(editor, '3', 'Documentation', [ monaco.KeyCode.KEY_3 ], 'documentation');
+          this.addSingleActionToEditor(editor, '4', 'Refactoring', [ monaco.KeyCode.KEY_4 ], 'refactoring');
+          this.addSingleActionToEditor(editor, '5', 'Test', [ monaco.KeyCode.KEY_5 ], 'test');
+          this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');*/
+          this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
         },
         markLineInEditorLeft(lineNumber,className, editor,ed) {
-          var that = this;
-          var changes = editor.getEditor().getLineChanges();
-          var isInChange = false;
-          var foundChange;
-          for (var i = 0; i < changes.length; i++) {
-               var change = changes[i];
-               if((change.originalStartLineNumber <= lineNumber &&
-                  lineNumber <= change.originalEndLineNumber))
-                  {
-                       foundChange = change;
-                       isInChange = true;
-                  }
-          }
-          if(isInChange) {
-            if(className == '') {
-              this.removeLabelLeft(lineNumber)
-            } else {
-              this.setLabelLeft(lineNumber, className, foundChange)  
-            }
+                    var that = this;
+                    var changes = editor.getEditor().getLineChanges();
+                    var isInChange = false;
+                    var foundChange;
+                    for (var i = 0; i < changes.length; i++) {
+                         var change = changes[i];
+                         if((change.originalStartLineNumber <= lineNumber &&
+                            lineNumber <= change.originalEndLineNumber))
+                            {
+                                 foundChange = change;
+                                 isInChange = true;
+                            }
+                    }
+                    if(isInChange) {
+                      console.log('found change!', foundChange)
+                    if(className == '') {
+                      delete that.decorationsObjectsLeft[lineNumber];
+                    } else {
+                       that.decorationsObjectsLeft[lineNumber] = {
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        options: {
+                            isWholeLine: true,
+                            linesDecorationsClassName: className
+                        },
+                        change: foundChange
+                    };
+                    }
 
-            that.decorationsLeft = ed.deltaDecorations(that.decorationsLeft, Object.values(that.decorationsObjectsLeft));
-              that.validateEditor();
-          }
+                    that.decorationsLeft = ed.deltaDecorations(that.decorationsLeft, Object.values(that.decorationsObjectsLeft));
+                        that.validateEditor();
+                    }
         },
         markLineInEditorRight(lineNumber,className, editor,ed) {
                     var that = this;
@@ -363,6 +422,23 @@ export default {
                     that.decorationsRight = ed.deltaDecorations(that.decorationsRight, Object.values(that.decorationsObjectsRight));
                         that.validateEditor();
                     }
+        },
+        addSingleActionToEditor2: function(editor, id, label, keybindings, callback) {
+          let actionLeft = {
+            id: id,
+            label: label,
+            keybindings: keybindings,
+            precondition: null,
+            keybindingContext: null,
+            contextMenuGroupId: 'navigation',
+            contextMenuOrder: id,
+            run: (ed) => {
+              this.labelTechnologyAction(editor, ed)
+              return null
+            }
+          };
+          editor.getEditor().getOriginalEditor().addAction(actionLeft);
+          editor.getEditor().getModifiedEditor().addAction(actionLeft);
         },
         addSingleActionToEditor: function(editor, id, label, keybindings, className) {
             var that = this;
@@ -404,30 +480,6 @@ export default {
             };
             editor.getEditor().getModifiedEditor().addAction(actionRight);
         },
-        removeLabelLeft: function(line) {
-          if(line in this.decorationsObjectsLeft) {
-            delete this.decorationsObjectsLeft[line].options.linesDecorationsClassName
-          }
-        },
-        setLabelLeft: function(line, label, change) {
-          console.log('setting left label', label, 'on', line)
-          if(line in this.decorationsObjectsLeft) {
-            this.decorationsObjectsLeft[line].options.linesDecorationsClassName = label
-            this.decorationsObjectsLeft[line].options.change = change
-          }else {
-            this.decorationsObjectsLeft[line] = {
-              range: new monaco.Range(line, 1, line, 1),
-              options: {
-                  isWholeLine: true,
-                  linesDecorationsClassName: label
-              },
-              change: change
-            };
-          }
-        },
-        hasLabelLeft: function(line) {
-          return !(typeof this.decorationsObjectsLeft[line] === 'undefined' || typeof this.decorationsObjectsLeft[line].options.linesDecorationsClassName === 'undefined')
-        },
         validateEditor: function() {
              var changes = this.$refs.editor.getEditor().getLineChanges();
              var isSomethingMissing = false;
@@ -443,7 +495,7 @@ export default {
                  {
                     for(var j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++)
                     {
-                    if(!this.hasLabelLeft(j)) {
+                    if(typeof lineDecorationsOrginal[j] === 'undefined') {
                     isThisMissing = true;
                     isSomethingMissing = true;
                     }
@@ -464,7 +516,7 @@ export default {
                     this.missingChanges.push(change);
                  }
              }
-
+             console.log(this.missingChanges);
              var header = this.$refs.header;
              if(!isSomethingMissing && header)
              {
@@ -479,45 +531,41 @@ export default {
            var data = {};
            var file = this.file;
            console.log(hash + "_" + file.parent_revision_hash + "_" + file.filename);
-                     data[hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
-                     var lineDecorationsOrginal = this.decorationsObjectsLeft;
-                     console.log('left', lineDecorationsOrginal)
-                     for(let k in lineDecorationsOrginal) {
-                          if(!this.hasLabelLeft(k)) {
-                            continue;
-                          }
-                          var label = lineDecorationsOrginal[k].options.linesDecorationsClassName;
-                          var line = lineDecorationsOrginal[k].range.startLineNumber;
+           data[hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
+           var lineDecorationsOrginal = this.decorationsObjectsLeft;
+           for(var k = 0; k < lineDecorationsOrginal.length; k++) {
+                if(typeof lineDecorationsOrginal[k] === 'undefined') {
+                    continue;
+                }
+                var label = lineDecorationsOrginal[k].options.technologies;
+                var line = lineDecorationsOrginal[k].range.startLineNumber;
                 
-                          let mappedLine = line
-                          for(let ml of this.lines) {
-                              if(ml['new'] == '-' && ml['old'] == line) {
-                                mappedLine = ml['number']
+                let mappedLine = line
+                for(let ml of this.lines) {
+                  if(ml['new'] == '-' && ml['old'] == line) {
+                    mappedLine = ml['number']
+                  }
+                }
 
-                                console.log('mapping line', line, 'to', mappedLine)
-                              }
-                           }
+                data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
+           }
+           var lineDecorationsModified = this.decorationsObjectsRight;
+           for(var k = 0; k < lineDecorationsModified.length; k++) {
+                if(typeof lineDecorationsModified[k] === 'undefined') {
+                    continue;
+                }
+                var label = lineDecorationsModified[k].options.technologies;
+                var line = lineDecorationsModified[k].range.startLineNumber;
 
-                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
-                     }
-                     var lineDecorationsModified = this.decorationsObjectsRight;
-                     for(var k = 0; k < lineDecorationsModified.length; k++)
-                     {
-                          if(typeof lineDecorationsModified[k] === 'undefined') {
-                              continue;
-                          }
-                          var label = lineDecorationsModified[k].options.linesDecorationsClassName;
-                          var line = lineDecorationsModified[k].range.startLineNumber;
+                let mappedLine = line
+                for(let ml of this.lines) {
+                  if(ml['old'] == '-' && ml['new'] == line) {
+                    mappedLine = ml['number']
+                  }
+                }
 
-                          let mappedLine = line
-                          for(let ml of this.lines) {
-                              if(ml['old'] == '-' && ml['new'] == line) {
-                                mappedLine = ml['number']
-                              }
-                           }
-
-                          data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
-                     }
+                data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
+           }
             return data;
         },
         labelWhitespace: function() {
@@ -537,11 +585,20 @@ export default {
           const origEditor = this.$refs.editor.getEditor().getOriginalEditor()
           const modEditor = this.$refs.editor.getEditor().getModifiedEditor()
 
+          let newDecorationsLeft = []
           let newDecorationsRight = []
           for (let change of changes) {  // change is a hunk
             // we have to do this line-wise because this.decorationsObjectsLeft/Right are used to aggregate the data for the backend
             for(let line = change.originalStartLineNumber; line <= change.originalEndLineNumber; line++) {
-              this.setLabelLeft(line, className, change)
+              newDecorationsLeft.push({
+                range: new monaco.Range(line, 1, line, 1),
+                options: {
+                  isWholeLine: true,
+                  linesDecorationsClassName: className
+                },
+                change: change
+              })
+              this.decorationsObjectsLeft[line] = newDecorationsLeft[newDecorationsLeft.length - 1]
             }
             for(let line = change.modifiedStartLineNumber; line <= change.modifiedEndLineNumber; line++) {
               newDecorationsRight.push({
@@ -555,7 +612,7 @@ export default {
               this.decorationsObjectsRight[line] = newDecorationsRight[newDecorationsRight.length - 1]
             }
           }
-          this.decorationsLeft = origEditor.deltaDecorations(this.decorationsLeft, Object.values(this.decorationsObjectsLeft))
+          this.decorationsLeft = origEditor.deltaDecorations(this.decorationsLeft, newDecorationsLeft)
           this.decorationsRight = modEditor.deltaDecorations(this.decorationsRight, newDecorationsRight)
           this.validateEditor()
         }
