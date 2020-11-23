@@ -756,7 +756,7 @@ class StatsHistoryView(APIView):
 
     def get(self, request):
         history = []
-        for pro in ProjectStats.objects.values('stats_date').distinct().order_by('stats_date'):
+        for pro in ProjectStats.objects.values('stats_date').distinct().order_by('stats_date')[:5]:
             tmp = {'date': pro['stats_date'], 'commits': 0, 'issues': 0, 'files': 0, 'messages': 0, 'people': 0}
             for p in ProjectStats.objects.filter(stats_date=pro['stats_date']):
                 tmp['commits'] += p.number_commits
