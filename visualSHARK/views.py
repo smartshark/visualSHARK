@@ -39,7 +39,7 @@ from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, File
     Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 from .models import LeaderboardSnapshot
-from .models import CorrectionIssues
+from .models import CorrectionIssue
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -1138,60 +1138,6 @@ class IssueLinkSet(APIView):
         return Response(result)
 
 
-class BugfixLines(APIView):
-    """Access full bug-fixes
-
-    includes: code, issue, everything that is validated
-    contains also all PMD warnings
-    """
-    read_perm = 'view_line_labels'
-    write_perm = 'edit_line_labels'
-
-    def get(self, request):
-        external_id = request.GET.get('external_id', None)
-        project_name = request.GET.get('project_name', None)
-
-        if not external_id:
-            log.error('got no external_id')
-            return Response({}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not project_name:
-            log.error('got no project')
-            return Response({}, status=status.HTTP_400_BAD_REQUEST)
-
-        issue = Issue.objects.get(external_id=external_id)
-
-        # urls for issue system and git
-        issue_system = IssueSystem.objects.get(id=issue.issue_system_id)
-        p = Project.objects.get(id=issue_system.project_id)
-        if 'jira' in issue_system.url:
-            issue_url = 'https://issues.apache.org/jira/browse/'
-        elif 'github' in issue_system.url:
-            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
-            if not issue_url.endswith('/'):
-                issue_url += '/'
-
-        vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
-        vcs_url = vcs.url.replace('.git', '') + '/commit/'
-
-        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
-
-        if not os.path.exists(project_path):
-            log.error('no such path ' + project_path)
-            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        result = {'warning': '',
-                  'commits': get_commit_data(issue, project_path, consensus=True),
-                  'issue_url': issue_url,
-                  'vcs_url': vcs_url}
-
-        serializer = IssueSerializer(issue, many=False)
-        data = serializer.data
-        result['issue'] = data
-
-        return Response(result)
-
-
 class TechnologyLabeling(APIView):
     """Access full bug-fixes
 
@@ -1565,20 +1511,14 @@ class LineLabelControlSet(APIView):
 
         external_id = request.GET.get('external_id', None)
 
-        ci = CorrectionIssues.objects.get(external_id=external_id, user=request.user)
-
-        # TODO: hacky hacky
-        project_key = ci.external_id.split('-')[0]
-        project = None
-        for its in IssueSystem.objects.all():
-            if project_key in its.url:
-                project = Project.objects.get(id=its.project_id)
-                break
+        ci = CorrectionIssue.objects.get(external_id=external_id, user=request.user)
+        project = Project.objects.get(name=ci.project_name)
+        its = IssueSystem.objects.get(project_id=project.id)
 
         issue = Issue.objects.get(external_id=external_id, issue_system_id=its.id)
 
         if issue is None:
-            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssues.objects.filter(user=request.user, is_skipped=True).count()})
+            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssue.objects.filter(user=request.user, is_skipped=True).count()})
 
         # urls for issue system and git
         issue_system = IssueSystem.objects.get(project_id=project.id)
@@ -1637,18 +1577,11 @@ class LineLabelCorrectionSet(APIView):
         p = None
         issue = None
 
-        ci = CorrectionIssues.objects.filter(user=user, is_corrected=False, is_skipped=False).first()
+        ci = CorrectionIssue.objects.filter(user=user, is_corrected=False, is_skipped=False).first()
         if not ci:
             return issue, p
 
-        project_key = ci.external_id.split('-')[0]
-        for its in IssueSystem.objects.all():
-            if project_key in its.url:
-                p = Project.objects.get(id=its.project_id)
-
-        if not p:
-            return issue, p
-
+        p = Project.objects.get(name=ci.project_name)
         its = IssueSystem.objects.get(project_id=p.id)
         issue = Issue.objects.get(external_id=ci.external_id, issue_system_id=its.id)
         return issue, p
@@ -1657,7 +1590,7 @@ class LineLabelCorrectionSet(APIView):
 
         issue, project = self._load_issue(request.user)
         if issue is None:
-            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssues.objects.filter(user=request.user, is_skipped=True).count()})
+            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssue.objects.filter(user=request.user, is_skipped=True).count()})
 
         # urls for issue system and git
         issue_system = IssueSystem.objects.get(project_id=project.id)
@@ -1692,15 +1625,15 @@ class LineLabelCorrectionSet(APIView):
         result['issue'] = data
 
         # include additional information about skipped / corrected issus
-        result['all'] = CorrectionIssues.objects.filter(user=request.user).count()
-        result['skipped'] = CorrectionIssues.objects.filter(user=request.user, is_skipped=True).count()
-        result['corrected'] = CorrectionIssues.objects.filter(user=request.user, is_corrected=True).count()
+        result['all'] = CorrectionIssue.objects.filter(user=request.user).count()
+        result['skipped'] = CorrectionIssue.objects.filter(user=request.user, is_skipped=True).count()
+        result['corrected'] = CorrectionIssue.objects.filter(user=request.user, is_corrected=True).count()
 
         return Response(result)
 
     def post(self, request):
         if 'unskip_issues' in request.data['data'].keys() and request.data['data']['unskip_issues']:
-            for ci in CorrectionIssues.objects.filter(user=request.user):
+            for ci in CorrectionIssue.objects.filter(user=request.user):
                 ci.is_skipped = False
                 ci.save()
             return Response({'unskipped_issues': True})
@@ -1709,7 +1642,7 @@ class LineLabelCorrectionSet(APIView):
         issue = Issue.objects.get(id=issue_id)
 
         if 'skip_issue' in request.data['data'].keys() and request.data['data']['skip_issue']:
-            ci = CorrectionIssues.objects.get(user=request.user, external_id=issue.external_id)
+            ci = CorrectionIssue.objects.get(user=request.user, external_id=issue.external_id)
             ci.is_skipped = True
             ci.save()
             return Response({'skipped_issue': issue.external_id})
@@ -1760,6 +1693,7 @@ class LineLabelCorrectionSet(APIView):
             return Response({'statusText': '\n'.join(errors)}, status=status.HTTP_400_BAD_REQUEST)  # does not work
 
         # now save the final changes
+        control = {}
         for change in new_changes:
             for key, changes in change.items():
                 revision_hash, parent_revision_hash, file_name = key.split('_')[0], key.split('_')[1], '_'.join(key.split('_')[2:])  # ugly :-(
@@ -1780,29 +1714,20 @@ class LineLabelCorrectionSet(APIView):
                         write_changes[hunk_id][username][line['label']].append(line['hunk_line'])
 
                 for hunk_id, result in write_changes.items():
+                    control[str(hunk_id)] = {}
+                    control[str(hunk_id)]['old'] = Hunk.objects.get(id=hunk_id).lines_manual[username]
+                    control[str(hunk_id)]['new'] = result[username]
                     r = {'set__lines_manual__{}'.format(self._escape_user(username)): result[username]}
                     h = Hunk.objects.get(id=hunk_id).update(**r)
 
-        ci = CorrectionIssues.objects.get(user=request.user, external_id=issue.external_id)
+        ci = CorrectionIssue.objects.get(user=request.user, external_id=issue.external_id)
         ci.is_corrected = True
+        ci.changes = json.dumps(control)
         ci.save()
 
         log.debug('final changes')
         log.debug(new_changes)
         return Response({'changes': new_changes})
-
-    # TODO: get changes in labels, maybe save them to CI?
-    def get_labels(self, issue, username):
-        changes = []
-        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
-            if commit.parents:
-                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
-            else:
-                fa_qry = FileAction.objects.filter(commit_id=commit.id)
-
-        for fa in fa_qry:
-            for h in Hunk.objects.filter(file_action_id=fa.id):
-                pass
 
 
 class LeaderboardSet(APIView):

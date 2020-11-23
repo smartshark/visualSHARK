@@ -1,10 +1,10 @@
 from django.contrib import admin
 
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
-    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssues
+    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue
 
 
-class CorrectionIssuesAdmin(admin.ModelAdmin):
+class CorrectionIssueAdmin(admin.ModelAdmin):
     list_display = ('user', 'external_id', 'is_corrected', 'is_skipped')
 
 
@@ -53,4 +53,4 @@ admin.site.register(IssueValidation, IssueValidationAdmin)
 admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
 admin.site.register(ProjectAttributes)
 admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
-admin.site.register(CorrectionIssues, CorrectionIssuesAdmin)
+admin.site.register(CorrectionIssue, CorrectionIssueAdmin)

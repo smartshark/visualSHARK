@@ -282,14 +282,12 @@ export default {
                  data = Object.assign({}, data, this.$refs.commitDiffView[i].getData());
              }
 
-            console.log(data);
             this.$store.dispatch('pushLoading')
             var result = {labels : data, issue_id: this.issue.id}
             rest.saveIssueForCorrection({ data : result})
             .then(response => {
                 this.$store.dispatch('popLoading');
-                console.log(response.data['changes'])
-                // window.location.reload(false);
+                window.location.reload(false);
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)

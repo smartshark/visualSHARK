@@ -198,12 +198,14 @@ class IssueValidationUser(models.Model):
     label = models.TextField()
 
 
-class CorrectionIssues(models.Model):
+class CorrectionIssue(models.Model):
     """MySQL Overlay for correcting issues for line-labeling"""
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     external_id = models.CharField(max_length=255)
+    project_name = models.CharField(max_length=255)
     is_corrected = models.BooleanField(default=False)
     is_skipped = models.BooleanField(default=False)
+    changes = models.TextField(blank=True, null=True)
 
 
 class RightsSupport(models.Model):

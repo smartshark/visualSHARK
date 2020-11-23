@@ -132,7 +132,6 @@ export default {
         },
         runBack(ed, editor) {
                    var currentLine = ed.getPosition().lineNumber;
-                   console.log(currentLine);
                    var original = false;
                    if(editor.getEditor().getOriginalEditor() == ed)
                    {
@@ -160,7 +159,6 @@ export default {
         },
         runNext(ed, editor) {
              var currentLine = ed.getPosition().lineNumber;
-                   console.log(currentLine)
                    var original = false;
                    if(editor.getEditor().getOriginalEditor() == ed)
                    {
@@ -410,7 +408,6 @@ export default {
           }
         },
         setLabelLeft: function(line, label, change) {
-          console.log('setting left label', label, 'on', line)
           if(line in this.decorationsObjectsLeft) {
             this.decorationsObjectsLeft[line].options.linesDecorationsClassName = label
             this.decorationsObjectsLeft[line].options.change = change
@@ -478,10 +475,8 @@ export default {
         getData: function(hash) {
            var data = {};
            var file = this.file;
-           console.log(hash + "_" + file.parent_revision_hash + "_" + file.filename);
                      data[hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
                      var lineDecorationsOrginal = this.decorationsObjectsLeft;
-                     console.log('left', lineDecorationsOrginal)
                      for(let k in lineDecorationsOrginal) {
                           if(!this.hasLabelLeft(k)) {
                             continue;
@@ -493,8 +488,6 @@ export default {
                           for(let ml of this.lines) {
                               if(ml['new'] == '-' && ml['old'] == line) {
                                 mappedLine = ml['number']
-
-                                console.log('mapping line', line, 'to', mappedLine)
                               }
                            }
 
