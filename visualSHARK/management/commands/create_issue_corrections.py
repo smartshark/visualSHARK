@@ -33,7 +33,7 @@ class Command(BaseCommand):
             for issue_id in issue_ids:
                 i = Issue.objects.get(id=issue_id)
 
-                its = IssueSystem.objects.get(i.issue_system_id)
+                its = IssueSystem.objects.get(id=i.issue_system_id)
                 p = Project.objects.get(id=its.project_id)
 
                 print(i.external_id, p.name)
