@@ -38,14 +38,14 @@
               <li class="nav-item" v-if="permissions.includes('view_line_labels') && isSuperuser">
                 <router-link :to="'/labeling/linesOld'" class="nav-link"><i class="fa fa-file"></i> Changed Lines Old</router-link>
               </li>
-              <li class="nav-item" v-if="permissions.includes('view_line_labels') && isSuperuser">
-                <router-link :to="'/labeling/inspectBugfix'" class="nav-link"><i class="fa fa-file"></i> Inspect Bugfix</router-link>
-              </li>
               <li class="nav-item" v-if="permissions.includes('view_technology_labels')">
                 <router-link :to="'/labeling/technology'" class="nav-link"><i class="fa fa-file"></i> Used Technology</router-link>
               </li>
               <li class="nav-item" v-if="permissions.includes('view_line_label_corrections')">
                 <router-link :to="'/labeling/lineCorrection'" class="nav-link"><i class="fa fa-file"></i> Lines Correction</router-link>
+              </li>
+              <li class="nav-item" v-if="permissions.includes('view_line_label_corrections')">
+                <router-link :to="'/labeling/lineControl'" class="nav-link"><i class="fa fa-file"></i> Lines Control</router-link>
               </li>
               <li class="nav-item" v-if="permissions.includes('view_line_labels')">
                 <router-link :to="'/labeling/leaderboard'" class="nav-link"><i class="fas fa-crown"></i> Leaderboard</router-link>

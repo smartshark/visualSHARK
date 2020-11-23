@@ -174,6 +174,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getIssueForControl (external_id) {
+    let req = this.getUrl('labeling/line_control/?external_id=' + external_id)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   saveIssueForCorrection (dat) {
     let req = this.getUrl('labeling/line_correction/')
     return axios.post(req, dat, {headers: {
@@ -518,13 +525,6 @@ export default {
   },
   getChangedLines (projectName) {
     let req = this.getUrl('labeling/lines/?project_name=' + projectName)
-    return axios.get(req, {headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Token ' + this.token
-    }})
-  },
-  getBugfix (projectName, externalId) {
-    let req = this.getUrl('labeling/bugfix/?project_name=' + projectName + '&external_id=' + externalId)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

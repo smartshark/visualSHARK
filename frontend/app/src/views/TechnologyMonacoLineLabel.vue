@@ -280,16 +280,6 @@ export default {
              }
 
             console.log(data);
-            this.$store.dispatch('pushLoading')
-            var result = {labels : data, issue_id: this.issue.id}
-            rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
-            .then(response => {
-                this.$store.dispatch('popLoading');
-                window.location.reload(false);
-            })
-            .catch(e => {
-                this.$store.dispatch('pushError', e)
-            });
         }
     }
 }

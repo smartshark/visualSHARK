@@ -21,9 +21,9 @@ import IssueTypeConflicts from '@/views/IssueTypeConflicts'
 import CommitIssueLinks from '@/views/CommitIssueLinks'
 import LineLabels from '@/views/LineLabels'
 import Leaderboard from '@/views/Leaderboard'
-import InspectBugfix from '@/views/InspectBugfix'
 import TechnologyMonacoLineLabel from '@/views/TechnologyMonacoLineLabel'
 import MonacoLineLabelCorrection from '@/views/MonacoLineLabelCorrection'
+import MonacoLineLabelControl from '@/views/MonacoLineLabelControl'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -139,11 +139,6 @@ const router = new Router({
               component: LineLabels
             },
             {
-              path: 'inspectBugfix',
-              name: 'Inspect Bugfix',
-              component: InspectBugfix
-            },
-            {
               path: 'technology',
               name: 'Technology Label',
               component: TechnologyMonacoLineLabel
@@ -152,6 +147,11 @@ const router = new Router({
               path: 'lineCorrection',
               name: 'Change lines correction',
               component: MonacoLineLabelCorrection
+            },
+            {
+              path: 'lineControl',
+              name: 'Change lines control',
+              component: MonacoLineLabelControl
             },
             {
               path: 'leaderboard',

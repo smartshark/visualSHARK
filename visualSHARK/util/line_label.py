@@ -225,7 +225,133 @@ def get_technology_commit(project_path, commit, consensus=False):
     return commits
 
 
-def get_commit_data(issue, project_path, consensus=False):
+def get_correction_data(issue, project_path, username, view):
+    commits = []
+
+    folder = tempfile.mkdtemp()
+    git.repo.base.Repo.clone_from(project_path + "/", folder)
+
+    for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
+        repo = git.Repo(folder)
+        repo.git.reset('--hard', commit.revision_hash)
+
+        if commit.parents:
+            fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+        else:
+            fa_qry = FileAction.objects.filter(commit_id=commit.id)
+
+        # print('commit', commit.revision_hash)
+        changes = []
+        for fa in fa_qry:
+            f = File.objects.get(id=fa.file_id)
+
+            source_file = folder + '/' + f.path
+            if not os.path.exists(source_file):
+                # print('file', source_file, 'not existing, skipping')
+                continue
+
+            # print('open file', source_file, end='')
+            # use libmagic to guess encoding
+            blob = open(source_file, 'rb').read()
+            m = magic.Magic(mime_encoding=True)
+            encoding = m.from_buffer(blob)
+            # print('encoding', encoding)
+
+            # we open everything but binary
+            if encoding == 'binary':
+                continue
+            if encoding == 'unknown-8bit':
+                continue
+            if encoding == 'application/mswordbinary':
+                continue
+
+            ref_old, ref_new = refactoring_lines(commit.id, fa.id)
+
+            # unknown encoding error
+            try:
+                nfile = open(source_file, 'rb').read().decode(encoding)
+            except LookupError:
+                continue
+            nfile = nfile.replace('\r\n', '\n')
+            nfile = nfile.replace('\r', '\n')
+            nfile = nfile.split('\n')
+
+            view_lines, has_changed, lines_before, lines_after, hunks = view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new, username)
+
+            if has_changed:
+                changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+
+        if changes:
+            commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
+
+    shutil.rmtree(folder)
+    return commits
+
+
+def get_commit_data(issue, project_path):
+    commits = []
+
+    folder = tempfile.mkdtemp()
+    git.repo.base.Repo.clone_from(project_path + "/", folder)
+
+    for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
+        repo = git.Repo(folder)
+        repo.git.reset('--hard', commit.revision_hash)
+
+        if commit.parents:
+            fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+        else:
+            fa_qry = FileAction.objects.filter(commit_id=commit.id)
+
+        # print('commit', commit.revision_hash)
+        changes = []
+        for fa in fa_qry:
+            f = File.objects.get(id=fa.file_id)
+
+            source_file = folder + '/' + f.path
+            if not os.path.exists(source_file):
+                # print('file', source_file, 'not existing, skipping')
+                continue
+
+            # print('open file', source_file, end='')
+            # use libmagic to guess encoding
+            blob = open(source_file, 'rb').read()
+            m = magic.Magic(mime_encoding=True)
+            encoding = m.from_buffer(blob)
+            # print('encoding', encoding)
+
+            # we open everything but binary
+            if encoding == 'binary':
+                continue
+            if encoding == 'unknown-8bit':
+                continue
+            if encoding == 'application/mswordbinary':
+                continue
+
+            ref_old, ref_new = refactoring_lines(commit.id, fa.id)
+
+            # unknown encoding error
+            try:
+                nfile = open(source_file, 'rb').read().decode(encoding)
+            except LookupError:
+                continue
+            nfile = nfile.replace('\r\n', '\n')
+            nfile = nfile.replace('\r', '\n')
+            nfile = nfile.split('\n')
+
+            view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new)
+
+            if has_changed:
+                changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
+
+        if changes:
+            commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
+
+    shutil.rmtree(folder)
+    return commits
+
+
+def get_consensus_data(issue, project_path, consensus=False):
     """Get full data for one issue and project path.
 
     Checks out the commit locally, reads the hunks from the db and pre-labels everything.

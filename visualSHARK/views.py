@@ -53,7 +53,7 @@ from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
 from .util.helper import get_change_view, refactoring_lines, get_correction_view, get_control_view
-from .util.line_label import get_commit_data, get_technology_commit
+from .util.line_label import get_commit_data, get_technology_commit, get_correction_data
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1543,6 +1543,78 @@ class LineLabelSet(APIView):
         return Response(result)
 
 
+class LineLabelControlSet(APIView):
+    """Only used for correcting line labels that were overwritten,
+    will be removed later"""
+    read_perm = 'view_line_label_corrections'
+    write_perm = 'edit_line_label_corrections'
+
+    def _escape_user(self, user):
+        return user.replace('.', '')
+
+    def _commit_control_data(self, issue, project_path, username):
+        return get_correction_data(issue, project_path, username, get_control_view)
+
+    def _commit_data(self, issue, project_path, username):
+        return get_correction_data(issue, project_path, username, get_correction_view)
+
+    def _commit_data_normal(self, issue, project_path):
+        return get_commit_data(issue, project_path)
+
+    def get(self, request):
+
+        external_id = request.GET.get('external_id', None)
+
+        ci = CorrectionIssues.objects.get(external_id=external_id, user=request.user)
+
+        # TODO: hacky hacky
+        project_key = ci.external_id.split('-')[0]
+        project = None
+        for its in IssueSystem.objects.all():
+            if project_key in its.url:
+                project = Project.objects.get(id=its.project_id)
+                break
+
+        issue = Issue.objects.get(external_id=external_id, issue_system_id=its.id)
+
+        if issue is None:
+            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssues.objects.filter(user=request.user, is_skipped=True).count()})
+
+        # urls for issue system and git
+        issue_system = IssueSystem.objects.get(project_id=project.id)
+        if 'jira' in issue_system.url:
+            issue_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not issue_url.endswith('/'):
+                issue_url += '/'
+
+        vcs = VCSSystem.objects.get(project_id=project.id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + project.name
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        username = self._escape_user(request.user.username)
+
+        if request.user.username == 'atx':
+            username = 'atrautsch'
+
+        result = {'warning': '',
+                  'commits': self._commit_control_data(issue, project_path, username),
+                  'issue_url': issue_url,
+                  'vcs_url': vcs_url}
+
+        serializer = IssueSerializer(issue, many=False)
+        data = serializer.data
+        result['issue'] = data
+
+        return Response(result)
+
+
 class LineLabelCorrectionSet(APIView):
     """Only used for correcting line labels that were overwritten,
     will be removed later"""
@@ -1552,129 +1624,14 @@ class LineLabelCorrectionSet(APIView):
     def _escape_user(self, user):
         return user.replace('.', '')
 
+    def _commit_control_data(self, issue, project_path, username):
+        return get_correction_data(issue, project_path, username, get_control_view)
+
     def _commit_data(self, issue, project_path, username):
-        commits = []
-
-        folder = tempfile.mkdtemp()
-        git.repo.base.Repo.clone_from(project_path + "/", folder)
-
-        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
-            repo = git.Repo(folder)
-            repo.git.reset('--hard', commit.revision_hash)
-
-            if commit.parents:
-                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
-            else:
-                fa_qry = FileAction.objects.filter(commit_id=commit.id)
-
-            # print('commit', commit.revision_hash)
-            changes = []
-            for fa in fa_qry:
-                f = File.objects.get(id=fa.file_id)
-
-                source_file = folder + '/' + f.path
-                if not os.path.exists(source_file):
-                    # print('file', source_file, 'not existing, skipping')
-                    continue
-
-                # print('open file', source_file, end='')
-                # use libmagic to guess encoding
-                blob = open(source_file, 'rb').read()
-                m = magic.Magic(mime_encoding=True)
-                encoding = m.from_buffer(blob)
-                # print('encoding', encoding)
-
-                # we open everything but binary
-                if encoding == 'binary':
-                    continue
-                if encoding == 'unknown-8bit':
-                    continue
-                if encoding == 'application/mswordbinary':
-                    continue
-
-                ref_old, ref_new = refactoring_lines(commit.id, fa.id)
-
-                # unknown encoding error
-                try:
-                    nfile = open(source_file, 'rb').read().decode(encoding)
-                except LookupError:
-                    continue
-                nfile = nfile.replace('\r\n', '\n')
-                nfile = nfile.replace('\r', '\n')
-                nfile = nfile.split('\n')
-
-                view_lines, has_changed, lines_before, lines_after, hunks = get_correction_view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new, username)
-
-                if has_changed:
-                    changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
-
-            if changes:
-                commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
-
-        shutil.rmtree(folder)
-        return commits
+        return get_correction_data(issue, project_path, username, get_correction_view)
 
     def _commit_data_normal(self, issue, project_path):
-        commits = []
-
-        folder = tempfile.mkdtemp()
-        git.repo.base.Repo.clone_from(project_path + "/", folder)
-
-        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
-            repo = git.Repo(folder)
-            repo.git.reset('--hard', commit.revision_hash)
-
-            if commit.parents:
-                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
-            else:
-                fa_qry = FileAction.objects.filter(commit_id=commit.id)
-
-            # print('commit', commit.revision_hash)
-            changes = []
-            for fa in fa_qry:
-                f = File.objects.get(id=fa.file_id)
-
-                source_file = folder + '/' + f.path
-                if not os.path.exists(source_file):
-                    # print('file', source_file, 'not existing, skipping')
-                    continue
-
-                # print('open file', source_file, end='')
-                # use libmagic to guess encoding
-                blob = open(source_file, 'rb').read()
-                m = magic.Magic(mime_encoding=True)
-                encoding = m.from_buffer(blob)
-                # print('encoding', encoding)
-
-                # we open everything but binary
-                if encoding == 'binary':
-                    continue
-                if encoding == 'unknown-8bit':
-                    continue
-                if encoding == 'application/mswordbinary':
-                    continue
-
-                ref_old, ref_new = refactoring_lines(commit.id, fa.id)
-
-                # unknown encoding error
-                try:
-                    nfile = open(source_file, 'rb').read().decode(encoding)
-                except LookupError:
-                    continue
-                nfile = nfile.replace('\r\n', '\n')
-                nfile = nfile.replace('\r', '\n')
-                nfile = nfile.split('\n')
-
-                view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id), ref_old, ref_new)
-
-                if has_changed:
-                    changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})
-
-            if changes:
-                commits.append({'revision_hash': commit.revision_hash, 'message': commit.message, 'changes': changes})
-
-        shutil.rmtree(folder)
-        return commits
+        return get_commit_data(issue, project_path)
 
     def _load_issue(self, user):
         p = None
@@ -1757,7 +1714,7 @@ class LineLabelCorrectionSet(APIView):
             ci.save()
             return Response({'skipped_issue': issue.external_id})
 
-        username = request.user.username
+        username = self._escape_user(request.user.username)
         if request.user.username == 'atx':
             username = 'atrautsch'
 
@@ -1833,6 +1790,19 @@ class LineLabelCorrectionSet(APIView):
         log.debug('final changes')
         log.debug(new_changes)
         return Response({'changes': new_changes})
+
+    # TODO: get changes in labels, maybe save them to CI?
+    def get_labels(self, issue, username):
+        changes = []
+        for commit in Commit.objects.filter(fixed_issue_ids=issue.id).only('id', 'revision_hash', 'parents', 'message'):
+            if commit.parents:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id, parent_revision_hash=commit.parents[0])
+            else:
+                fa_qry = FileAction.objects.filter(commit_id=commit.id)
+
+        for fa in fa_qry:
+            for h in Hunk.objects.filter(file_action_id=fa.id):
+                pass
 
 
 class LeaderboardSet(APIView):

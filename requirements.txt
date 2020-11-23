@@ -20,7 +20,7 @@ imagesize==1.0.0
 itypes==1.1.0
 Jinja2==2.10.1
 Markdown==2.6.11
-MarkupSafe==1.0
+MarkupSafe==1.1.1
 mongoengine==0.15.3
 mysqlclient==1.4.2.post1
 networkx==2.0

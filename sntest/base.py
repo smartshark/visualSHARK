@@ -154,7 +154,7 @@ REST_FRAMEWORK = {
     'STRICT_JSON': False
 }
 
-VERSION = '0.1.3'
+VERSION = '0.1.4'
 
 COMPUTED_FILES = 'computed_files/'
 
