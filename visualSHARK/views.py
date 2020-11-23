@@ -1540,9 +1540,6 @@ class LineLabelControlSet(APIView):
 
         username = self._escape_user(request.user.username)
 
-        if request.user.username == 'atx':
-            username = 'atrautsch'
-
         result = {'warning': '',
                   'commits': self._commit_control_data(issue, project_path, username),
                   'issue_url': issue_url,
@@ -1612,9 +1609,6 @@ class LineLabelCorrectionSet(APIView):
 
         username = self._escape_user(request.user.username)
 
-        if request.user.username == 'atx':
-            username = 'atrautsch'
-
         result = {'warning': '',
                   'commits': self._commit_data(issue, project_path, username),
                   'issue_url': issue_url,
@@ -1648,8 +1642,6 @@ class LineLabelCorrectionSet(APIView):
             return Response({'skipped_issue': issue.external_id})
 
         username = self._escape_user(request.user.username)
-        if request.user.username == 'atx':
-            username = 'atrautsch'
 
         labels = request.data['data']['labels']
 
