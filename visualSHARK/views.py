@@ -1739,8 +1739,8 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
 
     queryset = CorrectionIssue.objects.all()
     serializer_class = CorrectionIssueSerializer
-    filter_backends = (django_filters.rest_framework.DjangoFilterBackend, filters.OrderingFilter)
-    filter_fields = ('project_name', 'is_skipped', 'is_corrected')
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filter_fields = ('is_skipped', 'is_corrected')
     ordering_fields = ('project_name', 'external_id', 'is_skipped', 'is_corrected')
     search_fields = ('external_id',)
 

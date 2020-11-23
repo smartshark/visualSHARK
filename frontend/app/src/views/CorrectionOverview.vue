@@ -46,15 +46,15 @@ export default {
     return {
       grid: {
         columns: [
-          {ident: 'project_name', sortIdent: 'project_name', filterIdent: 'project_name', name: 'Project'},
-          {ident: 'external_id', sortIdent: 'external_id', filterIdent: 'external_id', name: 'Issue'},
-          {ident: 'is_skipped', sortIdent: 'is_skipped', name: 'IsSkipped'},
-          {ident: 'is_corrected', sortIdent: 'is_corrected', name: 'IsCorrected'},
+          {ident: 'project_name', sortIdent: 'project_name',  name: 'Project'},
+          {ident: 'external_id', sortIdent: 'external_id',  name: 'Issue'},
+          {ident: 'is_skipped', sortIdent: 'is_skipped', filterIdent: 'is_skipped', name: 'IsSkipped'},
+          {ident: 'is_corrected', sortIdent: 'is_corrected', filterIdent: 'is_corrected', name: 'IsCorrected'},
           {ident: 'actions', name: 'Actions'}
         ],
         defaultOrder: {
-          field: 'project_name',
-          type: -1
+          field: 'is_corrected',
+          type: 1
         }
       },
       triggerRefresh: false
