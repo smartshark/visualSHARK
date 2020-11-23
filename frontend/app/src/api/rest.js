@@ -167,8 +167,12 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
-  getIssueForCorrection (project_name) {
-    let req = this.getUrl('labeling/line_correction/?project_name=' + project_name)
+  getIssueForCorrection (dat) {
+    let req = this.getUrl('labeling/line_correction/?project_name=' + dat.project)
+    if(dat.issue != null) {
+      req = req + '&external_id=' + dat.issue
+    }
+
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
@@ -294,6 +298,13 @@ export default {
   },
   getJobs (dat) {
     let req = this.getFilterUrl('system/job/', dat)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getCorrections (dat) {
+    let req = this.getFilterUrl('labeling/correction', dat)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

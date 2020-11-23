@@ -17,6 +17,7 @@ from dateutil.relativedelta import relativedelta
 import networkx as nx
 
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import Permission
@@ -43,6 +44,7 @@ from .models import CorrectionIssue
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
+from .serializers import CorrectionIssueSerializer
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRel
@@ -1510,15 +1512,20 @@ class LineLabelControlSet(APIView):
     def get(self, request):
 
         external_id = request.GET.get('external_id', None)
+        username = request.GET.get('username', None)
 
-        ci = CorrectionIssue.objects.get(external_id=external_id, user=request.user)
+        user = request.user
+        if username:
+            user = User.objects.get(username=username)
+
+        ci = CorrectionIssue.objects.get(external_id=external_id, user=user)
         project = Project.objects.get(name=ci.project_name)
         its = IssueSystem.objects.get(project_id=project.id)
 
         issue = Issue.objects.get(external_id=external_id, issue_system_id=its.id)
 
         if issue is None:
-            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssue.objects.filter(user=request.user, is_skipped=True).count()})
+            return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssue.objects.filter(user=user, is_skipped=True).count()})
 
         # urls for issue system and git
         issue_system = IssueSystem.objects.get(project_id=project.id)
@@ -1570,11 +1577,15 @@ class LineLabelCorrectionSet(APIView):
     def _commit_data_normal(self, issue, project_path):
         return get_commit_data(issue, project_path)
 
-    def _load_issue(self, user):
+    def _load_issue(self, user, external_id=None):
         p = None
         issue = None
 
-        ci = CorrectionIssue.objects.filter(user=user, is_corrected=False, is_skipped=False).first()
+        if external_id:
+            ci = CorrectionIssue.objects.get(user=user, is_corrected=False, is_skipped=False, external_id=external_id)
+        else:
+            ci = CorrectionIssue.objects.filter(user=user, is_corrected=False, is_skipped=False).order_by('project_name').first()
+
         if not ci:
             return issue, p
 
@@ -1585,7 +1596,9 @@ class LineLabelCorrectionSet(APIView):
 
     def get(self, request):
 
-        issue, project = self._load_issue(request.user)
+        external_id = request.GET.get('external_id', None)
+
+        issue, project = self._load_issue(request.user, external_id)
         if issue is None:
             return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssue.objects.filter(user=request.user, is_skipped=True).count()})
 
@@ -1720,6 +1733,22 @@ class LineLabelCorrectionSet(APIView):
         log.debug('final changes')
         log.debug(new_changes)
         return Response({'changes': new_changes})
+
+
+class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
+
+    queryset = CorrectionIssue.objects.all()
+    serializer_class = CorrectionIssueSerializer
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend, filters.OrderingFilter)
+    filter_fields = ('project_name', 'is_skipped', 'is_corrected')
+    ordering_fields = ('project_name', 'external_id', 'is_skipped', 'is_corrected')
+    search_fields = ('external_id',)
+
+    read_perm = 'view_line_label_corrections'
+
+    def get_queryset(self):
+        qry = super().get_queryset()
+        return qry.filter(user=self.request.user)
 
 
 class LeaderboardSet(APIView):

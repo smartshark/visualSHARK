@@ -207,6 +207,8 @@ class CorrectionIssue(models.Model):
     is_skipped = models.BooleanField(default=False)
     changes = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return self.external_id
 
 class RightsSupport(models.Model):
 

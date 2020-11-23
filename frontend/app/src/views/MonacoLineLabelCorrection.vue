@@ -103,6 +103,9 @@ export default {
         all: -1
       }
     },
+    props: {
+      loadExternalId: String
+    },
     computed: mapGetters({
         currentProject: 'currentProject',
         projectsVcs: 'projectsVcs',
@@ -110,11 +113,15 @@ export default {
         projectsMl: 'projectsMl'
     }),
     mounted() {
+        let req = {project: this.currentProject.name, issue: null}
+        if(typeof this.loadExternalId !== 'undefined') {
+          req.issue = this.loadExternalId
+        }
 
         var that = this;
         // Start background request
         this.$store.dispatch('pushLoading')
-        rest.getIssueForCorrection(this.currentProject.name)
+        rest.getIssueForCorrection(req)
             .then(response => {
                 this.$store.dispatch('popLoading')
 
@@ -287,7 +294,10 @@ export default {
             rest.saveIssueForCorrection({ data : result})
             .then(response => {
                 this.$store.dispatch('popLoading');
-                window.location.reload(false);
+                this.$router.push('/labeling/lineCorrection')
+                setTimeout(() => {
+                  window.location.reload(false);
+                }, 25)
             })
             .catch(e => {
                 this.$store.dispatch('pushError', e)

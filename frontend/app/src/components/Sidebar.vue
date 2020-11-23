@@ -47,6 +47,9 @@
               <li class="nav-item" v-if="permissions.includes('view_line_label_corrections')">
                 <router-link :to="'/labeling/lineControl'" class="nav-link"><i class="fa fa-file"></i> Lines Control</router-link>
               </li>
+              <li class="nav-item" v-if="permissions.includes('view_line_label_corrections')">
+                <router-link :to="'/labeling/corrections'" class="nav-link"><i class="fa fa-file"></i> Corrections</router-link>
+              </li>
               <li class="nav-item" v-if="permissions.includes('view_line_labels')">
                 <router-link :to="'/labeling/leaderboard'" class="nav-link"><i class="fas fa-crown"></i> Leaderboard</router-link>
               </li>

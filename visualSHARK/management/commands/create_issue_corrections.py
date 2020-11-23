@@ -21,13 +21,12 @@ class Command(BaseCommand):
 
         count = 0
         for user, issue_ids in dat.items():
+            username = user
             # 1. get django user for username
-            print(user, end=' ')
             try:
-                u = User.objects.get(username=user)
+                u = User.objects.get(username=username)
             except User.DoesNotExist:
-                print('user', user, 'does not exist, skipping')
-                continue
+                raise Exception('user', user, 'does not exist, skipping')
 
             # 2. get issue and project name for id
             for issue_id in issue_ids:
@@ -36,13 +35,12 @@ class Command(BaseCommand):
                 its = IssueSystem.objects.get(id=i.issue_system_id)
                 p = Project.objects.get(id=its.project_id)
 
-                print(i.external_id, p.name)
                 count += 1
 
                 try:
                     ci = CorrectionIssue.objects.get(user=u, external_id=i.external_id, project_name=p.name)
                 except CorrectionIssue.DoesNotExist:
-                    pass
-                    # ci = CorrectionIssue(user=u, external_id=i.external_id, project_name=p.name)
+                    ci = CorrectionIssue(user=u, external_id=i.external_id, project_name=p.name)
+                    ci.save()
 
         self.stdout.write(self.style.SUCCESS('[OK]') + ' imported {} corrections'.format(count))

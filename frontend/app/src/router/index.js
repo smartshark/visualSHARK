@@ -24,6 +24,7 @@ import Leaderboard from '@/views/Leaderboard'
 import TechnologyMonacoLineLabel from '@/views/TechnologyMonacoLineLabel'
 import MonacoLineLabelCorrection from '@/views/MonacoLineLabelCorrection'
 import MonacoLineLabelControl from '@/views/MonacoLineLabelControl'
+import CorrectionOverview from '@/views/CorrectionOverview'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -144,14 +145,21 @@ const router = new Router({
               component: TechnologyMonacoLineLabel
             },
             {
-              path: 'lineCorrection',
+              path: 'lineCorrection/:loadExternalId?',
               name: 'Change lines correction',
-              component: MonacoLineLabelCorrection
+              component: MonacoLineLabelCorrection,
+              props: true
             },
             {
-              path: 'lineControl',
+              path: 'lineControl/:loadExternalId?',
               name: 'Change lines control',
-              component: MonacoLineLabelControl
+              component: MonacoLineLabelControl,
+              props: true
+            },
+            {
+              path: 'corrections',
+              name: 'Corrections',
+              component: CorrectionOverview
             },
             {
               path: 'leaderboard',

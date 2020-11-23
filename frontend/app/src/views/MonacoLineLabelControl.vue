@@ -14,7 +14,7 @@
           <i class="fa fa-cog"></i> Control View
         </div>
         <div class="card-block">
-            <input type="text" v-model="external_id"/> <button class="btn btn-primary" v-on:click="loadIssue()">Load issue</button>
+            <input type="text" v-model="external_id"/> <button class="btn btn-primary" v-on:click="loadIssueReload()">Load issue</button>
         </div>
       </div>
       <div class="card">
@@ -86,6 +86,9 @@ export default {
         external_id: ''
       }
     },
+    props: {
+      loadExternalId: String
+    },
     computed: mapGetters({
         currentProject: 'currentProject',
         projectsVcs: 'projectsVcs',
@@ -93,15 +96,26 @@ export default {
         projectsMl: 'projectsMl'
     }),
     mounted() {
+      if(typeof this.loadExternalId !== 'undefined') {
+        this.loadIssue(this.loadExternalId)
+      }
     },
     components: {
         MonacoCommitDiffView,
         alert
     },
     methods: {
-        loadIssue: function() {
+        loadIssueReload: function() {
+          if(this.external_id) {
+            this.$router.push('/labeling/lineControl/' + this.external_id)
+            setTimeout(() => {
+              window.location.reload(false);
+            }, 25)
+          }
+        },
+        loadIssue: function(external_id) {
             this.$store.dispatch('pushLoading')
-            rest.getIssueForControl(this.external_id)
+            rest.getIssueForControl(external_id)
             .then(response => {
                 this.$store.dispatch('popLoading')
 

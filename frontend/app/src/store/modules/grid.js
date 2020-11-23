@@ -17,7 +17,8 @@ const state = {
   gridFileHistory: {data: [], count: 0},
   gridDefectLinks: {data: [], count: 0},
   gridReleases: {data: [], count: 0},
-  gridJobs: {data: [], count: 0}
+  gridJobs: {data: [], count: 0},
+  gridCorrections: {data: [], count: 0},
 }
 
 const getters = {
@@ -35,7 +36,8 @@ const getters = {
   gridFileHistory: state => state.gridFileHistory,
   gridDefectLinks: state => state.gridDefectLinks,
   gridReleases: state => state.gridReleases,
-  gridJobs: state => state.gridJobs
+  gridJobs: state => state.gridJobs,
+  gridCorrections: state => state.gridCorrections
 }
 
 const actions = {
@@ -237,6 +239,18 @@ const actions = {
   },
   clearGridFileActions ({commit}) {
     commit(types.CLEAR_GRID_FILE_ACTIONS)
+  },
+  updateGridCorrections ({commit}, dat) {
+    commit(types.PUSH_LOADING)
+    rest.getCorrections(dat)
+      .then(response => {
+        commit(types.GRID_CORRECTIONS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   }
 }
 
@@ -350,6 +364,13 @@ const mutations = {
       state.gridJobs = {data: response.data, count: response.data.length}
     } else {
       state.gridJobs = {data: response.data.results, count: response.data.count}
+    }
+  },
+  [types.GRID_CORRECTIONS] (state, { response }) {
+    if (typeof response.data.results === 'undefined') {
+      state.gridCorrections = {data: response.data, count: response.data.length}
+    } else {
+      state.gridCorrections = {data: response.data.results, count: response.data.count}
     }
   }
 }
