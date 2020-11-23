@@ -6,6 +6,7 @@ from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobTyp
 
 class CorrectionIssueAdmin(admin.ModelAdmin):
     list_display = ('user', 'external_id', 'is_corrected', 'is_skipped')
+    list_filter = ('user', 'is_corrected', 'is_skipped')
 
 
 class CommitGraphAdmin(admin.ModelAdmin):
