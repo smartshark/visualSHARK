@@ -1177,7 +1177,7 @@ class TechnologyLabeling(APIView):
             if sample_commit:
                 break
 
-        sample_commit = Commit.objects.get(revision_hash='f3bd0b79313c65d41260a7dfec6e041cc5e24674')
+        sample_commit = Commit.objects.get(revision_hash='07b15a15038f69612d2bba75f750814cbfbe0a08')
         result = {'warning': '',
                   'commits': get_technology_commit(project_path, sample_commit),
                   'vcs_url': vcs_url}

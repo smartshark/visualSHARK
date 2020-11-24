@@ -165,6 +165,56 @@ def get_change_view(file, hunks, refactoring_lines_old, refactoring_lines_new):
     return view_lines, has_changed, lines_before, lines_after, hunks_changes
 
 
+def get_technology_view(file, hunks):
+    view_lines = []
+    lines_before = []
+    lines_after = []
+    hunks_changes = []
+    added_lines = {}
+    deleted_lines = {}
+
+    for hunk in hunks:
+        al, dl, hunk_changes = get_lines(hunk)
+        hunks_changes = hunks_changes + hunk_changes
+        added_lines.update(al)
+        deleted_lines.update(dl)
+
+    idx_old = idx_new = 1
+    i = 1
+    has_changed = False
+
+    for line in file:
+        while idx_old in deleted_lines.keys():
+            tmp = {'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']}
+            view_lines.append(tmp)
+            lines_before.append(deleted_lines[idx_old]['code'])
+
+            i += 1
+            idx_old += 1
+            has_changed = True
+
+        if idx_new in added_lines.keys():
+            tmp = {'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']}
+            view_lines.append(tmp)
+            lines_after.append(added_lines[idx_new]['code'])
+
+            i += 1
+            idx_new += 1
+            has_changed = True
+            continue
+
+        if idx_old not in deleted_lines.keys() and idx_new not in added_lines.keys():
+            view_lines.append({'old': idx_old, 'new': idx_new, 'code': line, 'number': i})
+            lines_before.append(line)
+            lines_after.append(line)
+
+            i += 1
+            idx_new += 1
+            idx_old += 1
+
+    return view_lines, has_changed, lines_before, lines_after, hunks_changes
+
+
 def get_technology_commit(project_path, commit, consensus=False):
     """Get full data for one issue and project path.
     Checks out the commit locally, reads the hunks from the db and pre-labels everything.
@@ -183,6 +233,9 @@ def get_technology_commit(project_path, commit, consensus=False):
     changes = []
     for fa in fa_qry:
         f = File.objects.get(id=fa.file_id)
+
+        #if f.path != 'src/test/java/org/apache/commons/compress/archivers/cpio/CpioArchiveInputStreamTest.java':
+        #    continue
 
         source_file = folder + '/' + f.path
         if not os.path.exists(source_file):
@@ -213,7 +266,7 @@ def get_technology_commit(project_path, commit, consensus=False):
         nfile = nfile.replace('\r', '\n')
         nfile = nfile.split('\n')
 
-        view_lines, has_changed, lines_before, lines_after, hunks = get_change_view(nfile, Hunk.objects.filter(file_action_id=fa.id), [], [])
+        view_lines, has_changed, lines_before, lines_after, hunks = get_technology_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
 
         if has_changed:
             changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})

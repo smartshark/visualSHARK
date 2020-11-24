@@ -24,7 +24,7 @@
     </div>
   </div>
   <div class="card-block" style="padding: 0px">
-    <MonacoEditor  class="editor" :diffEditor="true" :value="file.after" :original="file.before" language="java" ref="editor" />
+    <MonacoEditor class="editor" :diffEditor="true" :value="file.after" :original="file.before" :options="editorOptions" :language="editorLanguage" ref="editor" @editorWillMount="editorWillMount"/>
   </div>
 </div>
 </template>
@@ -42,7 +42,6 @@ export default {
         decorationsRight: [],
         decorationsObjectsRight: [],
         missingChanges: [],
-        folding: false,
         showValidation: false,
         selectedTechnologies: [],
         addedTechnologies: [],
@@ -54,7 +53,8 @@ export default {
       file : Object,
       commit : Object,
       lines: Array,
-      existingTechnologies: Array
+      existingTechnologies: Array,
+      readOnly: Boolean
     },
     components: {
       MonacoEditor,
@@ -63,30 +63,61 @@ export default {
     computed: {
       technologies: function () {
         return this.existingTechnologies.concat(this.addedTechnologies)
+      },
+      editorOptions: function () {
+        return {readOnly: this.readOnly}
+      },
+      editorLanguage: function () {
+        if(this.file.filename.endsWith('.java')) {
+          return "java"
+        }else if(this.file.filename.endsWith('.xml')) {
+          return "xml"
+        }else {
+          return ""
+        }
       }
     },
     methods: {
+        editorWillMount(monaco) {
+          this.$emit('editorWillMount', monaco)
+        },
+        isModified(lineNumber, isOriginal) {
+          return (isOriginal && this.getOriginalChangeForLine(lineNumber) !== null) || (!isOriginal && this.getModifiedChangeForLine(lineNumber) !== null)
+        },
+        getTechnologiesForLine(lineNumber, isOriginal) {
+          let ret = 'none'
+          if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] !== 'undefined') {
+              ret = this.decorationsObjectsLeft[lineNumber].options.technologies
+          }
+          if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] !== 'undefined') {
+              ret = this.decorationsObjectsRight[lineNumber].options.technologies
+          }
+          return ret
+        },
         getOriginalChangeForLine(lineNumber) {
           let changes = this.$refs.editor.getEditor().getLineChanges()
+          let returnHunk = null
           for(let hunk of changes) {
             if(hunk.originalStartLineNumber <= lineNumber && lineNumber <= hunk.originalEndLineNumber) {
-              return hunk
+              returnHunk = hunk
             }
           }
+          return returnHunk
         },
         getModifiedChangeForLine(lineNumber) {
           let changes = this.$refs.editor.getEditor().getLineChanges()
+          let returnHunk = null
           for(let hunk of changes) {
             if(hunk.modifiedStartLineNumber <= lineNumber && lineNumber <= hunk.modifiedEndLineNumber) {
-              return hunk
+              returnHunk = hunk
             }
           }
+          return returnHunk
         },
         setTechnologies: function(click) {
           const isOriginal = this.selectedEditorType === this.$refs.editor.getEditor().getOriginalEditor()
-
-          if(isOriginal) {
-            console.log('setting', this.selectedTechnologies, 'on', this.currentRange, 'on original?', isOriginal)
+          console.log('setting', this.selectedTechnologies, 'on', this.currentRange, 'on original?', isOriginal)
+          if(isOriginal) {  
             for(let lineNumber of this.currentRange) {
               let hunk = this.getOriginalChangeForLine(lineNumber)
               this.decorationsObjectsLeft[lineNumber] = {
@@ -285,14 +316,8 @@ export default {
           return null
         },
         addActionToEditor: function(editor) {
-          this.addSingleActionToEditor2(editor, '1', 'Set Label', [ monaco.KeyCode.KEY_1 ], this.labelTechnologyAction)
-          /*this.addSingleActionToEditor(editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');
-          this.addSingleActionToEditor(editor, '2', 'Whitespace', [ monaco.KeyCode.KEY_2 ], 'whitespace');
-          this.addSingleActionToEditor(editor, '3', 'Documentation', [ monaco.KeyCode.KEY_3 ], 'documentation');
-          this.addSingleActionToEditor(editor, '4', 'Refactoring', [ monaco.KeyCode.KEY_4 ], 'refactoring');
-          this.addSingleActionToEditor(editor, '5', 'Test', [ monaco.KeyCode.KEY_5 ], 'test');
-          this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');*/
-          this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
+          this.addSingleActionToEditor2(editor, '1', 'Set technologies', [ monaco.KeyCode.KEY_1 ], this.labelTechnologyAction)
+          this.addSingleActionToEditor(editor, '7', 'Remove technologies', [ monaco.KeyCode.KEY_7 ], '');
         },
         markLineInEditorLeft(lineNumber,className, editor,ed) {
                     var that = this;
@@ -503,54 +528,6 @@ export default {
                 data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
            }
             return data;
-        },
-        labelWhitespace: function() {
-          this.labelFileComplete('whitespace');
-        },
-        labelDocumentation: function() {
-          this.labelFileComplete('documentation');
-        },
-        labelTest: function() {
-          this.labelFileComplete('test');
-        },
-        labelUnrelated: function() {
-          this.labelFileComplete('unrelated');
-        },
-        labelFileComplete: function(className) {
-          const changes = this.$refs.editor.getEditor().getLineChanges()
-          const origEditor = this.$refs.editor.getEditor().getOriginalEditor()
-          const modEditor = this.$refs.editor.getEditor().getModifiedEditor()
-
-          let newDecorationsLeft = []
-          let newDecorationsRight = []
-          for (let change of changes) {  // change is a hunk
-            // we have to do this line-wise because this.decorationsObjectsLeft/Right are used to aggregate the data for the backend
-            for(let line = change.originalStartLineNumber; line <= change.originalEndLineNumber; line++) {
-              newDecorationsLeft.push({
-                range: new monaco.Range(line, 1, line, 1),
-                options: {
-                  isWholeLine: true,
-                  linesDecorationsClassName: className
-                },
-                change: change
-              })
-              this.decorationsObjectsLeft[line] = newDecorationsLeft[newDecorationsLeft.length - 1]
-            }
-            for(let line = change.modifiedStartLineNumber; line <= change.modifiedEndLineNumber; line++) {
-              newDecorationsRight.push({
-                range: new monaco.Range(line, 1, line, 1),
-                options: {
-                  isWholeLine: true,
-                  linesDecorationsClassName: className
-                },
-                change: change
-              })
-              this.decorationsObjectsRight[line] = newDecorationsRight[newDecorationsRight.length - 1]
-            }
-          }
-          this.decorationsLeft = origEditor.deltaDecorations(this.decorationsLeft, newDecorationsLeft)
-          this.decorationsRight = modEditor.deltaDecorations(this.decorationsRight, newDecorationsRight)
-          this.validateEditor()
         }
       }
 }

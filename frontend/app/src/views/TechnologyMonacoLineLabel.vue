@@ -46,7 +46,7 @@
             </div>
             <div>
               <template v-for="f in c.changes">
-                <TechnologyMonacoDiffView :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" ref="diffView" />
+                <TechnologyMonacoDiffView :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" :readOnly="true" ref="diffView" @editorWillMount="editorWillMount"/>
               </template>
             </div>
           </div>
@@ -72,7 +72,8 @@ export default {
         error: [],
         vcs_url: '',
         issue_url: '',
-        technologies: []
+        technologies: [],
+        didMount: false
       }
     },
     computed: mapGetters({
@@ -82,16 +83,15 @@ export default {
       projectsMl: 'projectsMl'
     }),
     mounted() {
-
         this.$store.dispatch('pushLoading')
         rest.getTechnologiesForTechnologyLabeling(this.currentProject.name)
-            .then(response => {
-                this.$store.dispatch('popLoading')
-                this.technologies = response.data['technologies']
-            })
-            .catch(e => {
-                this.$store.dispatch('pushError', e)
-            });
+          .then(response => {
+            this.$store.dispatch('popLoading')
+            this.technologies = response.data['technologies']
+          })
+          .catch(e => {
+            this.$store.dispatch('pushError', e)
+          });
 
         var that = this;
 
@@ -139,7 +139,40 @@ export default {
         Multiselect
     },
     methods: {
-        top : function() {
+        editorWillMount: function(monaco) {
+          if(!this.didMount) {
+            monaco.languages.registerHoverProvider('java', {
+              provideHover: (model, position) => {
+                // let isOriginal = model == this.$refs.editor.getEditor().getOriginalEditor().getModel()
+                // check if we hover over a line with a label
+                for(let i = 0; i < this.$refs.diffView.length; i++) {
+                    let m = this.$refs.diffView[i].getEditor()
+                    let isOriginal = m.getEditor().getModel().original == model
+
+                    if(m.getEditor().getModel().original == model || m.getEditor().getModel().modified == model) {
+                      
+                      // todo: there ought to be a better way than hhis, maybe use lines?
+                      if(this.$refs.diffView[i].isModified(position.lineNumber, isOriginal)) {
+                        //console.log('line number', position.lineNumber, 'in', this.$refs.diffView[i].file.filename, 'original', isOriginal)
+                        let techs = this.$refs.diffView[i].getTechnologiesForLine(position.lineNumber, isOriginal)
+                        //console.log(techs)
+                        return {
+                          //range: new monaco.Range(1, 1, model.getLineCount(), model.getLineMaxColumn(model.getLineCount())),
+                          contents: [
+                            { value: '**Technologies**' },
+                            { value:  techs}
+                          ]
+                        }
+
+                      }
+                    }
+                }
+              }
+            })
+            this.didMount = true 
+          }
+        },
+        top: function() {
             scroll(0,0)
         },
         initEditors: function() {     
@@ -148,7 +181,7 @@ export default {
                 this.$refs.diffView[i].initEditor();
             }
         },
-        getEditors : function() {
+        getEditors: function() {
             var editors = [];
             for(var i = 0; i < this.$refs.diffView.length; i++)
             {
@@ -182,11 +215,11 @@ export default {
             }
             return data;
         },
-        jumpToChange : function(change)
+        jumpToChange: function(change)
         {
             document.getElementById('file' + change.filename + change.parent_revision_hash).scrollIntoView();
         },
-        getEditors : function() {
+        getEditors: function() {
            var editors = [];
            for(var i = 0; i < this.$refs.diffView.length; i++)
            {
@@ -202,7 +235,7 @@ export default {
                     }
              }, 1000);
         },
-        submitLabels : function() {
+        submitLabels: function() {
              // check if anything is missing
              var correct = [];
              for (var i = 0; i < this.$refs.diffView.length; i++) {
