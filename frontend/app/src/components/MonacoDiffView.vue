@@ -77,11 +77,11 @@ export default {
         initEditor: function() {
             var editor = this.$refs.editor;
             this.addActionToEditor(editor);
-            this.setAutoFolding(editor);
+/*            this.setAutoFolding(editor);
             if(this.folding) {
               this.setFoldingModel(editor);
               this.foldAll(editor);
-            }
+            }*/
             this.jumpActions(editor);
 
             var labelCssClass = ['bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
