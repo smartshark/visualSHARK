@@ -14,7 +14,7 @@
           <i class="fa fa-cog"></i> Control View
         </div>
         <div class="card-block">
-            <input type="text" v-model="external_id"/> <button class="btn btn-primary" v-on:click="loadIssueReload()">Load issue</button>
+            This view shows the labels you assigned for each line for a specific issue. The issue can be selected in the <router-link :to="{ name: 'Corrections'}">corrections overview</router-link>.
         </div>
       </div>
       <div class="card">

@@ -2,7 +2,7 @@
   <div class="wrapper">
     <div class="animated fadeIn">
       <div class="card">
-        <div class="card-header"><i class="fa fa-bug"></i> Issues</div>
+        <div class="card-header"><i class="fa fa-bug"></i> Issues </div>
         <div class="card-block">
           <grid :gridColumns="grid.columns" :data="gridCorrections.data" :count="gridCorrections.count" :defaultOrder="grid.defaultOrder" :defaultPerPage="15" defaultFilterField="external_id" :triggerRefresh="triggerRefresh" @refresh="refreshGrid">
             <template slot="external_id" slot-scope="props">
@@ -23,8 +23,8 @@
             </template>
             <template slot="actions" slot-scope="props">
               <td>
-                <router-link :to="{ name: 'Change lines control', params: { loadExternalId: props.row.external_id }}"><button class="btn">control labels</button></router-link>
-                <router-link :to="{ name: 'Change lines correction', params: { loadExternalId: props.row.external_id }}" v-if="!props.row.is_corrected"><button class="btn btn-primary" style="margin-left: 10px">correct issue</button></router-link>
+                <router-link :to="{ name: 'Change lines control', params: { loadExternalId: props.row.external_id }}" class="btn" tag="button" style="cursor: pointer;"> control labels</router-link>
+                <router-link :to="{ name: 'Change lines correction', params: { loadExternalId: props.row.external_id }}" v-if="!props.row.is_corrected" class="btn btn-primary" style="margin-left: 10px; cursor: pointer;" tag="button">correct issue</router-link>
               </td>
             </template>
           </grid>
@@ -63,9 +63,11 @@ export default {
   components: {
     Grid
   },
-  computed: mapGetters({
-    gridCorrections: 'gridCorrections'
-  }),
+  computed: {
+    ...mapGetters({
+      gridCorrections: 'gridCorrections'
+    })
+  },
   methods: {
     refreshGrid (dat) {
       this.triggerRefresh = false

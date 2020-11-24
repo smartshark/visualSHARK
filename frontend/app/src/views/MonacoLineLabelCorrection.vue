@@ -27,7 +27,13 @@
           <i class="fa fa-cog"></i> Correction View
         </div>
         <div class="card-block">
+          This view loads one of the issues that are not skipped or corrected.
+          Missing labels are only on the left side, we removed the labels that were overwritten.
+          The pre-labels are still shown left of where the labels would appear so that they can be distinguished.
+
+
           <template v-if="all > -1">
+            <br/>
             Of {{ all }} issues assigned to you, you have corrected {{ corrected }} and skipped {{ skipped }}.
           </template>
         </div>
