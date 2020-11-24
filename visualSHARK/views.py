@@ -1745,10 +1745,26 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
     search_fields = ('external_id',)
 
     read_perm = 'view_line_label_corrections'
+    write_perm = 'edit_line_label_corrections'
 
     def get_queryset(self):
         qry = super().get_queryset()
         return qry.filter(user=self.request.user)
+
+    # TODO: this is a get but changes stuff, UGLY
+    @detail_route(methods=['get'])
+    def unskip(self, request, pk=None):
+        j = CorrectionIssue.objects.get(pk=pk, user=request.user)
+        j.is_skipped = False
+        j.save()
+        return HttpResponse(status=200)
+
+    @detail_route(methods=['get'])
+    def skip(self, request, pk=None):
+        j = CorrectionIssue.objects.get(pk=pk, user=request.user)
+        j.is_skipped = True
+        j.save()
+        return HttpResponse(status=200)
 
 
 class LeaderboardSet(APIView):

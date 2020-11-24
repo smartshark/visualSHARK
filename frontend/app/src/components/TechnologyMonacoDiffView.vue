@@ -134,11 +134,6 @@ export default {
         initEditor: function() {
             var editor = this.$refs.editor;
             this.addActionToEditor(editor);
-            this.setAutoFolding(editor);
-            if(this.folding) {
-              this.setFoldingModel(editor);
-              this.foldAll(editor);
-            }
             this.jumpActions(editor);
 
             var labelCssClass = [ 'bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
@@ -260,65 +255,6 @@ export default {
             };
             editor.getEditor().getOriginalEditor().addAction(action2);
             editor.getEditor().getModifiedEditor().addAction(action2);
-        },
-        clickFoldAll: function() {
-            var editor = this.$refs.editor;
-            this.foldAll(editor);
-        },
-        clickUnfoldAll: function() {
-            var editor = this.$refs.editor;
-            editor.getEditor().getOriginalEditor().trigger('fold', 'editor.unfoldAll');
-        },
-        foldAll: function(editor) {
-            setTimeout(function() {
-                editor.getEditor().getOriginalEditor().trigger('fold', 'editor.foldAll');
-            }, 1000);
-        },
-        setFoldingModel: function(editor) {
-            var foldingContrib = editor.getEditor().getOriginalEditor().getContribution('editor.contrib.folding');
-            var foldingContribModified = editor.getEditor().getModifiedEditor().getContribution('editor.contrib.folding');
-            foldingContribModified.getFoldingModel().then(foldingModelModified => {
-                foldingContrib.getFoldingModel().then(foldingModel => {
-                    foldingModel.onDidChange((e) => {
-                        var regions = foldingModel.regions;
-                        var regionsModified = foldingModelModified.regions;
-                        let toToggle = [];
-                        for (let i = regions.length - 1; i >= 0; i--) {
-                            if (regions.isCollapsed(i) != regionsModified.isCollapsed(i)) {
-                                toToggle.push(regionsModified.toRegion(i));
-                            }
-                        }
-                        foldingModelModified.toggleCollapseState(toToggle);
-                    });
-
-                    foldingModelModified.onDidChange((e) => {
-                        var regions = foldingModel.regions;
-                        var regionsModified = foldingModelModified.regions;
-                        let toToggle = [];
-                        for (let i = regions.length - 1; i >= 0; i--) {
-                            if (regions.isCollapsed(i) != regionsModified.isCollapsed(i)) {
-                                toToggle.push(regions.toRegion(i));
-                            }
-                        }
-                        foldingModel.toggleCollapseState(toToggle);
-                    });
-                });
-            });
-        },
-        setAutoFolding: function(editor) {
-            editor.getEditor().updateOptions({	
-                ignoreTrimWhitespace: false,	
-            });
-            editor.getEditor().getModifiedEditor().updateOptions({
-                readOnly: true,
-                folding: this.folding,
-                automaticLayout: true
-            });
-            editor.getEditor().getOriginalEditor().updateOptions({
-                readOnly: true,
-                folding: this.folding,
-                automaticLayout: true
-            });
         },
         labelTechnologyAction: function(editor, ed) {
           const range = ed.getSelection()

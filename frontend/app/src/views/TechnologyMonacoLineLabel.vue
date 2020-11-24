@@ -116,7 +116,7 @@ export default {
                 this.load_last = response.data['load_last']
                 setTimeout(() => {
                     // Register all editors
-                    this.registerFoldingModel();
+                    //this.registerFoldingModel();
                     this.initEditors();
                     this.validateAll();
                 }, 25);
@@ -182,7 +182,6 @@ export default {
             }
             return data;
         },
-
         jumpToChange : function(change)
         {
             document.getElementById('file' + change.filename + change.parent_revision_hash).scrollIntoView();
@@ -194,63 +193,6 @@ export default {
            editors = editors.concat(this.$refs.diffView[i].getEditors());
            }
            return editors;
-        },
-        registerFoldingModel: function() {
-            var that = this;
-            monaco.languages.registerFoldingRangeProvider("java", {
-                provideFoldingRanges: function(model, context, token) {
-                    var margin = 2;
-                    var ranges = [];
-                    // Detect editor
-                    var editor = null;
-                    var isOrginial = false;
-                    var editors = that.getEditors();
-                    for (var i = 0; i < editors.length; i++) {
-                        var currentEditor = editors[i].getEditor();
-                        if (currentEditor.getOriginalEditor().getModel() == model) {
-                            editor = currentEditor;
-                            isOrginial = true;
-                        } else if (currentEditor.getModifiedEditor().getModel() == model) {
-                            editor = currentEditor;
-                            isOrginial = false;
-                        }
-                    }
-                    var startLine = 1;
-                    var changes = editor.getLineChanges();
-                    for (var i = 0; i < changes.length; i++) {
-                        var change = changes[i];
-                        var ende = change.originalStartLineNumber;
-                        if (ende > change.modifiedStartLineNumber) {
-                            ende = change.modifiedStartLineNumber;
-                        }
-                        ende = ende - margin;
-                        var range = {
-                            start: startLine,
-                            end: ende,
-                            kind: monaco.languages.FoldingRangeKind.Region
-                        };
-                        ranges.push(range);
-
-                        var newStartLine = change.originalEndLineNumber;
-                        if (newStartLine < change.modifiedEndLineNumber) {
-                            newStartLine = change.modifiedEndLineNumber;
-                        }
-                        if (newStartLine == 0) {
-                            newStartLine = ende + 1;
-
-                        }
-                        startLine = newStartLine + margin;
-
-                    }
-
-                    ranges.push({
-                        start: startLine + margin,
-                        end: model.getLineCount(),
-                        kind: monaco.languages.FoldingRangeKind.Region
-                    });
-                    return ranges;
-                }
-            });
         },
         validateAll: function () {
             var that = this;

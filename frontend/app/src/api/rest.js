@@ -310,6 +310,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  unskipIssue (issueId) {
+    let req = this.getUrl('labeling/correction/' + issueId + '/unskip/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getReleaseApproaches () {
     let req = this.getUrl('analytics/releaseApproach/')
     return axios.get(req, {headers: {

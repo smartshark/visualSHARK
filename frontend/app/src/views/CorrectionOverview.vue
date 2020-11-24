@@ -24,7 +24,8 @@
             <template slot="actions" slot-scope="props">
               <td>
                 <router-link :to="{ name: 'Change lines control', params: { loadExternalId: props.row.external_id }}" class="btn" tag="button" style="cursor: pointer;"> control labels</router-link>
-                <router-link :to="{ name: 'Change lines correction', params: { loadExternalId: props.row.external_id }}" v-if="!props.row.is_corrected" class="btn btn-primary" style="margin-left: 10px; cursor: pointer;" tag="button">correct issue</router-link>
+                <router-link :to="{ name: 'Change lines correction', params: { loadExternalId: props.row.external_id }}" v-if="!props.row.is_corrected && !props.row.is_skipped" class="btn btn-primary" style="margin-left: 10px; cursor: pointer;" tag="button">correct issue</router-link>
+                <button v-if="props.row.is_skipped" class="btn btn-primary" v-on:click="unskip(props.row.id)">unskip</button>
               </td>
             </template>
           </grid>
@@ -36,6 +37,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import rest from '../api/rest'
 
 import Grid from '@/components/Grid.vue'
 
@@ -72,6 +74,18 @@ export default {
     refreshGrid (dat) {
       this.triggerRefresh = false
       this.$store.dispatch('updateGridCorrections', dat)
+    },
+    unskip (id) {
+      this.$store.dispatch('pushLoading')
+      rest.unskipIssue(id)
+        .then(response => {
+            this.$store.dispatch('popLoading')
+            this.triggerRefresh = true
+        })
+        .catch(e => {
+          this.$store.dispatch('popLoading')
+          this.$store.dispatch('pushError', e)
+        });
     }
   }
 }

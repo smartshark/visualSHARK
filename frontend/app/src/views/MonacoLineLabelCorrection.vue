@@ -18,7 +18,6 @@
                 </ul>
           </alert>
       </div>
-      <button class="btn btn-secondary" v-on:click="unskipIssues()" style="float: right; margin-bottom: 5px; margin-right: 5px:">Unskip issues</button>
       <button class="btn btn-secondary" v-on:click="skipIssue()" style="float: right; margin-bottom: 5px; margin-right: 5px:">Skip issue</button>
       <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
       <div class="clearfix"></div>
@@ -30,8 +29,6 @@
           This view loads one of the issues that are not skipped or corrected.
           Missing labels are only on the left side, we removed the labels that were overwritten.
           The pre-labels are still shown left of where the labels would appear so that they can be distinguished.
-
-
           <template v-if="all > -1">
             <br/>
             Of {{ all }} issues assigned to you, you have corrected {{ corrected }} and skipped {{ skipped }}.
@@ -257,22 +254,14 @@ export default {
             rest.saveIssueForCorrection({data : result})
             .then(response => {
                 this.$store.dispatch('popLoading');
-                window.location.reload(false);
+                this.$router.push('/labeling/lineCorrection')
+                setTimeout(() => {
+                  window.location.reload(false);
+                }, 25)
             })
             .catch(e => {
-                this.$store.dispatch('pushError', e)
-            });
-        },
-        unskipIssues: function() {
-            this.$store.dispatch('pushLoading')
-            var result = {unskip_issues: true, issue_id: this.issue.id}
-            rest.saveIssueForCorrection({data : result})
-            .then(response => {
-                this.$store.dispatch('popLoading');
-                window.location.reload(false);
-            })
-            .catch(e => {
-                this.$store.dispatch('pushError', e)
+              this.$store.dispatch('popLoading');
+              this.$store.dispatch('pushError', e)
             });
         },
         submitLabels : function() {
