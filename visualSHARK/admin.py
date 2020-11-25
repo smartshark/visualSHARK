@@ -1,7 +1,22 @@
 from django.contrib import admin
-
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
     IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue
+
+
+def activate_user(modeladmin, news, queryset):
+    queryset.update(is_active=True)
+activate_user.short_description = u"Activate selected Users"
+
+
+def deactivate_user(modeladmin, news, queryset):
+    queryset.update(is_active=False)
+deactivate_user.short_description = u"Deactivate selected Users"
+
+
+class CustomUserAdmin(UserAdmin):
+    actions = [activate_user, deactivate_user]
 
 
 class CorrectionIssueAdmin(admin.ModelAdmin):
@@ -44,6 +59,10 @@ class IssueValidationUserAdmin(admin.ModelAdmin):
 class LeaderboardSnapshotAdmin(admin.ModelAdmin):
     list_display = ('created_at',)
 
+
+# custom user admin
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
 
 admin.site.register(CommitGraph, CommitGraphAdmin)
 admin.site.register(CommitLabelField, CommitLabelFieldAdmin)
