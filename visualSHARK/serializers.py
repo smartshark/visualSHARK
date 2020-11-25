@@ -265,4 +265,4 @@ class CorrectionIssueSerializer(rserializers.ModelSerializer):
 
     class Meta:
         model = CorrectionIssue
-        fields = ('id', 'external_id', 'project_name', 'is_skipped', 'is_corrected')
+        fields = ('id', 'external_id', 'project_name', 'is_skipped', 'is_corrected', 'changed_at')

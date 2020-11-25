@@ -206,6 +206,7 @@ class CorrectionIssue(models.Model):
     is_corrected = models.BooleanField(default=False)
     is_skipped = models.BooleanField(default=False)
     changes = models.TextField(blank=True, null=True)
+    changed_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.external_id

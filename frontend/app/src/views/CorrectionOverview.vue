@@ -52,6 +52,7 @@ export default {
           {ident: 'external_id', sortIdent: 'external_id',  name: 'Issue'},
           {ident: 'is_skipped', sortIdent: 'is_skipped', filterIdent: 'is_skipped', name: 'IsSkipped'},
           {ident: 'is_corrected', sortIdent: 'is_corrected', filterIdent: 'is_corrected', name: 'IsCorrected'},
+          {ident: 'changed_at', sortIdent: 'changed_at', filterIdent: 'changed_at', name: 'Last changed'},
           {ident: 'actions', name: 'Actions'}
         ],
         defaultOrder: {

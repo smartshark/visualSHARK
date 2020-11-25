@@ -77,7 +77,10 @@ export default {
         initEditor: function() {
             var editor = this.$refs.editor;
             this.addActionToEditor(editor);
-/*            this.setAutoFolding(editor);
+            /*Folding triggers a race condition in certain changes
+            which results in the editor thinking a lot more lines need labeling
+            due to the diffAlgo override not working
+            this.setAutoFolding(editor);
             if(this.folding) {
               this.setFoldingModel(editor);
               this.foldAll(editor);

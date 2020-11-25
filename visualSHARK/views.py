@@ -1651,6 +1651,7 @@ class LineLabelCorrectionSet(APIView):
         if 'skip_issue' in request.data['data'].keys() and request.data['data']['skip_issue']:
             ci = CorrectionIssue.objects.get(user=request.user, external_id=issue.external_id)
             ci.is_skipped = True
+            ci.changed_at = datetime.now()
             ci.save()
             return Response({'skipped_issue': issue.external_id})
 
@@ -1728,6 +1729,7 @@ class LineLabelCorrectionSet(APIView):
         ci = CorrectionIssue.objects.get(user=request.user, external_id=issue.external_id)
         ci.is_corrected = True
         ci.changes = json.dumps(control)
+        ci.changed_at = datetime.now()
         ci.save()
 
         log.debug('final changes')
@@ -1741,7 +1743,7 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
     serializer_class = CorrectionIssueSerializer
     filter_backends = (django_filters.rest_framework.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_fields = ('is_skipped', 'is_corrected')
-    ordering_fields = ('project_name', 'external_id', 'is_skipped', 'is_corrected')
+    ordering_fields = ('project_name', 'external_id', 'is_skipped', 'is_corrected', 'changed_at')
     search_fields = ('external_id',)
 
     read_perm = 'view_line_label_corrections'
@@ -1756,6 +1758,7 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
     def unskip(self, request, pk=None):
         j = CorrectionIssue.objects.get(pk=pk, user=request.user)
         j.is_skipped = False
+        j.changed_at = datetime.now()
         j.save()
         return HttpResponse(status=200)
 
@@ -1763,6 +1766,7 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
     def skip(self, request, pk=None):
         j = CorrectionIssue.objects.get(pk=pk, user=request.user)
         j.is_skipped = True
+        j.changed_at = datetime.now()
         j.save()
         return HttpResponse(status=200)
 
