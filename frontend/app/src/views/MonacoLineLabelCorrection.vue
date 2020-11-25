@@ -159,7 +159,8 @@ export default {
                 }, 25);
             })
             .catch(e => {
-                this.$store.dispatch('pushError', e)
+              this.$store.dispatch('popLoading')
+              this.$store.dispatch('pushError', e)
             });
     },
     components: {
