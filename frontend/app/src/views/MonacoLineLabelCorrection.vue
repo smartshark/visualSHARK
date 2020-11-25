@@ -132,7 +132,7 @@ export default {
                 if(response.data['warning'] == 'no_more_issues') {
                   this.skipped = response.data['skipped']
                   if(response.data['skipped'] > 0) {
-                    this.flashes.push({id: 'no_more_issues', message: 'No more issues to correct. Thank you! If you want to take a look at your ' + response.data['skipped'] + ' skipped issues again, press unskip issues!'})
+                    this.flashes.push({id: 'no_more_issues', message: 'No more issues to correct. Thank you! If you want to take a look at your ' + response.data['skipped'] + ' skipped issues again, press unskip issue in the corrections view!'})
                   } else{
                     this.flashes.push({id: 'no_more_issues', message: 'No more issues to correct. Thank you!'})
                   }
