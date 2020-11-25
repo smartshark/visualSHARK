@@ -60,7 +60,7 @@ export default {
             missingChanges: [],
             folding: false,
             showValidation: false,
-            options: {glyphMargin: true}
+            options: {glyphMargin: true, readOnly: true, ignoreTrimWhitespace: false}
         }
     },
     props: {
@@ -334,6 +334,7 @@ export default {
           }
         },
         markLineInEditorRight(lineNumber,className, editor,ed) {
+                    console.log('try to mark line', lineNumber)
                     var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
@@ -351,6 +352,7 @@ export default {
                     if(className == '') {
                       delete that.decorationsObjectsRight[lineNumber];
                     } else {
+                      console.log('mark line', lineNumber)
                     that.decorationsObjectsRight[lineNumber] = {
                         range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                         options: {
