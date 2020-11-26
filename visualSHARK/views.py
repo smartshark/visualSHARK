@@ -1771,6 +1771,29 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
         return HttpResponse(status=200)
 
 
+class CorrectionBoardView(APIView):
+
+    def get(self, request):
+        ret = {}
+        ret['all_issues'] = CorrectionIssue.objects.count()
+        ret['skipped_issues'] = CorrectionIssue.objects.filter(is_skipped=True).count()
+        ret['corrected_issues'] = CorrectionIssue.objects.filter(is_corrected=True).count()
+
+        ret['users'] = {}
+        users = []
+        for ci in CorrectionIssue.objects.order_by('user__username'):
+            if ci.user not in users:
+                users.append(ci.user)
+
+        for user in users:
+            ret['users'][user.username] = {}
+            ret['users'][user.username]['all_issues'] = CorrectionIssue.objects.filter(user=user).count()
+            ret['users'][user.username]['skipped_issues'] = CorrectionIssue.objects.filter(user=user, is_skipped=True).count()
+            ret['users'][user.username]['corrected_issues'] = CorrectionIssue.objects.filter(user=user, is_corrected=True).count()
+
+        return Response(ret)
+
+
 class LeaderboardSet(APIView):
     read_perm = 'view_line_labels'
 

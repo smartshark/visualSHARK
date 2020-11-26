@@ -25,6 +25,7 @@ import TechnologyMonacoLineLabel from '@/views/TechnologyMonacoLineLabel'
 import MonacoLineLabelCorrection from '@/views/MonacoLineLabelCorrection'
 import MonacoLineLabelControl from '@/views/MonacoLineLabelControl'
 import CorrectionOverview from '@/views/CorrectionOverview'
+import CorrectionBoard from '@/views/CorrectionBoard'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -165,6 +166,11 @@ const router = new Router({
               path: 'leaderboard',
               name: 'Leaderboard',
               component: Leaderboard
+            },
+            {
+              path: 'correctionboard',
+              name: 'Correctionboard',
+              component: CorrectionBoard
             }
           ]
         },

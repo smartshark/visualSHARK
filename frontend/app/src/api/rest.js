@@ -569,6 +569,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getCorrectionBoard () {
+    let req = this.getUrl('labeling/correctionboard')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   createRevisionJob (dat) {
     let req = this.getUrl('system/job/collect_revision/')
     return axios.post(req, dat, {headers: {

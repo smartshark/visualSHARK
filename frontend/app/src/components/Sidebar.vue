@@ -53,6 +53,9 @@
               <li class="nav-item" v-if="permissions.includes('view_line_labels')">
                 <router-link :to="'/labeling/leaderboard'" class="nav-link"><i class="fas fa-crown"></i> Leaderboard</router-link>
               </li>
+              <li class="nav-item" v-if="isSuperuser">
+                <router-link :to="'/labeling/correctionboard'" class="nav-link"><i class="fas fa-crown"></i> Correctionboard</router-link>
+              </li>
             </ul>
         </router-link>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled v-if="permissions.includes('view_analytics')">
