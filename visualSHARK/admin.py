@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
-    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue
+    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue, PMDIssue
 
 
 def activate_user(modeladmin, news, queryset):
@@ -60,6 +60,12 @@ class LeaderboardSnapshotAdmin(admin.ModelAdmin):
     list_display = ('created_at',)
 
 
+class PMDIssueAdmin(admin.ModelAdmin):
+    list_display = ('user', 'external_id', 'is_validated', 'is_skipped')
+    list_filter = ('user', 'is_validated', 'is_skipped')
+    search_fields = ('user',)
+
+
 # custom user admin
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
@@ -75,3 +81,4 @@ admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
 admin.site.register(ProjectAttributes)
 admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
 admin.site.register(CorrectionIssue, CorrectionIssueAdmin)
+admin.site.register(PMDIssue, PMDIssueAdmin)

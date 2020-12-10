@@ -47,6 +47,54 @@
 
 import MonacoEditor from 'vue-monaco'
 
+var LineChange = /** @class */ (function () {
+    function LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges) {
+        this.originalStartLineNumber = originalStartLineNumber;
+        this.originalEndLineNumber = originalEndLineNumber;
+        this.modifiedStartLineNumber = modifiedStartLineNumber;
+        this.modifiedEndLineNumber = modifiedEndLineNumber;
+        this.charChanges = charChanges;
+    }
+    LineChange.createFromDiffResult = function (shouldIgnoreTrimWhitespace, diffChange, originalLineSequence, modifiedLineSequence, continueProcessingPredicate, shouldComputeCharChanges, shouldPostProcessCharChanges) {
+        var originalStartLineNumber;
+        var originalEndLineNumber;
+        var modifiedStartLineNumber;
+        var modifiedEndLineNumber;
+        var charChanges = undefined;
+        if (diffChange.originalLength === 0) {
+            originalStartLineNumber = originalLineSequence.getStartLineNumber(diffChange.originalStart) - 1;
+            originalEndLineNumber = 0;
+        }
+        else {
+            originalStartLineNumber = originalLineSequence.getStartLineNumber(diffChange.originalStart);
+            originalEndLineNumber = originalLineSequence.getEndLineNumber(diffChange.originalStart + diffChange.originalLength - 1);
+        }
+        if (diffChange.modifiedLength === 0) {
+            modifiedStartLineNumber = modifiedLineSequence.getStartLineNumber(diffChange.modifiedStart) - 1;
+            modifiedEndLineNumber = 0;
+        }
+        else {
+            modifiedStartLineNumber = modifiedLineSequence.getStartLineNumber(diffChange.modifiedStart);
+            modifiedEndLineNumber = modifiedLineSequence.getEndLineNumber(diffChange.modifiedStart + diffChange.modifiedLength - 1);
+        }
+        if (shouldComputeCharChanges && diffChange.originalLength !== 0 && diffChange.modifiedLength !== 0 && continueProcessingPredicate()) {
+            var originalCharSequence = originalLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.originalStart, diffChange.originalStart + diffChange.originalLength - 1);
+            var modifiedCharSequence = modifiedLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.modifiedStart, diffChange.modifiedStart + diffChange.modifiedLength - 1);
+            var rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueProcessingPredicate, true, null);
+            if (shouldPostProcessCharChanges) {
+                rawChanges = postProcessCharChanges(rawChanges);
+            }
+            charChanges = [];
+            for (var i = 0, length_2 = rawChanges.length; i < length_2; i++) {
+                charChanges.push(CharChange.createFromDiffChange(rawChanges[i], originalCharSequence, modifiedCharSequence));
+            }
+        }
+        return new LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges);
+    };
+    return LineChange;
+}());
+
+
 export default {
     data() {
         return {
@@ -60,7 +108,7 @@ export default {
             missingChanges: [],
             folding: false,
             showValidation: false,
-            options: {glyphMargin: true, readOnly: true, ignoreTrimWhitespace: false}
+            options: {glyphMargin: true, readOnly: true, ignoreTrimWhitespace: true}
         }
     },
     props: {
@@ -74,6 +122,34 @@ export default {
         getEditor: function() {
             return this.$refs.editor;
         },
+        calculateLineChanges: function(hunks) {
+          let changes = []
+          for(let hunk of hunks) {
+
+            var originalStartLineNumber;
+            var originalEndLineNumber;
+            var modifiedStartLineNumber;
+            var modifiedEndLineNumber;
+            if (hunk.originalLength === 0) {
+              originalStartLineNumber = hunk.originalStart;
+              originalEndLineNumber = 0;
+            }else {
+              originalStartLineNumber = hunk.originalStart + 1;
+              originalEndLineNumber = hunk.originalStart + hunk.originalLength;
+            }
+            if (hunk.modifiedLength === 0) {
+                modifiedStartLineNumber = hunk.modifiedStart;
+                modifiedEndLineNumber = 0;
+            }
+            else {
+                modifiedStartLineNumber = hunk.modifiedStart + 1;
+                modifiedEndLineNumber = hunk.modifiedStart + hunk.modifiedLength;
+            }
+
+            changes.push({originalStartLineNumber: originalStartLineNumber, originalEndLineNumber: originalEndLineNumber, modifiedStartLineNumber: modifiedStartLineNumber, modifiedEndLineNumber: modifiedEndLineNumber})
+          }
+          return changes
+        },
         initEditor: function() {
             var editor = this.$refs.editor;
             this.addActionToEditor(editor);
@@ -85,7 +161,23 @@ export default {
               this.setFoldingModel(editor);
               this.foldAll(editor);
             }*/
+            // hello test
             this.jumpActions(editor);
+
+            // thats the plan:
+            //
+            // overwrite DiffEditorWidget.prototype._beginUpdateDecorations = fucntion()  with empty function
+            // manually set DiffEditorWidget._diffComputationResult
+            
+            console.log('editor line changes', editor.getEditor().getLineChanges())
+            let edref = editor.getEditor()
+            //edref._diffComputationResult = {changes: LineChange.createFromDiffResult(true, edref.getOriginalEditor().getModel().uri, edref.getModifiedEditor().getModel().uri, this.file.after, null, false, false)}
+            edref._diffComputationResult = {changes: this.calculateLineChanges(this.file.hunks)}
+            //console.log(this.file.hunks)
+            edref._beginUpdateDecorations = function() {
+              //console.log('i should update');
+            }
+            console.log('editor line changes2', editor.getEditor().getLineChanges())
 
             var labelCssClass = ['bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
             var labelCssClassPre = ['bugfix-pre', 'whitespace-pre','documentation-pre', 'refactoring-pre', 'test-pre', 'unrelated-pre'];
@@ -334,7 +426,6 @@ export default {
           }
         },
         markLineInEditorRight(lineNumber,className, editor,ed) {
-                    console.log('try to mark line', lineNumber)
                     var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
@@ -352,7 +443,6 @@ export default {
                     if(className == '') {
                       delete that.decorationsObjectsRight[lineNumber];
                     } else {
-                      console.log('mark line', lineNumber)
                     that.decorationsObjectsRight[lineNumber] = {
                         range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                         options: {

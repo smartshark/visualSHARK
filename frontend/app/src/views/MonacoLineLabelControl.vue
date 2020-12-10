@@ -130,7 +130,7 @@ export default {
 
                 setTimeout(() => {
                     // Register all editors
-                    this.registerFoldingModel();
+                    //this.registerFoldingModel();
                     for(var i = 0; i < this.$refs.commitDiffView.length; i++)
                     {
                     this.$refs.commitDiffView[i].initEditors();

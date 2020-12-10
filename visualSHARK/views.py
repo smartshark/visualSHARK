@@ -40,7 +40,7 @@ from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, File
     Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 from .models import LeaderboardSnapshot
-from .models import CorrectionIssue
+from .models import CorrectionIssue, PMDIssue
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -55,7 +55,7 @@ from .util import prediction
 from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
 from .util.helper import get_change_view, refactoring_lines, get_correction_view, get_control_view
-from .util.line_label import get_commit_data, get_technology_commit, get_correction_data
+from .util.line_label import get_commit_data, get_technology_commit, get_correction_data, get_pmd_data
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1735,6 +1735,96 @@ class LineLabelCorrectionSet(APIView):
         log.debug('final changes')
         log.debug(new_changes)
         return Response({'changes': new_changes})
+
+
+class PMDValidationSet(APIView):
+    """Manual validation of possible direct connection between PMD warnings and reported bugs."""
+
+    def _pmd_data(self, issue, project_path, username, meta_data):
+        return get_pmd_data(issue, project_path, username, True, meta_data)
+
+    def _load_issue(self, user, external_id=None):
+        p = None
+        issue = None
+
+        if external_id:
+            ci = PMDIssue.objects.get(user=user, is_validated=False, is_skipped=False, external_id=external_id)
+        else:
+            ci = PMDIssue.objects.filter(user=user, is_validated=False, is_skipped=False).order_by('project_name').first()
+
+        if not ci:
+            return issue, p, None
+
+        p = Project.objects.get(name=ci.project_name)
+        its = IssueSystem.objects.get(project_id=p.id)
+        issue = Issue.objects.get(external_id=ci.external_id, issue_system_id=its.id)
+        return issue, p, json.loads(ci.warnings)
+
+    def get(self, request):
+        external_id = request.GET.get('external_id', None)
+
+        issue, project, file_meta_data = self._load_issue(request.user, external_id)
+        if issue is None:
+            return Response({'warning': 'no_more_issues', 'skipped': PMDIssue.objects.filter(user=request.user, is_skipped=True).count()})
+
+        # urls for issue system and git
+        issue_system = IssueSystem.objects.get(project_id=project.id)
+        if 'jira' in issue_system.url:
+            issue_url = 'https://issues.apache.org/jira/browse/'
+        elif 'github' in issue_system.url:
+            issue_url = issue_system.url.replace('/repos/', '/').replace('api.', '')
+            if not issue_url.endswith('/'):
+                issue_url += '/'
+
+        vcs = VCSSystem.objects.get(project_id=project.id)
+        vcs_url = vcs.url.replace('.git', '') + '/commit/'
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + project.name
+
+        if not os.path.exists(project_path):
+            log.error('no such path ' + project_path)
+            return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        result = {'warning': '',
+                  'commits': self._pmd_data(issue, project_path, request.user.username, file_meta_data),
+                  'issue_url': issue_url,
+                  'vcs_url': vcs_url}
+
+        serializer = IssueSerializer(issue, many=False)
+        data = serializer.data
+        result['issue'] = data
+
+        # include additional information about skipped / corrected issus
+        result['all'] = PMDIssue.objects.filter(user=request.user).count()
+        result['skipped'] = PMDIssue.objects.filter(user=request.user, is_skipped=True).count()
+        result['validated'] = PMDIssue.objects.filter(user=request.user, is_validated=True).count()
+
+        return Response(result)
+
+    def post(self, request):
+
+        issue_id = request.data['data']['issue_id']
+        issue = Issue.objects.get(id=issue_id)
+
+        if 'skip_issue' in request.data['data'].keys() and request.data['data']['skip_issue']:
+            ci = PMDIssue.objects.get(user=request.user, external_id=issue.external_id)
+            ci.is_skipped = True
+            ci.changed_at = datetime.now()
+            ci.save()
+            return Response({'skipped_issue': issue.external_id})
+
+        labels = request.data['data']['labels']
+
+        # todo:
+        # - are the lines really the position of consensus labels
+
+        ci = PMDIssue.objects.get(user=request.user, external_id=issue.external_id)
+        ci.is_validated = True
+        ci.labels = json.dumps(labels)
+        ci.changed_at = datetime.now()
+        ci.save()
+
+        return Response({'changes': labels})
 
 
 class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):

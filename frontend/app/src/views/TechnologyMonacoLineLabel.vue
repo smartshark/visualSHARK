@@ -146,30 +146,29 @@ export default {
                 // let isOriginal = model == this.$refs.editor.getEditor().getOriginalEditor().getModel()
                 // check if we hover over a line with a label
                 for(let i = 0; i < this.$refs.diffView.length; i++) {
-                    let m = this.$refs.diffView[i].getEditor()
-                    let isOriginal = m.getEditor().getModel().original == model
+                  let m = this.$refs.diffView[i].getEditor()
+                  let isOriginal = m.getEditor().getModel().original == model
 
-                    if(m.getEditor().getModel().original == model || m.getEditor().getModel().modified == model) {
-                      
-                      // todo: there ought to be a better way than hhis, maybe use lines?
-                      if(this.$refs.diffView[i].isModified(position.lineNumber, isOriginal)) {
-                        //console.log('line number', position.lineNumber, 'in', this.$refs.diffView[i].file.filename, 'original', isOriginal)
-                        let techs = this.$refs.diffView[i].getTechnologiesForLine(position.lineNumber, isOriginal)
-                        //console.log(techs)
-                        return {
-                          //range: new monaco.Range(1, 1, model.getLineCount(), model.getLineMaxColumn(model.getLineCount())),
-                          contents: [
-                            { value: '**Technologies**' },
-                            { value:  techs}
-                          ]
-                        }
-
+                  if(m.getEditor().getModel().original == model || m.getEditor().getModel().modified == model) {
+                    
+                    // todo: there ought to be a better way than hhis, maybe use lines?
+                    if(this.$refs.diffView[i].isModified(position.lineNumber, isOriginal)) {
+                      //console.log('line number', position.lineNumber, 'in', this.$refs.diffView[i].file.filename, 'original', isOriginal)
+                      let techs = this.$refs.diffView[i].getTechnologiesForLine(position.lineNumber, isOriginal)
+                      //console.log(techs)
+                      return {
+                        //range: new monaco.Range(1, 1, model.getLineCount(), model.getLineMaxColumn(model.getLineCount())),
+                        contents: [
+                          { value: '**Technologies**' },
+                          { value:  techs}
+                        ]
                       }
                     }
+                  }
                 }
               }
             })
-            this.didMount = true 
+            this.didMount = true
           }
         },
         top: function() {

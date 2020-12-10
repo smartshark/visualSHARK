@@ -56,7 +56,9 @@
               <li class="nav-item" v-if="isSuperuser">
                 <router-link :to="'/labeling/correctionboard'" class="nav-link"><i class="fas fa-crown"></i> Correctionboard</router-link>
               </li>
-            </ul>
+              <li class="nav-item" v-if="isSuperuser">
+                <router-link :to="'/labeling/PMDInspection'" class="nav-link"><i class="fas fa-check"></i> PMD Inspection</router-link>
+              </li>            </ul>
         </router-link>
         <router-link tag="li" class="nav-item nav-dropdown" :to="{ path: '/analytics'}" disabled v-if="permissions.includes('view_analytics')">
           <div class="nav-link nav-dropdown-toggle" @click="handleClick"><i class="fa fa-bar-chart"></i> Analytics</div>

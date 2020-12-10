@@ -211,6 +211,21 @@ class CorrectionIssue(models.Model):
     def __str__(self):
         return self.external_id
 
+
+class PMDIssue(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    external_id = models.CharField(max_length=255)
+    project_name = models.CharField(max_length=255)
+    is_validated = models.BooleanField(default=False)
+    is_skipped = models.BooleanField(default=False)
+    changed_at = models.DateTimeField(blank=True, null=True)
+    warnings = models.TextField(blank=True, null=True)
+    labels = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.external_id
+
+
 class RightsSupport(models.Model):
 
     class Meta:
@@ -242,6 +257,8 @@ class RightsSupport(models.Model):
                     ('edit_technology_labels', 'Edit technology labels'),
                     ('view_line_label_corrections', 'View line label corrections'),
                     ('edit_line_label_corrections', 'Set line label corrections'),
+                    ('view_pmd_labels', 'View pmdlabels'),
+                    ('edit_pmd_labels', 'Edit pmd labels'),
         )
 
 

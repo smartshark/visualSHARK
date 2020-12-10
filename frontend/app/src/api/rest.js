@@ -199,6 +199,20 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  sampleIssueFromPMD (project_name) {
+    let req = this.getUrl('labeling/pmd_validation/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  savePMDLabels (dat) {
+    let req = this.getUrl('labeling/pmd_validation/')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getTechnologiesForTechnologyLabeling (project_name) {
     let req = this.getUrl('labeling/technologies/?project_name=' + project_name)
     return axios.get(req, {headers: {
