@@ -14,7 +14,7 @@
       </div>
 
       <div class="card" v-if="commit.revision_hash">
-        <div class="card-header"><i class="fa fa-code"></i> Commit <a :href="'https://github.com/apache/' + commit.project_name + '/commits/' + commit.revision_hash">{{commit.revision_hash}}</a>
+        <div class="card-header"><i class="fa fa-code"></i> Commit <a :href="'https://github.com/apache/' + commit.project_name + '/commit/' + commit.revision_hash">{{commit.revision_hash}}</a>
         </div>
         <div class="card-block">
 <pre>{{commit.message}}</pre>
@@ -28,7 +28,7 @@
         </div>
         <div class="card-block">
           <div v-for="i in commit.issues">
-            <a :href="'https://issues.apache.org/jira/browse/' + i.external_id">{{i.external_id}}</a> Bug is validated: {{i.verified_bug}}
+            <a :href="'https://issues.apache.org/jira/browse/' + i.external_id">{{i.external_id}}</a> [{{i.type}}] Bug is validated: {{i.verified_bug}}
           </div>
         </div>
       </div>

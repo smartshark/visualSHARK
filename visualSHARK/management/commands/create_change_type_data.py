@@ -25,10 +25,10 @@ class Command(BaseCommand):
 
             p = Project.objects.get(name=data['project'])
 
-            c1 = ChangeTypeLabel.objects.get(user=u1, project_name=p.name, revision_hash=data['revision_hash'], is_perfective=data['internal_quality'], is_corrective=data['external_quality'])
+            c1 = ChangeTypeLabel(user=u1, project_name=p.name, revision_hash=data['revision_hash'], is_perfective=data['internal_quality'], is_corrective=data['external_quality'])
             c1.save()
 
-            c2 = ChangeTypeLabel.objects.get(user=u2, project_name=p.name, revision_hash=data['revision_hash'])
+            c2 = ChangeTypeLabel(user=u2, project_name=p.name, revision_hash=data['revision_hash'])
             c2.save()
 
             count += 1
