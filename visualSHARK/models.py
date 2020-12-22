@@ -242,6 +242,8 @@ class RightsSupport(models.Model):
                     ('edit_technology_labels', 'Edit technology labels'),
                     ('view_line_label_corrections', 'View line label corrections'),
                     ('edit_line_label_corrections', 'Set line label corrections'),
+                    ('view_change_labels', 'View change labels'),
+                    ('edit_change_labels', 'Set change labels'),
         )
 
 
@@ -259,3 +261,38 @@ class LeaderboardSnapshot(models.Model):
     """Contains leaderboard snapshots."""
     created_at = models.DateTimeField(auto_now_add=True, blank=False)
     data = models.TextField()
+
+
+class TechnologyLabel(models.Model):
+    """Used technologies, shows in technology label view in dropdown
+    and in word cloud."""
+    ident = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    times_used = models.PositiveIntegerField(default=0)
+
+
+class TechnologyLabelCommit(models.Model):
+    """MySQL Overlay for labeled Technologies."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    revision_hash = models.CharField(max_length=255)
+    project_name = models.CharField(max_length=255)
+    is_labeled = models.BooleanField(default=False)
+    has_technology = models.BooleanField(default=False)
+    changes = models.TextField(blank=True, null=True)
+    changed_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return self.revision_hash
+
+
+class ChangeTypeLabel(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    revision_hash = models.CharField(max_length=255)
+    project_name = models.CharField(max_length=255)
+    has_label = models.BooleanField(default=False)
+    is_perfective = models.BooleanField(default=False)
+    is_corrective = models.BooleanField(default=False)
+    changed_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return self.revision_hash

@@ -4,8 +4,8 @@
     <div style="margin-bottom: 5px;">{{ file.filename }}</div>
     <div>
       <div class="label">
-        Selected lines <template v-if="currentRange">{{currentRange}}</template><multiselect :id="'technologySelector' + file.filename + file.parent_revision_hash" v-model="selectedTechnologies" @tag="addTechnology" :taggable="true" :options="technologies" :multiple="true"></multiselect>
-        <button v-if="currentRange.length > 0" v-on:click="setTechnologies()">Set</button>
+        Selected lines <template v-if="currentRange">{{currentRange.length}}</template><multiselect :id="'technologySelector' + file.filename + file.parent_revision_hash" v-model="selectedTechnologies" @tag="addTechnology" :taggable="true" :options="technologies" :multiple="true" placeholder="select technologies"></multiselect>
+        <button v-if="currentRange.length > 0" v-on:click="setTechnologies()" class="btn btn-primary">Set</button>
       </div>
 
       <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next ></button>
@@ -72,6 +72,10 @@ export default {
           return "java"
         }else if(this.file.filename.endsWith('.xml')) {
           return "xml"
+        }else if(this.file.filename.endsWith('.cs')) {
+          return "csharp"
+        }else if(this.file.filename.endsWith('.xaml')) {
+          return "xaml"
         }else {
           return ""
         }
@@ -93,6 +97,34 @@ export default {
               ret = this.decorationsObjectsRight[lineNumber].options.technologies
           }
           return ret
+        },
+        setTechnologiesForLine(lineNumber, isOriginal, techs) {
+          if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] !== 'undefined') {
+            this.decorationsObjectsLeft[lineNumber].options.technologies = techs.join()
+          }
+          if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] === 'undefined') {
+            this.decorationsObjectsLeft[lineNumber] = {
+              range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+              options: {
+                    isWholeLine: true,
+                    linesDecorationsClassName: 'bugfix',
+                    technologies: techs.join()
+                }
+              }
+          }
+          if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] !== 'undefined') {
+              this.decorationsObjectsRight[lineNumber].options.technologies = techs.join()
+          }
+          if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] === 'undefined') {
+            this.decorationsObjectsRight[lineNumber] = {
+              range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+              options: {
+                    isWholeLine: true,
+                    linesDecorationsClassName: 'bugfix',
+                    technologies: techs.join()
+                }
+              }
+          }
         },
         getOriginalChangeForLine(lineNumber) {
           let changes = this.$refs.editor.getEditor().getLineChanges()
@@ -117,6 +149,13 @@ export default {
         setTechnologies: function(click) {
           const isOriginal = this.selectedEditorType === this.$refs.editor.getEditor().getOriginalEditor()
           console.log('setting', this.selectedTechnologies, 'on', this.currentRange, 'on original?', isOriginal)
+          
+          let dec = 'bugfix'
+          let techs = this.selectedTechnologies.join()
+          if(this.selectedTechnologies.length === 0) {
+            dec = ''
+            techs = null
+          }
           if(isOriginal) {  
             for(let lineNumber of this.currentRange) {
               let hunk = this.getOriginalChangeForLine(lineNumber)
@@ -124,8 +163,8 @@ export default {
                 range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                 options: {
                     isWholeLine: true,
-                    linesDecorationsClassName: 'bugfix',  // this.selectedTechnologies.join()
-                    technologies: this.selectedTechnologies.join()
+                    linesDecorationsClassName: dec,
+                    technologies: techs
                 },
                 change: hunk // this is the hunk, do we need it here?
               }
@@ -138,8 +177,8 @@ export default {
                 range: new monaco.Range(lineNumber, 1, lineNumber, 1),
                 options: {
                     isWholeLine: true,
-                    linesDecorationsClassName: 'bugfix',  // this.selectedTechnologies.join()
-                    technologies: this.selectedTechnologies.join()
+                    linesDecorationsClassName: dec,  // this.selectedTechnologies.join()
+                    technologies: techs
                 },
                 change: hunk // this is the hunk, do we need it here?
               }
@@ -175,6 +214,14 @@ export default {
                 var label = labelCssClass[line.label-1];
                 this.markLineInEditorLeft(line.old,label,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
                 this.markLineInEditorRight(line.new,label,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());
+              }
+              if(typeof line.techs !== 'undefined' && line.techs.length > 0) {
+                if(line.new == '-') {
+                  this.setTechnologiesForLine(line.old, true, line.techs)
+                }
+                if(line.old == '-') {
+                  this.setTechnologiesForLine(line.new, false, line.techs)
+                }
               }
             }
         },
@@ -477,7 +524,7 @@ export default {
                     this.missingChanges.push(change);
                  }
              }
-             console.log(this.missingChanges);
+
              var header = this.$refs.header;
              if(!isSomethingMissing && header)
              {
@@ -488,11 +535,10 @@ export default {
              }
              return false;
         },
-        getData: function(hash) {
+        getData: function() {
            var data = {};
            var file = this.file;
-           console.log(hash + "_" + file.parent_revision_hash + "_" + file.filename);
-           data[hash + "_" + file.parent_revision_hash + "_" + file.filename] = {};
+           data[file.filename] = {};
            var lineDecorationsOrginal = this.decorationsObjectsLeft;
            for(var k = 0; k < lineDecorationsOrginal.length; k++) {
                 if(typeof lineDecorationsOrginal[k] === 'undefined') {
@@ -508,7 +554,7 @@ export default {
                   }
                 }
 
-                data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
+                data[file.filename][mappedLine] = label;
            }
            var lineDecorationsModified = this.decorationsObjectsRight;
            for(var k = 0; k < lineDecorationsModified.length; k++) {
@@ -525,7 +571,7 @@ export default {
                   }
                 }
 
-                data[hash + "_" + file.parent_revision_hash + "_" + file.filename][mappedLine] = label;
+                data[file.filename][mappedLine] = label;
            }
             return data;
         }

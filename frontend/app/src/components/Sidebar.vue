@@ -41,6 +41,9 @@
               <li class="nav-item" v-if="permissions.includes('view_technology_labels')">
                 <router-link :to="'/labeling/technology'" class="nav-link"><i class="fa fa-file"></i> Used Technology</router-link>
               </li>
+              <li class="nav-item" v-if="permissions.includes('view_technology_labels')">
+                <router-link :to="'/labeling/technologyOverview'" class="nav-link"><i class="fa fa-file"></i> Technology Overview</router-link>
+              </li>
               <li class="nav-item" v-if="permissions.includes('view_line_label_corrections')">
                 <router-link :to="'/labeling/lineCorrection'" class="nav-link"><i class="fa fa-file"></i> Lines Correction</router-link>
               </li>
@@ -55,6 +58,9 @@
               </li>
               <li class="nav-item" v-if="isSuperuser">
                 <router-link :to="'/labeling/correctionboard'" class="nav-link"><i class="fas fa-crown"></i> Correctionboard</router-link>
+              </li>
+              <li class="nav-item" v-if="permissions.includes('view_change_labels')">
+                <router-link :to="'/labeling/changeTypeLabel'" class="nav-link"><i class="fa fa-code"></i> Change Type</router-link>
               </li>
             </ul>
         </router-link>

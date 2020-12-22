@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
-    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue
+    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue, ChangeTypeLabel, TechnologyLabelCommit, TechnologyLabel
 
 
 def activate_user(modeladmin, news, queryset):
@@ -60,6 +60,22 @@ class LeaderboardSnapshotAdmin(admin.ModelAdmin):
     list_display = ('created_at',)
 
 
+class ChangeTypeLabelAdmin(admin.ModelAdmin):
+    list_display = ('user', 'project_name', 'revision_hash', 'has_label', 'is_perfective', 'is_corrective', 'changed_at')
+    list_filter = ('user', 'has_label', 'is_perfective', 'is_corrective')
+    search_fields = ('user',)
+
+
+class TechnologyLabelCommitAdmin(admin.ModelAdmin):
+    list_display = ('user', 'project_name', 'revision_hash', 'is_labeled', 'changed_at')
+    list_filter = ('user', 'project_name', 'is_labeled')
+    search_fields = ('user',)
+
+
+class TechnologyLabelAdmin(admin.ModelAdmin):
+    list_display = ('name', 'times_used')
+
+
 # custom user admin
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
@@ -75,3 +91,6 @@ admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
 admin.site.register(ProjectAttributes)
 admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
 admin.site.register(CorrectionIssue, CorrectionIssueAdmin)
+admin.site.register(ChangeTypeLabel, ChangeTypeLabelAdmin)
+admin.site.register(TechnologyLabelCommit, TechnologyLabelCommitAdmin)
+admin.site.register(TechnologyLabel, TechnologyLabelAdmin)

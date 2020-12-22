@@ -18,20 +18,36 @@
         </alert>
       </div>
       <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
+      <button v-if="loadId" class="btn btn-primary" v-on:click="loadNext()" style="float: right; margin-bottom: 5px; margin-right: 5px;">Load next</button>
       <div class="clearfix"></div>
+        <div class="card">
+        <div class="card-header">
+          <i class="fa fa-question"></i> Instructions
+        </div>
+        <div class="card-block">
+          <ul>
+            <li>Select changed code to label</li>
+            <li>Press 1 on keyboard</li>
+            <li>Use dropdown to select technologies or add new ones</li>
+            <li>Press set button</li>
+            <li>To remove a label follow the same procedure without selecting a technology</li>
+            <li>To see technologies that are labeled hover over the line of the code</li>
+          </ul>
+        </div>
+      </div>
       <div class="card">
         <div class="card-header">
           <i class="fa fa-tag"></i> Most used technologies
         </div>
         <div class="card-block">
-          TAG CLOUD: <template v-for="tech in technologies">{{tech}}&nbsp;</template>
+          TAG CLOUD: <template v-for="(number, tech) in counts">{{tech}}({{number}})&nbsp;</template>
         </div>
       </div>
       <template v-for="c in commits">
         <div class="card" :id="c.revision_hash">
           <div class="card-header">
             <div v-on:click="scrollToCommit(c)">
-              <i class="fa fa-bug"></i> Commit <a :href="vcs_url + c.revision_hash" target="_blank">{{c.revision_hash}}</a>
+              <i class="fa fa-code"></i> Commit <a :href="vcs_url + c.revision_hash" target="_blank">{{c.revision_hash}}</a>
               <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
             </div>
           </div>
@@ -73,8 +89,12 @@ export default {
         vcs_url: '',
         issue_url: '',
         technologies: [],
+        counts: [],
         didMount: false
       }
+    },
+    props: {
+      loadId: String
     },
     computed: mapGetters({
       currentProject: 'currentProject',
@@ -83,11 +103,16 @@ export default {
       projectsMl: 'projectsMl'
     }),
     mounted() {
+        let req = {project: this.currentProject.name, id: null}
+        if(typeof this.loadId !== 'undefined') {
+          req.id = this.loadId
+        }
         this.$store.dispatch('pushLoading')
-        rest.getTechnologiesForTechnologyLabeling(this.currentProject.name)
+        rest.getTechnologiesForTechnologyLabeling()
           .then(response => {
             this.$store.dispatch('popLoading')
             this.technologies = response.data['technologies']
+            this.counts = response.data['counts']
           })
           .catch(e => {
             this.$store.dispatch('pushError', e)
@@ -97,9 +122,11 @@ export default {
 
         // Start background request
         this.$store.dispatch('pushLoading')
-        rest.sampleCommitForTechnologyLabeling(this.currentProject.name)
+        rest.sampleCommitForTechnologyLabeling(req)
             .then(response => {
                 this.$store.dispatch('popLoading')
+
+                console.log(response.data)
 
                  // maybe we are finished for this project
                 if(response.data['warning'] == 'no_more_issues') {
@@ -121,10 +148,10 @@ export default {
                     this.validateAll();
                 }, 25);
 
-                if(this.has_trained !== true) {
+/*                if(this.has_trained !== true) {
                     this.flashes.push({id: 'train', message: 'You have not finished the training! Loading training issues first!'})
                 }
-
+*/
                 if(this.load_last === true) {
                      this.flashes.push({id: 'last', message: 'You have not finished labeling the last issue, loading last issue first.'})
                 }
@@ -139,9 +166,15 @@ export default {
         Multiselect
     },
     methods: {
+        loadNext: function() {
+          this.$router.push('/labeling/technology/')
+          setTimeout(() => {
+            window.location.reload(false);
+          }, 25)
+        },
         editorWillMount: function(monaco) {
           if(!this.didMount) {
-            monaco.languages.registerHoverProvider('java', {
+            monaco.languages.registerHoverProvider('csharp', {
               provideHover: (model, position) => {
                 // let isOriginal = model == this.$refs.editor.getEditor().getOriginalEditor().getModel()
                 // check if we hover over a line with a label
@@ -211,7 +244,7 @@ export default {
             var hash = this.commit.revision_hash;
             for(var i = 0; i < this.$refs.diffView.length; i++)
             {
-                data = Object.assign({}, data, this.$refs.diffView[i].getData(hash));
+                data = Object.assign({}, data, this.$refs.diffView[i].getData());
             }
             return data;
         },
@@ -236,25 +269,27 @@ export default {
              }, 1000);
         },
         submitLabels: function() {
-             // check if anything is missing
-             var correct = [];
-             for (var i = 0; i < this.$refs.diffView.length; i++) {
-                  correct = correct.concat(this.$refs.diffView[i].validateEditor());
-                  this.$refs.diffView[i].changeValidation(true);
-             }
-             this.error = correct;
-             console.log(this.error);
-             if(correct.length > 0) {
-                window.alert("Not all lines are labelled. You can find links to the locations you missed at the top of the page and the files.");
-                return;
-             }
              // else collect data for transmit
-             var data = {};
+             var labels = {};
              for (var i = 0; i < this.$refs.diffView.length; i++) {
-                 data = Object.assign({}, data, this.$refs.diffView[i].getData());
+                 labels = Object.assign({}, labels, this.$refs.diffView[i].getData());
              }
 
-            console.log(data);
+             var data = {revision_hash: this.commits[0].revision_hash, project_name: this.currentProject.name, labels: labels}
+              this.$store.dispatch('pushLoading')
+              rest.setCommitForTechnologyLabeling(data)
+                .then(response => {
+                  this.$store.dispatch('popLoading');
+                  this.$router.push('/labeling/technology/')
+                  setTimeout(() => {
+                    window.location.reload(false);
+                  }, 25)
+                })
+                .catch(e => {
+                    this.$store.dispatch('pushError', e)
+                    this.$store.dispatch('popLoading')
+                });
+          console.log(data);
         }
     }
 }

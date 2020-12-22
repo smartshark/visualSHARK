@@ -27,6 +27,9 @@ import MonacoLineLabelControl from '@/views/MonacoLineLabelControl'
 import CorrectionOverview from '@/views/CorrectionOverview'
 import CorrectionBoard from '@/views/CorrectionBoard'
 
+import TechnologyLabelOverview from '@/views/TechnologyLabelOverview'
+import ChangeTypeLabel from '@/views/ChangeTypeLabel'
+
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
 import CommitGraph from '@/views/CommitGraph'
@@ -141,9 +144,15 @@ const router = new Router({
               component: LineLabels
             },
             {
-              path: 'technology',
+              path: 'technology/:loadId?',
               name: 'Technology Label',
-              component: TechnologyMonacoLineLabel
+              component: TechnologyMonacoLineLabel,
+              props: true
+            },
+            {
+              path: 'technologyOverview',
+              name: 'Technology Labels Overview',
+              component: TechnologyLabelOverview
             },
             {
               path: 'lineCorrection/:loadExternalId?',
@@ -156,6 +165,11 @@ const router = new Router({
               name: 'Change lines control',
               component: MonacoLineLabelControl,
               props: true
+            },
+            {
+              path: 'changeTypeLabel',
+              name: 'Change Type Label',
+              component: ChangeTypeLabel
             },
             {
               path: 'corrections',

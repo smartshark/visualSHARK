@@ -9,7 +9,7 @@ from rest_framework import serializers as rserializers
 # from rest_framework import fields as rfields
 
 from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData, Branch, Event, Hunk
-from .models import CommitGraph, CommitLabelField, VSJob, VSJobType, CorrectionIssue
+from .models import CommitGraph, CommitLabelField, VSJob, VSJobType, CorrectionIssue, TechnologyLabelCommit
 
 
 class CommitLabelFieldSerializer(rserializers.ModelSerializer):
@@ -266,3 +266,10 @@ class CorrectionIssueSerializer(rserializers.ModelSerializer):
     class Meta:
         model = CorrectionIssue
         fields = ('id', 'external_id', 'project_name', 'is_skipped', 'is_corrected', 'changed_at')
+
+
+class TechnologyLabelCommitSerializer(rserializers.ModelSerializer):
+
+    class Meta:
+        model = TechnologyLabelCommit
+        fields = ('id', 'revision_hash', 'project_name', 'is_labeled', 'has_technology', 'changed_at')

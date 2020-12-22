@@ -165,7 +165,7 @@ def get_change_view(file, hunks, refactoring_lines_old, refactoring_lines_new):
     return view_lines, has_changed, lines_before, lines_after, hunks_changes
 
 
-def get_technology_view(file, hunks):
+def get_technology_view(file, hunks, labels):
     view_lines = []
     lines_before = []
     lines_after = []
@@ -185,7 +185,15 @@ def get_technology_view(file, hunks):
 
     for line in file:
         while idx_old in deleted_lines.keys():
-            tmp = {'old': idx_old, 'new': '-', 'code': deleted_lines[idx_old]['code'], 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']}
+
+            label = 0
+            techs = []
+            if str(deleted_lines[idx_old]['hunk_id']) in labels.keys() and str(deleted_lines[idx_old]['hunk_line']) in labels[str(deleted_lines[idx_old]['hunk_id'])]:
+                techs = labels[str(deleted_lines[idx_old]['hunk_id'])][str(deleted_lines[idx_old]['hunk_line'])]
+                if techs:
+                    label = 1
+
+            tmp = {'old': idx_old, 'new': '-', 'label': label, 'techs': techs, 'code': deleted_lines[idx_old]['code'], 'number': i, 'hunk_id': str(deleted_lines[idx_old]['hunk_id']), 'hunk_line': deleted_lines[idx_old]['hunk_line']}
             view_lines.append(tmp)
             lines_before.append(deleted_lines[idx_old]['code'])
 
@@ -194,7 +202,13 @@ def get_technology_view(file, hunks):
             has_changed = True
 
         if idx_new in added_lines.keys():
-            tmp = {'old': '-', 'new': idx_new, 'code': added_lines[idx_new]['code'], 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']}
+            techs = []
+            label = 0
+            if str(added_lines[idx_new]['hunk_id']) in labels.keys() and str(added_lines[idx_new]['hunk_line']) in labels[str(added_lines[idx_new]['hunk_id'])]:
+                techs = labels[str(added_lines[idx_new]['hunk_id'])][str(added_lines[idx_new]['hunk_line'])]
+                if techs:
+                    label = 1
+            tmp = {'old': '-', 'new': idx_new, 'label': label, 'techs': techs, 'code': added_lines[idx_new]['code'], 'number': i, 'hunk_id': str(added_lines[idx_new]['hunk_id']), 'hunk_line': added_lines[idx_new]['hunk_line']}
             view_lines.append(tmp)
             lines_after.append(added_lines[idx_new]['code'])
 
@@ -215,7 +229,7 @@ def get_technology_view(file, hunks):
     return view_lines, has_changed, lines_before, lines_after, hunks_changes
 
 
-def get_technology_commit(project_path, commit, consensus=False):
+def get_technology_commit(project_path, commit, labels):
     """Get full data for one issue and project path.
     Checks out the commit locally, reads the hunks from the db and pre-labels everything.
     """
@@ -234,12 +248,13 @@ def get_technology_commit(project_path, commit, consensus=False):
     for fa in fa_qry:
         f = File.objects.get(id=fa.file_id)
 
-        #if f.path != 'src/test/java/org/apache/commons/compress/archivers/cpio/CpioArchiveInputStreamTest.java':
-        #    continue
-
         source_file = folder + '/' + f.path
         if not os.path.exists(source_file):
             # print('file', source_file, 'not existing, skipping')
+            continue
+
+        # for now we are only interested in cs files
+        if not f.path.endswith('.cs'):
             continue
 
         # print('open file', source_file, end='')
@@ -266,7 +281,7 @@ def get_technology_commit(project_path, commit, consensus=False):
         nfile = nfile.replace('\r', '\n')
         nfile = nfile.split('\n')
 
-        view_lines, has_changed, lines_before, lines_after, hunks = get_technology_view(nfile, Hunk.objects.filter(file_action_id=fa.id))
+        view_lines, has_changed, lines_before, lines_after, hunks = get_technology_view(nfile, Hunk.objects.filter(file_action_id=fa.id), labels)
 
         if has_changed:
             changes.append({'hunks': hunks, 'filename': f.path, 'lines': view_lines, 'parent_revision_hash': fa.parent_revision_hash, 'before': "\n".join(lines_before), 'after': "\n".join(lines_after)})

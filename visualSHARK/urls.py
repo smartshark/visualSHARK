@@ -12,7 +12,7 @@ from .views import Auth, StatsView
 from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet, HunkViewSet
 from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView, IssueLabelSet, IssueConflictSet, IssueLinkSet, LineLabelSet
 from .views import LeaderboardSet, TechnologyLabeling, Technologies, LineLabelCorrectionSet, LineLabelControlSet, CorrectionOverviewSet
-from .views import CorrectionBoardView
+from .views import CorrectionBoardView, ChangeTypeLabelViewSet, TechnologyLabelingOverviewSet
 
 
 # Routers provide an easy way of automatically determining the URL conf.
@@ -42,6 +42,8 @@ arouter.register(r'job', VSJobViewSet)
 
 drouter = rrouters.DefaultRouter()
 drouter.register(r'correction', CorrectionOverviewSet)
+drouter.register(r'tech', TechnologyLabelingOverviewSet)
+
 
 urlpatterns = [
     url(r'^', include(router.urls)),
@@ -65,6 +67,7 @@ urlpatterns = [
     url(r'^labeling/line_correction', LineLabelCorrectionSet.as_view()),
     url(r'^labeling/line_control', LineLabelControlSet.as_view()),
     url(r'^labeling/correctionboard', CorrectionBoardView.as_view()),
+    url(r'^labeling/change_type', ChangeTypeLabelViewSet.as_view()),
     url(r'^labeling/', include(drouter.urls)),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 ]

@@ -41,10 +41,12 @@ from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, File
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 from .models import LeaderboardSnapshot
 from .models import CorrectionIssue
+from .models import ChangeTypeLabel
+from .models import TechnologyLabelCommit, TechnologyLabel
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
-from .serializers import CorrectionIssueSerializer
+from .serializers import CorrectionIssueSerializer, TechnologyLabelCommitSerializer
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRel
@@ -1139,18 +1141,65 @@ class IssueLinkSet(APIView):
         result['status'] = "ok"
         return Response(result)
 
+class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
 
-class TechnologyLabeling(APIView):
-    """Access full bug-fixes
+    queryset = TechnologyLabelCommit.objects.all()
+    serializer_class = TechnologyLabelCommitSerializer
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filter_fields = ('is_labeled', 'has_technology')
+    ordering_fields = ('project_name', 'revision_hash', 'is_labeled', 'has_technology', 'changed_at')
+    search_fields = ('project_name',)
 
-    includes: code, issue, everything that is validated
-    contains also all PMD warnings
-    """
     read_perm = 'view_technology_labels'
     write_perm = 'edit_technology_labels'
 
+    def get_queryset(self):
+        qry = super().get_queryset()
+        return qry.filter(user=self.request.user)
+
+
+class TechnologyLabeling(APIView):
+    """Labeling of used technology in one commit."""
+    read_perm = 'view_technology_labels'
+    write_perm = 'edit_technology_labels'
+
+    def _sample_commit(self, vcs, user):
+        # sample commits, very simple, get first commit which changes at least one csharp file
+        sample_commit = None
+        skip_commit = False
+        for c in Commit.objects.filter(vcs_system_id=vcs.id, parents__1__exists=False, parents__0__exists=True).only('revision_hash', 'parents', 'message'):
+
+            if TechnologyLabelCommit.objects.filter(user=user, revision_hash=c.revision_hash).count() > 0:
+                continue
+
+            for fa in FileAction.objects.filter(commit_id=c.id):
+                # skip the fa if the user already has labeled this
+                # want = {'file_action_id': fa.id,
+                #         'technologies_manual__{}__exists'.format(request.user.username): True}
+                # if Hunk.objects.filter(**want).count() > 0:
+                #     skip_commit = True
+                #     continue
+
+                f = File.objects.get(id=fa.file_id)
+                if f.path.lower().endswith('.cs'):
+                    sample_commit = c
+                    break
+
+            if skip_commit:
+                skip_commit = False
+                continue
+            if sample_commit:
+                break
+        return sample_commit
+
     def get(self, request):
         project_name = request.GET.get('project_name', None)
+        tl_id = request.GET.get('id', None)
+
+        print('got id', tl_id)
+        if tl_id:
+            tlc = TechnologyLabelCommit.objects.get(id=tl_id, user=request.user)
+            project_name = tlc.project_name
 
         if not project_name:
             log.error('got no project')
@@ -1166,23 +1215,69 @@ class TechnologyLabeling(APIView):
             log.error('no such path ' + project_path)
             return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # sample commits, very simple, get first commit which changes at least one java file
-        sample_commit = None
-        for c in Commit.objects.filter(vcs_system_id=vcs.id, parents__1__exists=False).only('revision_hash', 'parents', 'message'):
-            for fa in FileAction.objects.filter(commit_id=c.id):
-                f = File.objects.get(id=fa.file_id)
-                if f.path.lower().endswith('.java'):
-                    sample_commit = c
-                    break
-            if sample_commit:
-                break
+        if not tl_id:
+            sample_commit = self._sample_commit(vcs, request.user)
+            commits = get_technology_commit(project_path, sample_commit, {})
+        else:
+            sample_commit = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=tlc.revision_hash)
+            commits = get_technology_commit(project_path, sample_commit, json.loads(tlc.changes))
 
-        sample_commit = Commit.objects.get(revision_hash='07b15a15038f69612d2bba75f750814cbfbe0a08')
+        # sample_commit = Commit.objects.get(revision_hash='07b15a15038f69612d2bba75f750814cbfbe0a08')
         result = {'warning': '',
-                  'commits': get_technology_commit(project_path, sample_commit),
+                  'project_name': p.name,
+                  'commits': commits,
                   'vcs_url': vcs_url}
 
         return Response(result)
+
+    def post(self, request):
+        """
+        - check if the hunk lines are within the possible ranges
+        - save to hunks and also save a database overlay object so that the
+          saved labels can be revisited
+        - save technologies so the tag cloud expands
+        """
+        revision_hash = request.data['revision_hash']
+        project_name = request.data['project_name']
+        labels = request.data['labels']
+
+        p = Project.objects.get(name=project_name)
+        vcs = VCSSystem.objects.get(project_id=p.id)
+
+        commit = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=revision_hash)
+
+        project_path = settings.LOCAL_REPOSITORY_PATH + p.name
+        to_save = {}
+        technologies = []
+        for c in get_technology_commit(project_path, commit, {}):
+            for change in c['changes']:
+                if change['filename'] in labels.keys():
+                    for line in change['lines']:
+                        if line['old'] != '-' and line['new'] != '-':
+                            continue
+                        if line['hunk_id'] not in to_save.keys():
+                            to_save[line['hunk_id']] = {}
+                        if str(line['number']) in labels[change['filename']]:
+                            if labels[change['filename']][str(line['number'])] not in to_save[line['hunk_id']].keys():
+                                to_save[line['hunk_id']][int(line['hunk_line'])] = []
+                            techs = labels[change['filename']][str(line['number'])]
+                            if techs:
+                                to_save[line['hunk_id']][int(line['hunk_line'])] += [t for t in techs.split(',')]
+                                technologies += [t for t in techs.split(',')]
+
+        tlc, _ = TechnologyLabelCommit.objects.get_or_create(user=request.user, revision_hash=revision_hash, project_name=p.name)
+        tlc.is_labeled = True
+        tlc.has_technology = len(technologies) > 0
+        tlc.changes = json.dumps(to_save)
+        tlc.changed_at = datetime.now()
+        tlc.save()
+
+        for t in technologies:
+            to, _ = TechnologyLabel.objects.get_or_create(ident=t.lower(), name=t)
+            to.times_used += 1
+            to.save()
+
+        return HttpResponse(status=200)
 
 
 class Technologies(APIView):
@@ -1193,15 +1288,10 @@ class Technologies(APIView):
     write_perm = 'edit_technology_labels'
 
     def get(self, request):
-        project_name = request.GET.get('project_name', None)
-
-        if not project_name:
-            log.error('got no project')
-            return Response({}, status=status.HTTP_400_BAD_REQUEST)
-
-        # p = Project.objects.get(name=project_name)
-
-        result = {'technologies': ['springboot', 'log4j']}
+        techs = {}
+        for t in TechnologyLabel.objects.all():
+            techs[t.name] = t.times_used
+        result = {'technologies': techs.keys(), 'counts': techs}
 
         return Response(result)
 
@@ -1792,6 +1882,54 @@ class CorrectionBoardView(APIView):
             ret['users'][user.username]['corrected_issues'] = CorrectionIssue.objects.filter(user=user, is_corrected=True).count()
 
         return Response(ret)
+
+
+class ChangeTypeLabelViewSet(APIView):
+    """Label commits as quality improving or bug fixing."""
+    read_perm = 'view_change_labels'
+    write_perm = 'edit_change_labels'
+
+    def get(self, request):
+        user = request.user
+        cl = ChangeTypeLabel.objects.filter(user=user, has_label=False).first()
+
+        if not cl:
+            return Response({'warning': 'no_more_issues'})
+
+        # 1. get linked issues
+        p = Project.objects.get(name=cl.project_name)
+        vcs = VCSSystem.objects.get(project_id=p.id)
+
+        c = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=cl.revision_hash)
+
+        issues = []
+        for issue_id in c.linked_issue_ids:
+            try:
+                i = Issue.objects.get(id=issue_id)
+            except Issue.DoesNotExist:
+                continue
+
+            if i.issue_type_verified and i.issue_type_verified.lower() == 'bug':
+                issues.append({'external_id': i.external_id, 'verified_bug': True, 'type': i.issue_type})
+            else:
+                issues.append({'external_id': i.external_id, 'verified_bug': False, 'type': i.issue_type})
+
+        dat = {'id': cl.id, 'project_name': p.name, 'revision_hash': c.revision_hash, 'issues': issues, 'message': c.message, 'is_perfective': cl.is_perfective, 'is_corrective': cl.is_corrective, 'has_label': cl.has_label}
+
+        return Response(dat)
+
+    def post(self, request):
+        cl_id = request.data['data']['id']
+        is_perfective = request.data['data']['is_perfective']
+        is_corrective = request.data['data']['is_corrective']
+
+        cl = ChangeTypeLabel.objects.get(id=cl_id, user=request.user)
+        cl.has_label = True
+        cl.is_corrective = is_corrective
+        cl.is_perfective = is_perfective
+        cl.changed_at = datetime.now()
+        cl.save()
+        return HttpResponse(status=200)
 
 
 class LeaderboardSet(APIView):

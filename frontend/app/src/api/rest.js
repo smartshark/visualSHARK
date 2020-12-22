@@ -192,15 +192,32 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
-  sampleCommitForTechnologyLabeling (project_name) {
-    let req = this.getUrl('labeling/technology/?project_name=' + project_name)
+  sampleCommitForTechnologyLabeling (dat) {
+    let req = this.getUrl('labeling/technology/?project_name=' + dat.project)
+    if (dat.id !== null) {
+      req = this.getUrl('labeling/technology/?id=' + dat.id)
+    }
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
     }})
   },
-  getTechnologiesForTechnologyLabeling (project_name) {
-    let req = this.getUrl('labeling/technologies/?project_name=' + project_name)
+  setCommitForTechnologyLabeling (dat) {
+    let req = this.getUrl('labeling/technology')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getTechnologiesForTechnologyLabeling () {
+    let req = this.getUrl('labeling/technologies/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getTechnologyLabels (dat) {
+    let req = this.getFilterUrl('labeling/tech/', dat)
     return axios.get(req, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
@@ -299,6 +316,20 @@ export default {
   getJobs (dat) {
     let req = this.getFilterUrl('system/job/', dat)
     return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getChangeType () {
+    let req = this.getFilterUrl('labeling/change_type', {})
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  setChangeType (dat) {
+    let req = this.getUrl('labeling/change_type/')
+    return axios.post(req, dat, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token
     }})
