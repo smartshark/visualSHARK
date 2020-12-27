@@ -62,7 +62,7 @@
             </div>
             <div>
               <template v-for="f in c.changes">
-                <TechnologyMonacoDiffView :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" :readOnly="true" ref="diffView" @editorWillMount="editorWillMount"/>
+                <TechnologyMonacoDiffView :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" :readOnly="true" ref="diffView" @editorWillMount="editorWillMount" @addTechnology="addTechnology"/>
               </template>
             </div>
           </div>
@@ -166,6 +166,11 @@ export default {
         Multiselect
     },
     methods: {
+        addTechnology: function(tech) {
+          if(!this.technologies.includes(tech)) {
+            this.technologies.push(tech)
+          }
+        },
         loadNext: function() {
           this.$router.push('/labeling/technology/')
           setTimeout(() => {

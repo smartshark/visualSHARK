@@ -21,7 +21,9 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import Permission
-
+from django.db.models import Count
+from django.utils.text import slugify
+from django.utils import timezone
 
 from rest_framework.views import APIView
 from rest_framework import exceptions
@@ -1269,13 +1271,20 @@ class TechnologyLabeling(APIView):
         tlc.is_labeled = True
         tlc.has_technology = len(technologies) > 0
         tlc.changes = json.dumps(to_save)
-        tlc.changed_at = datetime.now()
+        tlc.changed_at = timezone.now()
         tlc.save()
 
         for t in technologies:
-            to, _ = TechnologyLabel.objects.get_or_create(ident=t.lower(), name=t)
-            to.times_used += 1
+            ident = slugify(t)
+            to, created = TechnologyLabel.objects.get_or_create(ident=ident)
+            if created:
+                to.name = t
+                to.created_at = timezone.now()
+                to.created_by = request.user
             to.save()
+            tlc.technologies.add(to)
+
+        tlc.save()
 
         return HttpResponse(status=200)
 
@@ -1288,12 +1297,28 @@ class Technologies(APIView):
     write_perm = 'edit_technology_labels'
 
     def get(self, request):
+
+        qry = TechnologyLabel.objects.values('name', 'ident').annotate(times_used=Count('technologylabelcommit')).order_by('ident')
         techs = {}
-        for t in TechnologyLabel.objects.all():
-            techs[t.name] = t.times_used
+        for t in qry:
+            techs[t['name']] = t['times_used']
         result = {'technologies': techs.keys(), 'counts': techs}
 
         return Response(result)
+
+    # def post(self, request):
+    #     """create new tech from the multiselect, can be used by the user."""
+    #     name = request.data['name']
+    #     ident = slugify(name)
+    #     t, created = TechnologyLabel.get_or_create(ident=ident)
+
+    #     if created:
+    #         t.name = name
+    #         t.created_by = request.user
+    #         t.created_at = timezone.now()
+    #         t.save()
+
+    #     return HttpResponse(status=200)
 
 
 class LineLabelSet(APIView):

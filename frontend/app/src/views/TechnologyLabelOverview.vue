@@ -21,6 +21,13 @@
                 <i v-if="!props.row.has_technology" class="fa fa-times"></i>
               </td>
             </template>
+            <template slot="technologies" slot-scope="props">
+              <td>
+                <ul v-if="props.row.technologies" class="tech-list">
+                  <li v-for="tech in props.row.technologies">{{tech.name}}</li>
+                </ul>
+              </td>
+            </template>
             <template slot="actions" slot-scope="props">
               <td>
                 <router-link :to="{ name: 'Technology Label', params: { loadId: '' + props.row.id}}" class="btn" tag="button" style="cursor: pointer;"> control labels</router-link>
@@ -50,6 +57,7 @@ export default {
           {ident: 'revision_hash', sortIdent: 'revision_hash',  name: 'Commit'},
           {ident: 'is_labeled', sortIdent: 'is_labeled', filterIdent: 'is_labeled', name: 'IsLabeled'},
           {ident: 'has_technology', sortIdent: 'has_technology', filterIdent: 'has_technology', name: 'HasTechnology'},
+          {ident: 'technologies', name: 'Technologies'},
           {ident: 'changed_at', sortIdent: 'changed_at', filterIdent: 'changed_at', name: 'Last changed'},
           {ident: 'actions', name: 'Actions'}
         ],
@@ -91,4 +99,15 @@ export default {
 </script>
 
 <style>
+.tech-list {
+  margin: 0px;
+  padding: 0px;
+}
+.tech-list > li {
+  list-style: none;
+  display: inline;
+}
+.tech-list > li:not(:last-child)::after {
+  content: ", "
+}
 </style>

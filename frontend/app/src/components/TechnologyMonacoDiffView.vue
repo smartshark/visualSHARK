@@ -29,7 +29,6 @@
 </div>
 </template>
 <script>
-
 import MonacoEditor from 'vue-monaco'
 import Multiselect from 'vue-multiselect'
 
@@ -62,7 +61,7 @@ export default {
     },
     computed: {
       technologies: function () {
-        return this.existingTechnologies.concat(this.addedTechnologies)
+        return [...new Set(this.existingTechnologies.concat(this.addedTechnologies))]  // we still need this because emitting newTechnology resets the array
       },
       editorOptions: function () {
         return {readOnly: this.readOnly}
@@ -197,6 +196,7 @@ export default {
         addTechnology: function(newTechnology) {
           this.addedTechnologies.push(newTechnology)
           this.selectedTechnologies.push(newTechnology)
+          this.$emit('addTechnology', newTechnology)
         },
         getEditor: function() {
             return this.$refs.editor;

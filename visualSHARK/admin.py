@@ -73,7 +73,7 @@ class TechnologyLabelCommitAdmin(admin.ModelAdmin):
 
 
 class TechnologyLabelAdmin(admin.ModelAdmin):
-    list_display = ('name', 'times_used')
+    list_display = ('name', 'created_at', 'created_by')
 
 
 # custom user admin

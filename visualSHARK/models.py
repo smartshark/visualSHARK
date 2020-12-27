@@ -266,27 +266,32 @@ class LeaderboardSnapshot(models.Model):
 class TechnologyLabel(models.Model):
     """Used technologies, shows in technology label view in dropdown
     and in word cloud."""
-    ident = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    times_used = models.PositiveIntegerField(default=0)
+    ident = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class TechnologyLabelCommit(models.Model):
     """MySQL Overlay for labeled Technologies."""
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     revision_hash = models.CharField(max_length=255)
     project_name = models.CharField(max_length=255)
     is_labeled = models.BooleanField(default=False)
     has_technology = models.BooleanField(default=False)
     changes = models.TextField(blank=True, null=True)
     changed_at = models.DateTimeField(blank=True, null=True)
+    technologies = models.ManyToManyField(TechnologyLabel, blank=True)
 
     def __str__(self):
         return self.revision_hash
 
 
 class ChangeTypeLabel(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     revision_hash = models.CharField(max_length=255)
     project_name = models.CharField(max_length=255)
     has_label = models.BooleanField(default=False)
