@@ -13,6 +13,10 @@
         <button v-else v-on:click="load" class="btn btn-primary">Load next issue</button>
       </div>
 
+      <div v-if="commit.revision_hash">
+        <progress :max="todo + finished" :value="finished"></progress>
+      </div>
+
       <div class="card" v-if="commit.revision_hash">
         <div class="card-header"><i class="fa fa-code"></i> Commit <a :href="'https://github.com/apache/' + commit.project_name + '/commit/' + commit.revision_hash">{{commit.revision_hash}}</a>
         </div>
@@ -46,6 +50,8 @@ export default {
   data () {
     return {
       commit: {},
+      todo: null,
+      finished: null,
       flashes: []
     }
   },
@@ -76,6 +82,8 @@ export default {
             return
           }
           this.commit = response.data
+          this.todo = response.data['todo']
+          this.finished = response.data['finished']
         })
         .catch(e => {
           this.$store.dispatch('popLoading')
@@ -88,6 +96,7 @@ export default {
         .then(response => {
           this.$store.dispatch('popLoading')
           this.commit = {}
+          this.loadSample()
         })
         .catch(e => {
           this.$store.dispatch('popLoading')

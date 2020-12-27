@@ -1896,6 +1896,10 @@ class ChangeTypeLabelViewSet(APIView):
         if not cl:
             return Response({'warning': 'no_more_issues'})
 
+        # get counts
+        todo = ChangeTypeLabel.objects.filter(user=user, has_label=False).count()
+        finished = ChangeTypeLabel.objects.filter(user=user, has_label=True).count()
+
         # 1. get linked issues
         p = Project.objects.get(name=cl.project_name)
         vcs = VCSSystem.objects.get(project_id=p.id)
@@ -1914,7 +1918,7 @@ class ChangeTypeLabelViewSet(APIView):
             else:
                 issues.append({'external_id': i.external_id, 'verified_bug': False, 'type': i.issue_type})
 
-        dat = {'id': cl.id, 'project_name': p.name, 'revision_hash': c.revision_hash, 'issues': issues, 'message': c.message, 'is_perfective': cl.is_perfective, 'is_corrective': cl.is_corrective, 'has_label': cl.has_label}
+        dat = {'id': cl.id, 'todo': todo, 'finished': finished, 'project_name': p.name, 'revision_hash': c.revision_hash, 'issues': issues, 'message': c.message, 'is_perfective': cl.is_perfective, 'is_corrective': cl.is_corrective, 'has_label': cl.has_label}
 
         return Response(dat)
 
