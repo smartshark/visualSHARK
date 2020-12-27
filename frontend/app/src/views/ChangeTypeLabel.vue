@@ -8,13 +8,21 @@
     </template>
     <div class="animated fadeIn">
 
-      <div class="submitLine">
-        <button v-if="commit.revision_hash" v-on:click="submit" class="btn btn-primary">Submit Labels</button>
-        <button v-else v-on:click="load" class="btn btn-primary">Load next issue</button>
-      </div>
-
-      <div v-if="commit.revision_hash">
-        <progress :max="todo + finished" :value="finished"></progress>
+      <div class="row">
+        <div class="col-md-6">
+          <div v-if="commit.revision_hash" class="form-group">
+            <div class="input-group">
+              <div class="input-group-addon">
+                <span class="input-group-text">{{finished}}/{{todo + finished}}</span>
+              </div>
+              <progress :max="todo + finished" :value="finished" style="vertical-align: none;"></progress>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6" style="text-align: right;">
+          <button v-if="commit.revision_hash" v-on:click="submit" class="btn btn-primary">Submit Labels</button>
+          <button v-else v-on:click="load" class="btn btn-primary">Load next issue</button>
+        </div>
       </div>
 
       <div class="card" v-if="commit.revision_hash">
@@ -108,5 +116,4 @@ export default {
 </script>
 
 <style>
-
 </style>
