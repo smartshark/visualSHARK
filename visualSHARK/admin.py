@@ -15,6 +15,11 @@ def deactivate_user(modeladmin, news, queryset):
 deactivate_user.short_description = u"Deactivate selected Users"
 
 
+def remove_label(modeladmin, news, queryset):
+    queryset.update(has_label=False)
+remove_label.short_description = u"Remove label"
+
+
 class CustomUserAdmin(UserAdmin):
     actions = [activate_user, deactivate_user]
 
@@ -61,6 +66,7 @@ class LeaderboardSnapshotAdmin(admin.ModelAdmin):
 
 
 class ChangeTypeLabelAdmin(admin.ModelAdmin):
+    actions = [remove_label]
     list_display = ('user', 'project_name', 'revision_hash', 'has_label', 'is_perfective', 'is_corrective', 'changed_at')
     list_filter = ('user', 'has_label', 'is_perfective', 'is_corrective')
     search_fields = ('user',)
