@@ -1179,7 +1179,6 @@ class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
                 tmp = {'project': c.project_name, 'commit': c.revision_hash, 'committer_date': str(commit.committer_date), 'author': str(a.name), 'file': f.path, 'hunk_id': str(h.id), 'full_hunk': h.content, 'lines': []}
                 for lno, hl in enumerate(h.content.split('\n')):
                     techs = ll.get(str(lno), [])
-                    print(ll)
                     if hl.startswith(('-', '+')):
                         tmp['lines'].append({'hunk_line': lno, 'code': hl, 'technologies': techs})
 
