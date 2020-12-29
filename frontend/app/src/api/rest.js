@@ -223,6 +223,15 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getTechnologyLabelFileDownload () {
+    let req = this.getUrl('labeling/tech/export/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    },
+    responseType: 'arraybuffer'
+    })
+  },
   saveLabelsOfCommits (dat) {
     let req = this.getUrl('labeling/lines/')
     return axios.post(req, dat, {headers: {

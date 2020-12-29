@@ -2,7 +2,20 @@
   <div class="wrapper">
     <div class="animated fadeIn">
       <div class="card">
-        <div class="card-header"><i class="fa fa-code"></i> Labeled commits </div>
+        <div class="card-header"><i class="fa fa-code"></i> Labeled commits 
+          <div class="card-actions">
+            <dropdown class="inline">
+              <span slot="button">
+                <i class="fa fa-gear"></i>
+              </span>
+              <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
+                <div class="dropdown-header text-center"><strong>Options</strong></div>
+                <div class="input-group-btn"><button type="button" class="btn btn-primary btn-override" @click="downloadLabels()"><i class="fa fa-download"></i> export
+                  </button></div>
+              </div>
+            </dropdown>
+          </div>
+        </div>
         <div class="card-block">
           <grid :gridColumns="grid.columns" :data="gridData.data" :count="gridData.count" :defaultOrder="grid.defaultOrder" :defaultPerPage="15" defaultFilterField="external_id" :triggerRefresh="triggerRefresh" @refresh="refreshGrid">
             <template slot="revision_hash" slot-scope="props">
@@ -42,6 +55,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { dropdown } from 'vue-strap'
 import rest from '../api/rest'
 
 import Grid from '@/components/Grid.vue'
@@ -70,7 +84,7 @@ export default {
     }
   },
   components: {
-    Grid
+    Grid, dropdown
   },
   computed: {
     ...mapGetters({
@@ -78,6 +92,26 @@ export default {
     })
   },
   methods: {
+    downloadLabels () {
+      this.$store.dispatch('pushLoading')
+      rest.getTechnologyLabelFileDownload()
+        .then(response => {
+          this.$store.dispatch('popLoading')
+          // this is kind of stupid, but it seems to be the only way
+          // save response in blob, create blob url, create A element, link it and click it.
+          let blob = new Blob([response.data], { type: 'application/json' })
+          let url = window.URL.createObjectURL(blob)
+          let link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
+          link.href = url
+          link.download = 'export.json'
+          document.body.appendChild(link)
+          link.click()
+        })
+        .catch(e => {
+          this.$store.dispatch('popLoading')
+          this.$store.dispatch('pushError', e)
+        })
+    },
     refreshGrid (dat) {
       this.triggerRefresh = false
       this.$store.dispatch('updateGridTechnologyLabels', dat)

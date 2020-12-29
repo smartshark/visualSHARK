@@ -1159,6 +1159,36 @@ class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
         qry = super().get_queryset()
         return qry.filter(user=self.request.user)
 
+    @list_route(methods=['get'])
+    def export(self, request):
+
+        # todo:
+        # - should we allow single exports via detail_route?
+
+        # get all labels for current user and construct output
+        out = {'user': request.user.username, 'data': []}
+        for c in TechnologyLabelCommit.objects.filter(user=request.user):
+            for hunk_id, ll in json.loads(c.changes).items():
+                h = Hunk.objects.get(id=hunk_id)
+                fa = FileAction.objects.get(id=h.file_action_id)
+                commit = Commit.objects.only('author_id', 'committer_date').get(id=fa.commit_id)
+                a = People.objects.get(id=commit.author_id)
+
+                f = File.objects.get(id=fa.file_id)
+
+                tmp = {'project': c.project_name, 'commit': c.revision_hash, 'committer_date': str(commit.committer_date), 'author': str(a.name), 'file': f.path, 'hunk_id': str(h.id), 'full_hunk': h.content, 'lines': []}
+                for lno, hl in enumerate(h.content.split('\n')):
+                    techs = ll.get(lno, [])
+                    if hl.startswith(('-', '+')):
+                        tmp['lines'].append({'hunk_line': lno, 'code': hl, 'technologies': techs})
+
+                out['data'].append(tmp)
+
+        f = io.BytesIO(json.dumps(out).encode('utf-8'))
+        response = HttpResponse(f, content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="export_{}.json"'.format(request.user.username)
+        return response
+
 
 class TechnologyLabeling(APIView):
     """Labeling of used technology in one commit."""
