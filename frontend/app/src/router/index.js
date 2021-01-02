@@ -9,6 +9,7 @@ import Full from '@/containers/Full'
 // Views
 import Dashboard from '@/views/Dashboard'
 import Commits from '@/views/Commits'
+import PullRequests from '@/views/PullRequests'
 import Issues from '@/views/Issues'
 import People from '@/views/People'
 import MonacoLineLabel from '@/views/MonacoLineLabel'
@@ -29,6 +30,7 @@ import CorrectionBoard from '@/views/CorrectionBoard'
 
 import TechnologyLabelOverview from '@/views/TechnologyLabelOverview'
 import ChangeTypeLabel from '@/views/ChangeTypeLabel'
+import ChangeTypeLabelDisagreement from '@/views/ChangeTypeLabelDisagreement'
 
 import Analytics from '@/views/Analytics'
 import Project from '@/views/Project'
@@ -86,6 +88,18 @@ const router = new Router({
             {
               path: ':id',
               name: 'Commit'
+            }
+          ]
+        },
+        {
+          path: 'pulls',
+          name: 'Pull Requests',
+          component: PullRequests,
+          props: true,
+          children: [
+            {
+              path: ':id',
+              name: 'Pull Requests'
             }
           ]
         },
@@ -170,6 +184,11 @@ const router = new Router({
               path: 'changeTypeLabel',
               name: 'Change Type Label',
               component: ChangeTypeLabel
+            },
+            {
+              path: 'changeTypeLabelDisagreement',
+              name: 'Change Type Label Disagreement',
+              component: ChangeTypeLabelDisagreement
             },
             {
               path: 'corrections',

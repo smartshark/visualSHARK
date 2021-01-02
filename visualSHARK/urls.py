@@ -12,7 +12,8 @@ from .views import Auth, StatsView
 from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet, HunkViewSet
 from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView, IssueLabelSet, IssueConflictSet, IssueLinkSet, LineLabelSet
 from .views import LeaderboardSet, TechnologyLabeling, Technologies, LineLabelCorrectionSet, LineLabelControlSet, CorrectionOverviewSet
-from .views import CorrectionBoardView, ChangeTypeLabelViewSet, TechnologyLabelingOverviewSet
+from .views import CorrectionBoardView, ChangeTypeLabelViewSet, ChangeTypeLabelDisagreementViewSet, TechnologyLabelingOverviewSet
+from .views import PullRequestSystemViewSet, PullRequestViewSet
 
 
 # Routers provide an easy way of automatically determining the URL conf.
@@ -32,6 +33,8 @@ router.register(r'codeentitystate', CodeEntityStateViewSet)
 router.register(r'file', FileViewSet)
 router.register(r'product', ProductViewSet)
 router.register(r'hunk', HunkViewSet)
+router.register(r'prs', PullRequestSystemViewSet)
+router.register(r'pulls', PullRequestViewSet)
 
 rrouter = rrouters.DefaultRouter()
 rrouter.register(r'commitgraph', CommitGraphViewSet)
@@ -68,6 +71,7 @@ urlpatterns = [
     url(r'^labeling/line_control', LineLabelControlSet.as_view()),
     url(r'^labeling/correctionboard', CorrectionBoardView.as_view()),
     url(r'^labeling/change_type', ChangeTypeLabelViewSet.as_view()),
+    url(r'^labeling/ctdisagreement', ChangeTypeLabelDisagreementViewSet.as_view()),
     url(r'^labeling/', include(drouter.urls)),
     url(r'^docs/', include_docs_urls(title='visualSHARK ReST Documentation', public=False))
 ]

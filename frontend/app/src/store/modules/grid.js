@@ -19,7 +19,8 @@ const state = {
   gridReleases: {data: [], count: 0},
   gridJobs: {data: [], count: 0},
   gridCorrections: {data: [], count: 0},
-  gridTechnologyLabels: {data: [], count: 0}
+  gridTechnologyLabels: {data: [], count: 0},
+  gridPullRequests: {data: [], count: 0}
 }
 
 const getters = {
@@ -39,7 +40,8 @@ const getters = {
   gridReleases: state => state.gridReleases,
   gridJobs: state => state.gridJobs,
   gridCorrections: state => state.gridCorrections,
-  gridTechnologyLabels: state => state.gridTechnologyLabels
+  gridTechnologyLabels: state => state.gridTechnologyLabels,
+  gridPullRequests: state => state.gridPullRequests,
 }
 
 const actions = {
@@ -265,6 +267,18 @@ const actions = {
         commit(types.POP_LOADING)
         commit(types.PUSH_ERROR, { error })
       })
+  },
+  updateGridPullRequests ({commit}, dat) {
+    commit(types.PUSH_LOADING)
+    rest.getPullRequests(dat)
+      .then(response => {
+        commit(types.GRID_PULL_REQUESTS, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
   }
 }
 
@@ -392,6 +406,13 @@ const mutations = {
       state.gridTechnologyLabels = {data: response.data, count: response.data.length}
     } else {
       state.gridTechnologyLabels = {data: response.data.results, count: response.data.count}
+    }
+  },
+  [types.GRID_PULL_REQUESTS] (state, { response }) {
+    if (typeof response.data.results === 'undefined') {
+      state.gridPullRequests = {data: response.data, count: response.data.length}
+    } else {
+      state.gridPullRequests = {data: response.data.results, count: response.data.count}
     }
   }
 }

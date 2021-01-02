@@ -1,8 +1,12 @@
-0.1.4 (in progress)
-- merged line labeling branch
-[ ] include feature flags in backend and frontend to deactivate functionality that is in development
+0.1.5 (in progress)
 [ ] fix warning for loading attribute of grid
 [ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
+
+0.1.4
+- merged line labeling branch
+- added change type labelin
+- added used technology labeling
+- added initial pull request views
 
 0.1.3
 - add VERY basic rights management

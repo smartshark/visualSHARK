@@ -62,6 +62,9 @@ const actions = {
         if (permissions.includes('view_commits')) {
           dispatch('getAllVcsBranches')
         }
+        if (permissions.includes('view_pull_requests')) {
+          dispatch('getAllPullRequestSystems')
+        }
       })
       .catch(error => {
         commit(types.LOGIN_ERROR, { error })
@@ -82,6 +85,9 @@ const actions = {
     }
     if (dat.permissions.includes('view_commits')) {
       dispatch('getAllVcsBranches')
+    }
+    if (dat.permissions.includes('view_pull_requests')) {
+      dispatch('getAllPullRequestSystems')
     }
   },
   testConnectionWorker ({commit}, dat) {

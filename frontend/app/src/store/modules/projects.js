@@ -8,15 +8,18 @@ const state = {
   currentVcs: null,
   currentIts: null,
   currentMl: null,
+  currentPrs: null,
   currentJob: null,
   vcs: [],
   its: [],
   ml: [],
+  prs: [],
   allVcsBranches: [],
   currentVcsBranches: [],
-  dashboardStats: {num_projects: 0, num_commits: 0, num_issues: 0, num_emails: 0, num_files: 0, num_people: 0, projects: {}},
+  dashboardStats: {num_projects: 0, num_commits: 0, num_issues: 0, num_emails: 0, num_files: 0, num_people: 0, num_pulls: 0, projects: {}},
   dashboardStatsHistory: [],
   currentCommit: {},
+  currentPullRequest: {},
   currentCommitAnalytics: {},
   currentIssue: {},
   currentPerson: {},
@@ -41,11 +44,13 @@ const getters = {
   allVcs: state => state.vcs,
   allIS: state => state.its,
   allML: state => state.ml,
+  allPR: state => state.prs,
   allVcsBranches: state => state.allVcsBranches,
   currentProject: state => state.currentProject,
   currentVcs: state => state.currentVcs,
   currentIts: state => state.currentIts,
   currentMl: state => state.currentMl,
+  currentPrs: state => state.currentPrs,
   currentVcsBranches: state => {
     return state.allVcsBranches.filter(item => state.currentVcs !== null && item.vcs_system_id === state.currentVcs.id)
   },
@@ -80,16 +85,27 @@ const getters = {
     })
     return pvcs
   },
+  projectsPrs: state => {
+    let pvcs = []
+    state.prs.forEach(item => {
+      if (state.currentProject !== null && item.project_id === state.currentProject.id) {
+        pvcs.push(item)
+      }
+    })
+    return pvcs
+  },
   allProjectData: state => {
     let pwvcs = []
     state.projects.forEach(item => {
       let vcs = state.vcs.filter(vcs => vcs.project_id === item.id)
       let its = state.its.filter(its => its.project_id === item.id)
       let ml = state.ml.filter(ml => ml.project_id === item.id)
+      let pr = state.prs.filter(pr => pr.project_id === item.id)
 
       let vcsId = null
       let itsId = null
       let mlId = null
+      let prId = null
       if (vcs.length > 0) {
         vcsId = vcs[0].id
       }
@@ -99,12 +115,15 @@ const getters = {
       if (ml.length > 0) {
         mlId = ml[0].id
       }
-
-      pwvcs.push({vcs: vcs, its: its, ml: ml, id: item.id, name: item.name, vcs_id: vcsId, its_id: itsId, ml_id: mlId})
+      if (pr.length > 0) {
+        prId = pr[0].id
+      }
+      pwvcs.push({vcs: vcs, its: its, ml: ml, prs: pr, id: item.id, name: item.name, vcs_id: vcsId, its_id: itsId, ml_id: mlId})
     })
 
     return pwvcs
   },
+  currentPullRequest: state => state.currentPullRequest,
   currentCommit: state => state.currentCommit,
   currentCommitAnalytics: state => state.currentCommitAnalytics,
   possiblePaths: state => state.possiblePaths,
@@ -151,6 +170,19 @@ const actions = {
     rest.getCommit(params.vcsSystemId, params.revisionHash)
       .then(response => {
         commit(types.SET_COMMIT, { response })
+        commit(types.POP_LOADING)
+      })
+      .catch(error => {
+        commit(types.POP_LOADING)
+        commit(types.PUSH_ERROR, { error })
+      })
+  },
+  getPullRequest ({commit}, id) {
+    commit(types.PUSH_LOADING)
+    commit(types.SET_PULL_REQUEST, { response: {data: {}} })
+    rest.getPullRequest(id)
+      .then(response => {
+        commit(types.SET_PULL_REQUEST, { response })
         commit(types.POP_LOADING)
       })
       .catch(error => {
@@ -396,12 +428,22 @@ const actions = {
         commit(types.PUSH_ERROR, { error })
       })
   },
+  getAllPullRequestSystems ({commit}) {
+    rest.getAllPullRequestSystems()
+      .then(response => {
+        commit(types.RECEIVE_PRS, { response })
+      })
+      .catch(error => {
+        commit(types.PUSH_ERROR, { error })
+      })
+  },
   setProject ({commit, getters}, project) {
     // on changing the project we also set the projects VCS and ITS if there is only one.
     commit(types.SET_PROJECT, { project })
     let vcs = null
     let its = null
     let ml = null
+    let pr = null
     if (getters.projectsVcs.length === 1) {
       vcs = getters.projectsVcs[0]
     }
@@ -411,9 +453,13 @@ const actions = {
     if (getters.projectsMls.length === 1) {
       ml = getters.projectsMls[0]
     }
+    if (getters.projectsPrs.length === 1) {
+      pr = getters.projectsPrs[0]
+    }
     commit(types.SET_VCS, { vcs })
     commit(types.SET_ITS, { its })
     commit(types.SET_ML, { ml })
+    commit(types.SET_PRS, { pr })
   },
   setVcs ({commit}, vcs) {
     commit(types.SET_VCS, { vcs })
@@ -423,6 +469,9 @@ const actions = {
   },
   setMl ({commit}, ml) {
     commit(types.SET_ML, { ml })
+  },
+  setPrs ({commit}, prs) {
+    commit(types.SET_PRS, { prs })
   },
   getCommitAnalytics ({commit}, id) {
     commit(types.PUSH_LOADING)
@@ -486,6 +535,9 @@ const mutations = {
   },
   [types.SET_COMMIT] (state, { response }) {
     state.currentCommit = response.data
+  },
+  [types.SET_PULL_REQUEST] (state, { response }) {
+    state.currentPullRequest = response.data
   },
   [types.SET_JOB] (state, { response }) {
     state.currentJob = response.data
@@ -555,6 +607,9 @@ const mutations = {
   [types.SET_ML] (state, { ml }) {
     state.currentMl = ml
   },
+  [types.SET_PRS] (state, { prs }) {
+    state.currentPrs = prs
+  },
   [types.RECEIVE_VCS] (state, { response }) {
     state.vcs = response.data.results
   },
@@ -563,6 +618,9 @@ const mutations = {
   },
   [types.RECEIVE_ML] (state, { response }) {
     state.ml = response.data.results
+  },
+  [types.RECEIVE_PRS] (state, { response }) {
+    state.prs = response.data.results
   },
   [types.SET_VCS_BRANCHES] (state, { response }) {
     state.allVcsBranches = response.data.results

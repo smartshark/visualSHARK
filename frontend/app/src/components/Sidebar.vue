@@ -8,6 +8,9 @@
         <li class="nav-item" v-if="permissions.includes('view_commits')">
           <router-link :to="'/commits'" class="nav-link"><i class="fa fa-code"></i> Commits</router-link>
         </li>
+        <li class="nav-item" v-if="permissions.includes('view_pull_requests')">
+          <router-link :to="'/pulls'" class="nav-link"><i class="fa fa-code-fork"></i> Pull Requests</router-link>
+        </li>
         <li class="nav-item" v-if="permissions.includes('view_issues')">
           <router-link :to="'/issues'" class="nav-link"><i class="fa fa-bug"></i> Issues</router-link>
         </li>
@@ -61,6 +64,9 @@
               </li>
               <li class="nav-item" v-if="permissions.includes('view_change_labels')">
                 <router-link :to="'/labeling/changeTypeLabel'" class="nav-link"><i class="fa fa-code"></i> Change Type</router-link>
+              </li>
+              <li class="nav-item" v-if="permissions.includes('view_change_labels')">
+                <router-link :to="'/labeling/changeTypeLabelDisagreement'" class="nav-link"><i class="fa fa-check"></i> Change Type Disagreements</router-link>
               </li>
             </ul>
         </router-link>

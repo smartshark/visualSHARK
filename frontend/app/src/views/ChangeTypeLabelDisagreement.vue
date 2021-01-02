@@ -30,8 +30,34 @@
         </div>
         <div class="card-block">
 <pre>{{commit.message}}</pre>
-          <input type="checkbox" v-model="commit.is_perfective" name="is_perfective"/> increases quality<br/>
-          <input type="checkbox" v-model="commit.is_corrective" name="is_corrective"/> fixes a bug
+        </div>
+      </div>
+
+      <div class="card" v-if="commit.revision_hash">
+        <div class="card-header"><i class="fa fa-tags"></i> Label
+        </div>
+        <div class="card-block">
+          <table>
+            <tr>
+              <th>Resolution</th>
+              <th>Label1</th>
+              <th>Label2</th>
+            </tr>
+            <tr>
+              <td>
+                <input type="checkbox" v-model="commit.is_perfective" name="is_perfective"/> increases quality<br/>
+                <input type="checkbox" v-model="commit.is_corrective" name="is_corrective"/> fixes a bug
+              </td>
+              <td>
+                <input type="checkbox" v-model="label1.is_perfective" disabled/> increases quality<br/>
+                <input type="checkbox" v-model="label1.is_corrective" disabled/> fixes a bug
+              </td>
+              <td>
+                <input type="checkbox" v-model="label2.is_perfective" disabled/> increases quality<br/>
+                <input type="checkbox" v-model="label2.is_corrective" disabled/> fixes a bug
+              </td>
+            </tr>
+          </table>
         </div>
       </div>
 
@@ -50,30 +76,27 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert, checkbox } from 'vue-strap'
+import { alert } from 'vue-strap'
 import rest from '../api/rest'
 
 export default {
-  name: '',
+  name: 'ChangeTypeDisagreement',
   data () {
     return {
       commit: {},
+      label1: {},
+      label2: {},
       todo: null,
       finished: null,
       flashes: []
     }
   },
   components: {
-    alert,
-    checkbox
-  },
-  mounted () {
+    alert
   },
   computed: mapGetters({
     loading: 'loading'
   }),
-  watch: {
-  },
   methods: {
     load() {
       this.loadSample()
@@ -81,7 +104,7 @@ export default {
     loadSample() {
       this.$store.dispatch('pushLoading')
       this.commit = {}
-      rest.getChangeType()
+      rest.getChangeTypeDisagreement()
         .then(response => {
           this.flashes = []
           this.$store.dispatch('popLoading')
@@ -90,6 +113,8 @@ export default {
             return
           }
           this.commit = response.data
+          this.label1 = response.data['label1']
+          this.label2 = response.data['label2']
           this.todo = response.data['todo']
           this.finished = response.data['finished']
         })
@@ -100,7 +125,7 @@ export default {
     },
     submit() {
       this.$store.dispatch('pushLoading')
-      rest.setChangeType({data: this.commit})
+      rest.setChangeTypeDisagreement({data: this.commit})
         .then(response => {
           this.$store.dispatch('popLoading')
           this.commit = {}

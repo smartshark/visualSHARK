@@ -1,6 +1,6 @@
 {
   "name": "visualshark",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Fronted for visualSHARK",
   "author": "alexander.trautsch@cs.uni-goettingen.de",
   "private": true,

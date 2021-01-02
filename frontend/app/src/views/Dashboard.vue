@@ -166,10 +166,11 @@
                     <table class="table table-striped table-bordered table-condensed">
                         <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>VCS</th>
-                            <th>Issue</th>
-                            <th>Mailinglist</th>
+                            <th>Project</th>
+                            <th>Repository</th>
+                            <th>Pull Request System</th>
+                            <th>Issue Tracking System</th>
+                            <th>Mailing List</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -182,8 +183,13 @@
                                     <span class="updated">{{ vcs.last_updated | momentfromnow }}</span>
                                 </div>
                                 </template>
-                                <template v-else>
-                                    no VCS
+                            </td>
+                            <td>
+                                <template v-if="project.prs">
+                                <div v-for="prs in project.prs">
+                                    <a :href="prs.url" target="_blank">{{prs.url}}</a><br/>
+                                    <span class="updated">{{ prs.last_updated | momentfromnow }}</span>
+                                </div>
                                 </template>
                             </td>
                             <td>
@@ -194,9 +200,6 @@
                                     <br/>
                                     </div>
                                 </template>
-                                <template v-else>
-                                    no Issue System
-                                </template>
                             </td>
                             <td>
                                 <template v-if="project.ml.length > 0">
@@ -205,9 +208,6 @@
                                     <span class="updated">{{ ml.last_updated | momentfromnow }}</span>
                                     <br/>
                                     </div>
-                                </template>
-                                <template v-else>
-                                    no Mailing List
                                 </template>
                             </td>
                         </tr>

@@ -43,12 +43,14 @@ from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, File
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 from .models import LeaderboardSnapshot
 from .models import CorrectionIssue
-from .models import ChangeTypeLabel
+from .models import ChangeTypeLabel, ChangeTypeLabelDisagreement
 from .models import TechnologyLabelCommit, TechnologyLabel
+from .models import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestCommit, PullRequestFile, PullRequestReview
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
 from .serializers import CorrectionIssueSerializer, TechnologyLabelCommitSerializer
+from .serializers import PullRequestSystemSerializer, PullRequestSerializer, SinglePullRequestSerializer
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRel
@@ -349,6 +351,63 @@ class FileViewSet(MongoReadOnlyModelViewSet):
     ordering_fields = ('path',)
     filter_fields = ('vcs_system_id', 'path', 'id')
     mongo_search_fields = ('path',)
+
+
+class PullRequestSystemViewSet(MongoReadOnlyModelViewSet):
+    read_perm = 'view_pull_requests'
+    queryset = PullRequestSystem.objects.all()
+    serializer_class = PullRequestSystemSerializer
+    filter_fields = ('project_id',)
+
+
+class PullRequestViewSet(MongoReadOnlyModelViewSet):
+    """For now we just put everything in here.
+
+    We will probably create grid endpoints for most of it.
+    """
+    read_perm = 'view_pull_requests'
+    queryset = PullRequest.objects.all()
+    serializer_class = PullRequestSerializer
+    filter_fields = ('project_id', 'state', 'title')
+    ordering_fields = ('state', 'external_id', 'title', 'created_at', 'updated_at', 'merged_at')
+    mongo_search_fields = ('title',)
+
+    def retrieve(self, request, id=None):
+        """Additional information for GET."""
+        r = self.queryset.get(id=id)
+        dat = r.to_mongo()
+
+        dat['comments'] = []
+        for c in PullRequestComment.objects.filter(pull_request_id=id):
+            c.author = People.objects.get(id=c.author_id)
+            dat['comments'].append(c)
+
+        dat['events'] = []
+        for c in PullRequestEvent.objects.filter(pull_request_id=id):
+            c.author = People.objects.get(id=c.author_id)
+            dat['events'].append(c)
+
+        dat['commits'] = []
+        for c in PullRequestCommit.objects.filter(pull_request_id=id):
+            c.author = People.objects.get(id=c.author_id)
+            c.committer = People.objects.get(id=c.committer_id)
+            dat['commits'].append(c)
+
+        dat['files'] = []
+        for c in PullRequestFile.objects.filter(pull_request_id=id):
+            dat['files'].append(c)
+
+        dat['reviews'] = []
+        for c in PullRequestReview.objects.filter(pull_request_id=id):
+            c.creator = People.objects.get(id=c.creator_id)
+            if c.pull_request_commit_id:
+                c.pull_request_commit = PullRequestCommit.objects.get(id=c.pull_request_commit_id)
+                c.pull_request_commit.author = People.objects.get(id=c.pull_request_commit.author_id)
+                c.pull_request_commit.committer = People.objects.get(id=c.pull_request_commit.committer_id)
+            dat['reviews'].append(c)
+
+        serializer = SinglePullRequestSerializer(dat)
+        return Response(serializer.data)
 
 
 class ProjectViewSet(MongoReadOnlyModelViewSet):
@@ -1983,6 +2042,88 @@ class ChangeTypeLabelViewSet(APIView):
         is_corrective = request.data['data']['is_corrective']
 
         cl = ChangeTypeLabel.objects.get(id=cl_id, user=request.user)
+        cl.has_label = True
+        cl.is_corrective = is_corrective
+        cl.is_perfective = is_perfective
+        cl.changed_at = datetime.now()
+        cl.save()
+        return HttpResponse(status=200)
+
+
+class ChangeTypeLabelDisagreementViewSet(APIView):
+    """Disagreement view of change type labeling"""
+    read_perm = 'view_change_labels'
+    write_perm = 'edit_change_labels'
+
+    def get_disagreement(self):
+        """Creates and returns disagreements on-the-fly.
+
+        It is not efficient but saves additional code for a command to create disagreements.
+        """
+        user1 = User.objects.get(username='atrautsch')
+        user2 = User.objects.get(username='erbel')
+
+        cl1 = ChangeTypeLabel.objects.filter(user=user1, has_label=True)
+
+        for c1 in cl1:
+            try:
+                c2 = ChangeTypeLabel.objects.get(user=user2, has_label=True, revision_hash=c1.revision_hash, project_name=c1.project_name)
+            except ChangeTypeLabel.DoesNotExist:
+                continue
+
+            if c1.is_perfective != c2.is_perfective or c1.is_corrective != c2.is_corrective:
+                d, created = ChangeTypeLabelDisagreement.objects.get_or_create(project_name=c1.project_name, revision_hash=c1.revision_hash)
+
+                if created:
+                    return d
+
+    def get(self, request):
+        d = self.get_disagreement()
+
+        if not d:
+            return Response({'warning': 'no_more_issues'})
+
+        user1 = User.objects.get(username='atrautsch')
+        user2 = User.objects.get(username='erbel')
+
+        c1 = ChangeTypeLabel.objects.get(user=user1, has_label=True, revision_hash=d.revision_hash, project_name=d.project_name)
+        c2 = ChangeTypeLabel.objects.get(user=user2, has_label=True, revision_hash=d.revision_hash, project_name=d.project_name)
+
+        p = Project.objects.get(name=d.project_name)
+        vcs = VCSSystem.objects.get(project_id=p.id)
+
+        c = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=d.revision_hash)
+
+        finished = ChangeTypeLabelDisagreement.objects.filter(has_label=True).count()
+        todo = ChangeTypeLabelDisagreement.objects.filter(has_label=False).count()
+
+        issues = []
+        for issue_id in c.linked_issue_ids:
+            try:
+                i = Issue.objects.get(id=issue_id)
+            except Issue.DoesNotExist:
+                continue
+
+            if i.issue_type_verified and i.issue_type_verified.lower() == 'bug':
+                issues.append({'external_id': i.external_id, 'verified_bug': True, 'type': i.issue_type})
+            else:
+                issues.append({'external_id': i.external_id, 'verified_bug': False, 'type': i.issue_type})
+
+        label = []
+        label.append({'has_label': c1.has_label, 'is_corrective': c1.is_corrective, 'is_perfective': c1.is_perfective})
+        label.append({'has_label': c2.has_label, 'is_corrective': c2.is_corrective, 'is_perfective': c2.is_perfective})
+        random.shuffle(label)
+
+        dat = {'id': d.id, 'label1': label.pop(), 'label2': label.pop(), 'todo': todo, 'finished': finished, 'project_name': p.name, 'revision_hash': c.revision_hash, 'issues': issues, 'message': c.message, 'is_perfective': d.is_perfective, 'is_corrective': d.is_corrective, 'has_label': d.has_label}
+
+        return Response(dat)
+
+    def post(self, request):
+        cl_id = request.data['data']['id']
+        is_perfective = request.data['data']['is_perfective']
+        is_corrective = request.data['data']['is_corrective']
+
+        cl = ChangeTypeLabelDisagreement.objects.get(id=cl_id)
         cl.has_label = True
         cl.is_corrective = is_corrective
         cl.is_perfective = is_perfective

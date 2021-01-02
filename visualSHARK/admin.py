@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, UserProfile, IssueValidation, \
-    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue, ChangeTypeLabel, TechnologyLabelCommit, TechnologyLabel
+    IssueValidationUser, ProjectAttributes, LeaderboardSnapshot, CorrectionIssue, ChangeTypeLabel, ChangeTypeLabelDisagreement, TechnologyLabelCommit, TechnologyLabel
 
 
 def activate_user(modeladmin, news, queryset):
@@ -72,6 +72,11 @@ class ChangeTypeLabelAdmin(admin.ModelAdmin):
     search_fields = ('user',)
 
 
+class ChangeTypeLabelDisagreementAdmin(admin.ModelAdmin):
+    list_display = ('project_name', 'revision_hash', 'has_label', 'is_perfective', 'is_corrective', 'changed_at')
+    list_filter = ('has_label', 'is_perfective', 'is_corrective')
+
+
 class TechnologyLabelCommitAdmin(admin.ModelAdmin):
     list_display = ('user', 'project_name', 'revision_hash', 'is_labeled', 'changed_at')
     list_filter = ('user', 'project_name', 'is_labeled')
@@ -98,5 +103,6 @@ admin.site.register(ProjectAttributes)
 admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
 admin.site.register(CorrectionIssue, CorrectionIssueAdmin)
 admin.site.register(ChangeTypeLabel, ChangeTypeLabelAdmin)
+admin.site.register(ChangeTypeLabelDisagreement, ChangeTypeLabelDisagreementAdmin)
 admin.site.register(TechnologyLabelCommit, TechnologyLabelCommitAdmin)
 admin.site.register(TechnologyLabel, TechnologyLabelAdmin)

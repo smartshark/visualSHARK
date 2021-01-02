@@ -6,19 +6,24 @@
             <option v-for="item in projects" :value="item">{{ item.name }}</option>
         </select>
         <br/>
-        <h6>VCS</h6>
+        <h6>Repository</h6>
         <select v-model="currentVcs" class="form-control">
             <option v-for="item in vcs" :value="item">{{ item.url }}</option>
         </select>
         <br/>
-        <h6>ITS</h6>
+        <h6>Issue Tracking System</h6>
         <select v-model="currentIts" class="form-control">
             <option v-for="item in its" :value="item">{{ item.url }}</option>
         </select>
         <br/>
-        <h6>ML</h6>
+        <h6>Mailing List</h6>
         <select v-model="currentMl" class="form-control">
             <option v-for="item in mls" :value="item">{{ item.name }}</option>
+        </select>
+        <br/>
+        <h6>Pull Request System</h6>
+        <select v-model="currentPrs" class="form-control">
+            <option v-for="item in prs" :value="item">{{ item.url }}</option>
         </select>
     </div>
   </aside>
@@ -34,7 +39,8 @@ export default {
       projects: 'allProjects',
       vcs: 'projectsVcs',
       its: 'projectsIts',
-      mls: 'projectsMls'
+      mls: 'projectsMls',
+      prs: 'projectsPrs'
     }),
     currentProject: {
       get () {
@@ -66,6 +72,14 @@ export default {
       },
       set (value) {
         this.$store.dispatch('setMl', value)
+      }
+    },
+    currentPrs: {
+      get () {
+        return this.$store.getters.currentPrs
+      },
+      set (value) {
+        this.$store.dispatch('setPrs', value)
       }
     }
   }

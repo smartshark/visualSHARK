@@ -83,6 +83,27 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getAllPullRequestSystems () {
+    let req = this.getUrl('prs/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getPullRequests (dat) {
+    let req = this.getFilterUrl('pulls/', dat)
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getPullRequest (id) {
+    let req = this.getUrl('pulls/' + id + '/')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getProjects (dat) {
     let req = this.getFilterUrl('project/', dat)
     return axios.get(req, {headers: {
@@ -338,6 +359,20 @@ export default {
   },
   setChangeType (dat) {
     let req = this.getUrl('labeling/change_type/')
+    return axios.post(req, dat, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  getChangeTypeDisagreement () {
+    let req = this.getFilterUrl('labeling/ctdisagreement', {})
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
+  setChangeTypeDisagreement (dat) {
+    let req = this.getUrl('labeling/ctdisagreement/')
     return axios.post(req, dat, {headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token ' + this.token

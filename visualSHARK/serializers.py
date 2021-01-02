@@ -10,6 +10,7 @@ from rest_framework import serializers as rserializers
 
 from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData, Branch, Event, Hunk
 from .models import CommitGraph, CommitLabelField, VSJob, VSJobType, CorrectionIssue, TechnologyLabelCommit, TechnologyLabel
+from .models import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestCommit, PullRequestFile, PullRequestReview
 
 
 class CommitLabelFieldSerializer(rserializers.ModelSerializer):
@@ -282,3 +283,71 @@ class TechnologyLabelCommitSerializer(rserializers.ModelSerializer):
     class Meta:
         model = TechnologyLabelCommit
         fields = ('id', 'revision_hash', 'project_name', 'is_labeled', 'has_technology', 'technologies', 'changed_at')
+
+
+class PullRequestSystemSerializer(serializers.DocumentSerializer):
+
+    class Meta:
+        model = PullRequestSystem
+        fields = ('id', 'project_id', 'url', 'last_updated')
+
+
+class PullRequestSerializer(serializers.DocumentSerializer):
+
+    class Meta:
+        model = PullRequest
+        fields = ('id', 'external_id', 'pull_request_system_id', 'title', 'description', 'created_at', 'updated_at', 'merged_at', 'state', 'labels')
+
+
+class PullRequestCommentSerializer(serializers.DocumentSerializer):
+    author = PersonSerializer(many=False)
+
+    class Meta:
+        model = PullRequestComment
+        fields = ('id', 'external_id', 'pull_request_id', 'created_at', 'updated_at', 'comment', 'author_id', 'author')
+
+
+class PullRequestEventSerializer(serializers.DocumentSerializer):
+    author = PersonSerializer(many=False)
+
+    class Meta:
+        model = PullRequestEvent
+        fields = ('id', 'external_id', 'pull_request_id', 'created_at', 'event_type', 'author_id', 'author', 'additional_data')
+
+
+class PullRequestCommitSerializer(serializers.DocumentSerializer):
+    author = PersonSerializer(many=False)
+    committer = PersonSerializer(many=False)
+
+    class Meta:
+        model = PullRequestCommit
+        fields = ('id', 'pull_request_id', 'commit_sha', 'message', 'author_id', 'committer_id', 'author', 'committer', 'commit_repo_url', 'parents', 'commit_id')
+
+
+class PullRequestFileSerializer(serializers.DocumentSerializer):
+
+    class Meta:
+        model = PullRequestFile
+        fields = ('id', 'pull_request_id', 'path', 'status', 'additions', 'deletions', 'changes')
+
+
+class PullRequestReviewSerializer(serializers.DocumentSerializer):
+    creator = PersonSerializer(many=False)
+    pull_request_commit = PullRequestCommitSerializer(many=False)
+
+    class Meta:
+        model = PullRequestReview
+        fields = ('id', 'pull_request_id', 'external_id', 'state', 'description', 'creator_id', 'submitted_at', 'commit_sha', 'pull_request_commit_id', 'creator', 'pull_request_commit')
+
+
+class SinglePullRequestSerializer(serializers.DocumentSerializer):
+    comments = PullRequestCommentSerializer(many=True, read_only=True)
+    events = PullRequestEventSerializer(many=True, read_only=True)
+    commits = PullRequestCommitSerializer(many=True, read_only=True)
+    files = PullRequestFileSerializer(many=True, read_only=True)
+    reviews = PullRequestReviewSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PullRequest
+        fields = ('id', 'external_id', 'pull_request_system_id', 'title', 'description', 'created_at', 'updated_at', 'merged_at',
+                  'state', 'labels', 'comments', 'events', 'commits', 'files', 'reviews')

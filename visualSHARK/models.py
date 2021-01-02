@@ -14,6 +14,7 @@ from rest_framework.authtoken.models import Token
 
 from mongoengine import connect
 from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch, Hunk, Refactoring
+from pycoshark.mongomodels import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestCommit, PullRequestFile, PullRequestReview, PullRequestReviewComment
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
@@ -57,6 +58,15 @@ if not settings.TESTING:
     Branch._meta = remove_index(Branch)
     Hunk._meta = remove_index(Hunk)
     Refactoring._meta = remove_index(Refactoring)
+
+    PullRequestSystem._meta = remove_index(PullRequestSystem)
+    PullRequest._meta = remove_index(PullRequest)
+    PullRequestComment._meta = remove_index(PullRequestComment)
+    PullRequestEvent._meta = remove_index(PullRequestEvent)
+    PullRequestCommit._meta = remove_index(PullRequestCommit)
+    PullRequestFile._meta = remove_index(PullRequestFile)
+    PullRequestReview._meta = remove_index(PullRequestReview)
+    PullRequestReviewComment._meta = remove_index(PullRequestReviewComment)
 
 
 if settings.TESTING:
@@ -244,6 +254,7 @@ class RightsSupport(models.Model):
                     ('edit_line_label_corrections', 'Set line label corrections'),
                     ('view_change_labels', 'View change labels'),
                     ('edit_change_labels', 'Set change labels'),
+                    ('view_pull_requests', 'View pull requests'),
         )
 
 
@@ -292,6 +303,21 @@ class TechnologyLabelCommit(models.Model):
 
 class ChangeTypeLabel(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
+    revision_hash = models.CharField(max_length=255)
+    project_name = models.CharField(max_length=255)
+    has_label = models.BooleanField(default=False)
+    is_perfective = models.BooleanField(default=False)
+    is_corrective = models.BooleanField(default=False)
+    changed_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return self.revision_hash
+
+
+class ChangeTypeLabelDisagreement(models.Model):
+    """isagreements between authors for change type labels.
+    has_label marks the disagreement as resolved.
+    """
     revision_hash = models.CharField(max_length=255)
     project_name = models.CharField(max_length=255)
     has_label = models.BooleanField(default=False)
