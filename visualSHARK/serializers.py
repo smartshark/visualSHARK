@@ -333,7 +333,7 @@ class PullRequestFileSerializer(serializers.DocumentSerializer):
 
 class PullRequestReviewSerializer(serializers.DocumentSerializer):
     creator = PersonSerializer(many=False)
-    pull_request_commit = PullRequestCommitSerializer(many=False)
+    pull_request_commit = PullRequestCommitSerializer(many=False, required=False, default=None)
 
     class Meta:
         model = PullRequestReview

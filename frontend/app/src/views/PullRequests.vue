@@ -116,7 +116,8 @@
                   <div v-for="review in currentPullRequest.reviews">
                     <div>{{review.external_id}} - {{review.state}} - {{review.submitted_at}} - {{review.creator.name}}</div>
                     <div>{{review.description}}</div>
-                    <div>{{review.pull_request_commit.commit_sha}}</div>
+                    <div v-if="review.pull_request_commit">{{review.pull_request_commit.commit_sha}}</div>
+                    <div v-else>pull request not linked to commit</div>
                     <br/>
                   </div>
                 </div>
@@ -230,6 +231,7 @@ export default {
   },
   methods: {
     refreshGrid (dat) {
+      console.log('refresh with', this.currentPrs.id)
       this.triggerRefresh = false
       if (this.currentPrs !== null && this.currentPrs.id !== null) {
         dat.filter = dat.filter + '&pull_request_system_id=' + this.currentPrs.id

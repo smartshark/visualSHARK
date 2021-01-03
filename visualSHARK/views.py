@@ -368,7 +368,7 @@ class PullRequestViewSet(MongoReadOnlyModelViewSet):
     read_perm = 'view_pull_requests'
     queryset = PullRequest.objects.all()
     serializer_class = PullRequestSerializer
-    filter_fields = ('project_id', 'state', 'title')
+    filter_fields = ('project_id', 'state', 'title', 'pull_request_system_id')
     ordering_fields = ('state', 'external_id', 'title', 'created_at', 'updated_at', 'merged_at')
     mongo_search_fields = ('title',)
 
