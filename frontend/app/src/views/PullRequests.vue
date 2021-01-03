@@ -231,7 +231,6 @@ export default {
   },
   methods: {
     refreshGrid (dat) {
-      console.log('refresh with', this.currentPrs.id)
       this.triggerRefresh = false
       if (this.currentPrs !== null && this.currentPrs.id !== null) {
         dat.filter = dat.filter + '&pull_request_system_id=' + this.currentPrs.id
