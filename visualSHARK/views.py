@@ -2055,16 +2055,13 @@ class ChangeTypeLabelDisagreementViewSet(APIView):
     read_perm = 'view_change_labels'
     write_perm = 'edit_change_labels'
 
-    def get_disagreement(self):
-        """Creates and returns disagreements on-the-fly.
-
-        It is not efficient but saves additional code for a command to create disagreements.
-        """
+    def _create_disagreements(self):
         user1 = User.objects.get(username='atrautsch')
         user2 = User.objects.get(username='erbel')
 
         cl1 = ChangeTypeLabel.objects.filter(user=user1, has_label=True)
 
+        # create everything
         for c1 in cl1:
             try:
                 c2 = ChangeTypeLabel.objects.get(user=user2, has_label=True, revision_hash=c1.revision_hash, project_name=c1.project_name)
@@ -2074,10 +2071,15 @@ class ChangeTypeLabelDisagreementViewSet(APIView):
             if c1.is_perfective != c2.is_perfective or c1.is_corrective != c2.is_corrective:
                 d, created = ChangeTypeLabelDisagreement.objects.get_or_create(project_name=c1.project_name, revision_hash=c1.revision_hash)
 
-                if created:
-                    return d
+    def get_disagreement(self):
+        """Creates and returns disagreements on-the-fly.
+
+        It is not efficient but saves additional code for a command to create disagreements.
+        """
+        return ChangeTypeLabelDisagreement.objects.filter(has_label=False).first()
 
     def get(self, request):
+        self._create_disagreements()
         d = self.get_disagreement()
 
         if not d:
