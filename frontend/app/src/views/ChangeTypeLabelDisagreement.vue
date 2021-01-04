@@ -22,6 +22,7 @@
         <div class="col-md-6" style="text-align: right;">
           <button v-if="commit.revision_hash" v-on:click="submit" class="btn btn-primary">Submit Labels</button>
           <button v-else v-on:click="load" class="btn btn-primary">Load next issue</button>
+          <button v-on:click="generate" class="btn btn-primary">sync disagreements</button>
         </div>
       </div>
 
@@ -123,9 +124,22 @@ export default {
           this.$store.dispatch('pushError', e)
         });
     },
+    generate() {
+      this.$store.dispatch('pushLoading')
+      rest.setChangeTypeDisagreement({action: 'sync'})
+        .then(response => {
+          this.$store.dispatch('popLoading')
+          this.commit = {}
+          this.loadSample()
+        })
+        .catch(e => {
+          this.$store.dispatch('popLoading')
+          this.$store.dispatch('pushError', e)
+        });
+    },
     submit() {
       this.$store.dispatch('pushLoading')
-      rest.setChangeTypeDisagreement({data: this.commit})
+      rest.setChangeTypeDisagreement({data: this.commit, action: 'resolve'})
         .then(response => {
           this.$store.dispatch('popLoading')
           this.commit = {}

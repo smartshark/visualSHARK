@@ -2079,7 +2079,7 @@ class ChangeTypeLabelDisagreementViewSet(APIView):
         return ChangeTypeLabelDisagreement.objects.filter(has_label=False).first()
 
     def get(self, request):
-        self._create_disagreements()
+        # self._create_disagreements()
         d = self.get_disagreement()
 
         if not d:
@@ -2121,6 +2121,12 @@ class ChangeTypeLabelDisagreementViewSet(APIView):
         return Response(dat)
 
     def post(self, request):
+        # sync disagreements or resolve disagreement
+        action = request.data['action']
+        if action == 'sync':
+            self._create_disagreements()
+            return HttpResponse(status=200)
+
         cl_id = request.data['data']['id']
         is_perfective = request.data['data']['is_perfective']
         is_corrective = request.data['data']['is_corrective']
