@@ -73,6 +73,7 @@ class ChangeTypeLabelAdmin(admin.ModelAdmin):
 
 
 class ChangeTypeLabelDisagreementAdmin(admin.ModelAdmin):
+    actions = [remove_label]
     list_display = ('project_name', 'revision_hash', 'has_label', 'is_perfective', 'is_corrective', 'changed_at')
     list_filter = ('has_label', 'is_perfective', 'is_corrective')
 
