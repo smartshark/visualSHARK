@@ -52,12 +52,14 @@
             </thead>
             <tbody>
               <tr v-for="(item, key, index) in projects">
-                <td>{{key}}</td>
-                <td class="td-number">{{item.need_issues}}</td>
-                <td class="td-number">{{item.partial_1}}</td>
-                <td class="td-number">{{item.partial_2}}</td>
-                <td class="td-number">{{item.partial_3}}</td>
-                <td class="td-number">{{item.finished}}</td>
+                <template v-if="key in onlyProjects">
+                  <td>{{key}}</td>
+                  <td class="td-number">{{item.need_issues}}</td>
+                  <td class="td-number">{{item.partial_1}}</td>
+                  <td class="td-number">{{item.partial_2}}</td>
+                  <td class="td-number">{{item.partial_3}}</td>
+                  <td class="td-number">{{item.finished}}</td>
+                </template>
               </tr>
             </tbody>
           </table>
@@ -78,6 +80,7 @@ export default {
     return {
       board: {},
       projects: {},
+      onlyProjects: [],
       last_updated: ''
     }
   },
@@ -95,6 +98,12 @@ export default {
       for(let user in response.data['board']) {
         leaderboard.push({user: user, lines: response.data['board'][user].lines, commits: response.data['board'][user].commits, issues: response.data['board'][user].issues, files: response.data['board'][user].files})
       }
+      this.onlyProjects = ['ant-ivy', 'commons-bcel', 'commons-beanutils', 'commons-codec', 
+        'commons-collections', 'commons-compress', 'commons-configuration', 'commons-dbcp',
+        'commons-digester', 'commons-io', 'commons-jcs', 'commons-lang', 'commons-math', 'commons-net',
+        'commons-scxml', 'commons-validator', 'commons-vfs',
+        'giraph', 'gora', 'opennlp', 'parquet-mr', 'santuario-java', 'wss4j']
+
       this.board = leaderboard.sort((a, b) => (a.commits < b.commits) ? 1 : -1)
       this.projects = response.data['projects']
       this.$store.dispatch('popLoading')
