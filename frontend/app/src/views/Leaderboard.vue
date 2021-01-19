@@ -52,7 +52,7 @@
             </thead>
             <tbody>
               <tr v-for="(item, key, index) in projects">
-                <template v-if="key in onlyProjects">
+                <template v-if="onlyProjects.includes(key)">
                   <td>{{key}}</td>
                   <td class="td-number">{{item.need_issues}}</td>
                   <td class="td-number">{{item.partial_1}}</td>
