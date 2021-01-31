@@ -32,6 +32,53 @@
 import MonacoEditor from 'vue-monaco'
 import Multiselect from 'vue-multiselect'
 
+// we override this stuff from the monaco editor to get the correct diffs
+var LineChange = /** @class */ (function () {
+    function LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges) {
+        this.originalStartLineNumber = originalStartLineNumber;
+        this.originalEndLineNumber = originalEndLineNumber;
+        this.modifiedStartLineNumber = modifiedStartLineNumber;
+        this.modifiedEndLineNumber = modifiedEndLineNumber;
+        this.charChanges = charChanges;
+    }
+    LineChange.createFromDiffResult = function (shouldIgnoreTrimWhitespace, diffChange, originalLineSequence, modifiedLineSequence, continueProcessingPredicate, shouldComputeCharChanges, shouldPostProcessCharChanges) {
+        var originalStartLineNumber;
+        var originalEndLineNumber;
+        var modifiedStartLineNumber;
+        var modifiedEndLineNumber;
+        var charChanges = undefined;
+        if (diffChange.originalLength === 0) {
+            originalStartLineNumber = originalLineSequence.getStartLineNumber(diffChange.originalStart) - 1;
+            originalEndLineNumber = 0;
+        }
+        else {
+            originalStartLineNumber = originalLineSequence.getStartLineNumber(diffChange.originalStart);
+            originalEndLineNumber = originalLineSequence.getEndLineNumber(diffChange.originalStart + diffChange.originalLength - 1);
+        }
+        if (diffChange.modifiedLength === 0) {
+            modifiedStartLineNumber = modifiedLineSequence.getStartLineNumber(diffChange.modifiedStart) - 1;
+            modifiedEndLineNumber = 0;
+        }
+        else {
+            modifiedStartLineNumber = modifiedLineSequence.getStartLineNumber(diffChange.modifiedStart);
+            modifiedEndLineNumber = modifiedLineSequence.getEndLineNumber(diffChange.modifiedStart + diffChange.modifiedLength - 1);
+        }
+        if (shouldComputeCharChanges && diffChange.originalLength !== 0 && diffChange.modifiedLength !== 0 && continueProcessingPredicate()) {
+            var originalCharSequence = originalLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.originalStart, diffChange.originalStart + diffChange.originalLength - 1);
+            var modifiedCharSequence = modifiedLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.modifiedStart, diffChange.modifiedStart + diffChange.modifiedLength - 1);
+            var rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueProcessingPredicate, true, null);
+            if (shouldPostProcessCharChanges) {
+                rawChanges = postProcessCharChanges(rawChanges);
+            }
+            charChanges = [];
+            for (var i = 0, length_2 = rawChanges.length; i < length_2; i++) {
+                charChanges.push(CharChange.createFromDiffChange(rawChanges[i], originalCharSequence, modifiedCharSequence));
+            }
+        }
+        return new LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges);
+    };
+    return LineChange;
+}());
 
 export default {
     data() {
@@ -43,6 +90,7 @@ export default {
         missingChanges: [],
         showValidation: false,
         selectedTechnologies: [],
+        selectedTechnologyType: 'per-line',
         addedTechnologies: [],
         currentRange: [],
         selectedEditorType: null
@@ -81,6 +129,32 @@ export default {
       }
     },
     methods: {
+        calculateLineChanges: function(hunks) {
+          let changes = []
+          for(let hunk of hunks) {
+            var originalStartLineNumber;
+            var originalEndLineNumber;
+            var modifiedStartLineNumber;
+            var modifiedEndLineNumber;
+            if (hunk.originalLength === 0) {
+              originalStartLineNumber = hunk.originalStart;
+              originalEndLineNumber = 0;
+            }else {
+              originalStartLineNumber = hunk.originalStart + 1;
+              originalEndLineNumber = hunk.originalStart + hunk.originalLength;
+            }
+            if (hunk.modifiedLength === 0) {
+                modifiedStartLineNumber = hunk.modifiedStart;
+                modifiedEndLineNumber = 0;
+            }
+            else {
+                modifiedStartLineNumber = hunk.modifiedStart + 1;
+                modifiedEndLineNumber = hunk.modifiedStart + hunk.modifiedLength;
+            }
+            changes.push({originalStartLineNumber: originalStartLineNumber, originalEndLineNumber: originalEndLineNumber, modifiedStartLineNumber: modifiedStartLineNumber, modifiedEndLineNumber: modifiedEndLineNumber})
+          }
+          return changes
+        },
         editorWillMount(monaco) {
           this.$emit('editorWillMount', monaco)
         },
@@ -88,38 +162,42 @@ export default {
           return (isOriginal && this.getOriginalChangeForLine(lineNumber) !== null) || (!isOriginal && this.getModifiedChangeForLine(lineNumber) !== null)
         },
         getTechnologiesForLine(lineNumber, isOriginal) {
-          let ret = 'none'
+          let ret = {'techs': [], 'type': ''}
           if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] !== 'undefined') {
-              ret = this.decorationsObjectsLeft[lineNumber].options.technologies
+              ret['techs'] = this.decorationsObjectsLeft[lineNumber].options.technologies
+              ret['type'] = this.decorationsObjectsLeft[lineNumber].options.linesDecorationsClassName
           }
           if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] !== 'undefined') {
-              ret = this.decorationsObjectsRight[lineNumber].options.technologies
+              ret['techs'] = this.decorationsObjectsRight[lineNumber].options.technologies
+              ret['type'] = this.decorationsObjectsRight[lineNumber].options.linesDecorationsClassName
           }
           return ret
         },
-        setTechnologiesForLine(lineNumber, isOriginal, techs) {
+        setTechnologiesForLine(lineNumber, isOriginal, techs, selectionType) {
           if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] !== 'undefined') {
             this.decorationsObjectsLeft[lineNumber].options.technologies = techs.join()
+            this.decorationsObjectsLeft[lineNumber].options.linesDecorationsClassName = selectionType
           }
           if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] === 'undefined') {
             this.decorationsObjectsLeft[lineNumber] = {
               range: new monaco.Range(lineNumber, 1, lineNumber, 1),
               options: {
                     isWholeLine: true,
-                    linesDecorationsClassName: 'bugfix',
+                    linesDecorationsClassName: selectionType,
                     technologies: techs.join()
                 }
               }
           }
           if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] !== 'undefined') {
               this.decorationsObjectsRight[lineNumber].options.technologies = techs.join()
+              this.decorationsObjectsRight[lineNumber].options.linesDecorationsClassName = selectionType
           }
           if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] === 'undefined') {
             this.decorationsObjectsRight[lineNumber] = {
               range: new monaco.Range(lineNumber, 1, lineNumber, 1),
               options: {
                     isWholeLine: true,
-                    linesDecorationsClassName: 'bugfix',
+                    linesDecorationsClassName: selectionType,
                     technologies: techs.join()
                 }
               }
@@ -149,12 +227,13 @@ export default {
           const isOriginal = this.selectedEditorType === this.$refs.editor.getEditor().getOriginalEditor()
           console.log('setting', this.selectedTechnologies, 'on', this.currentRange, 'on original?', isOriginal)
           
-          let dec = 'bugfix'
+          let dec = this.selectedTechnologyType
           let techs = this.selectedTechnologies.join()
           if(this.selectedTechnologies.length === 0) {
             dec = ''
             techs = null
           }
+          console.log('setting tech type', dec)
           if(isOriginal) {  
             for(let lineNumber of this.currentRange) {
               let hunk = this.getOriginalChangeForLine(lineNumber)
@@ -206,24 +285,50 @@ export default {
             this.addActionToEditor(editor);
             this.jumpActions(editor);
 
-            var labelCssClass = [ 'bugfix', 'whitespace','documentation', 'refactoring', 'test', 'unrelated'];
+            console.log('editor line changes', editor.getEditor().getLineChanges())
+            let edref = editor.getEditor()
+            //edref._diffComputationResult = {changes: LineChange.createFromDiffResult(true, edref.getOriginalEditor().getModel().uri, edref.getModifiedEditor().getModel().uri, this.file.after, null, false, false)}
+            edref._diffComputationResult = {changes: this.calculateLineChanges(this.file.hunks)}
+            //console.log(this.file.hunks)
+            edref._beginUpdateDecorations = function() {
+              //console.log('i should update');
+            }
+            //console.log('editor line changes2', editor.getEditor().getLineChanges())
+
+            console.log('show me the money!')
+            console.log(this.file)
+            var labelCssClass = ['per-line', 'per-block'];
             for(var i = 0; i < this.file.lines.length; i++)
             {
               var line = this.file.lines[i];
               if(line.label > 0) {
-                var label = labelCssClass[line.label-1];
-                this.markLineInEditorLeft(line.old,label,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
-                this.markLineInEditorRight(line.new,label,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());
+                labelCssClass = line.techs['selectionType']
+                
+                if(line.techs !== 'undefined') {
+                  if(line.new == '-') {
+                    this.setTechnologiesForLine(line.old, true, line.techs['technologies'], line.techs['selectionType'])
+                  }
+                  if(line.old == '-') {
+                    this.setTechnologiesForLine(line.new, false, line.techs['technologies'], line.techs['selectionType'])
+                  }
+                }
+
+/*                var label = labelCssClass[line.label-1];
+                this.markLineInEditorLeft(line.old, labelCssClass,this.$refs.editor,this.$refs.editor.getEditor().getOriginalEditor());
+                this.markLineInEditorRight(line.new, labelCssClass,this.$refs.editor,this.$refs.editor.getEditor().getModifiedEditor());*/
               }
-              if(typeof line.techs !== 'undefined' && line.techs.length > 0) {
+/*              if(typeof line.techs !== 'undefined' && line.techs.length > 0) {
                 if(line.new == '-') {
-                  this.setTechnologiesForLine(line.old, true, line.techs)
+                  this.setTechnologiesForLine(line.old, true, line.techs['technologies'], line.techs['selectionType'])
                 }
                 if(line.old == '-') {
-                  this.setTechnologiesForLine(line.new, false, line.techs)
+                  this.setTechnologiesForLine(line.new, false, line.techs['technologies'], line.techs['selectionType'])
                 }
-              }
+              }*/
             }
+          this.decorationsLeft = edref.getOriginalEditor().deltaDecorations(this.decorationsLeft, Object.values(this.decorationsObjectsLeft));
+          this.decorationsRight = edref.getModifiedEditor().deltaDecorations(this.decorationsRight, Object.values(this.decorationsObjectsRight));
+          this.validateEditor()
         },
         top : function() {
             scroll(0,0)
@@ -334,7 +439,7 @@ export default {
             editor.getEditor().getOriginalEditor().addAction(action2);
             editor.getEditor().getModifiedEditor().addAction(action2);
         },
-        labelTechnologyAction: function(editor, ed) {
+        labelTechnologyAction: function(editor, ed, label) {
           const range = ed.getSelection()
           const isOriginal = ed === this.$refs.editor.getEditor().getOriginalEditor()
           let lines = []
@@ -345,7 +450,7 @@ export default {
               // are changed lines part of the hunk lines?
               if(isOriginal) {
                 if(hunk.originalStartLineNumber <= lineNumber && lineNumber <= hunk.originalEndLineNumber) {
-                  lines.push(lineNumber)
+                  //lines.push(lineNumber)
                 }
               }else {
                   if(hunk.modifiedStartLineNumber <= lineNumber && lineNumber <= hunk.modifiedEndLineNumber) {
@@ -358,15 +463,17 @@ export default {
           if(lines.length > 0) {
             this.currentRange = lines
             this.selectedEditorType = ed
+            this.selectedTechnologyType = label
             document.getElementById("technologySelector" + this.file.filename + this.file.parent_revision_hash).focus();
           }
           return null
         },
         addActionToEditor: function(editor) {
-          this.addSingleActionToEditor2(editor, '1', 'Set technologies', [ monaco.KeyCode.KEY_1 ], this.labelTechnologyAction)
+          this.addSingleActionToEditor2(editor, '1', 'Set technologies', [ monaco.KeyCode.KEY_1 ], 'per-line')
+          this.addSingleActionToEditor2(editor, '2', 'Set technologies separately', [ monaco.KeyCode.KEY_2 ], 'per-block')
           this.addSingleActionToEditor(editor, '7', 'Remove technologies', [ monaco.KeyCode.KEY_7 ], '');
         },
-        markLineInEditorLeft(lineNumber,className, editor,ed) {
+        markLineInEditorLeft(lineNumber, className, editor, ed, techs) {
                     var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
@@ -431,7 +538,7 @@ export default {
                         that.validateEditor();
                     }
         },
-        addSingleActionToEditor2: function(editor, id, label, keybindings, callback) {
+        addSingleActionToEditor2: function(editor, id, label, keybindings, cssClass) {
           let actionLeft = {
             id: id,
             label: label,
@@ -441,7 +548,7 @@ export default {
             contextMenuGroupId: 'navigation',
             contextMenuOrder: id,
             run: (ed) => {
-              this.labelTechnologyAction(editor, ed)
+              this.labelTechnologyAction(editor, ed, cssClass)
               return null
             }
           };
@@ -544,7 +651,8 @@ export default {
                 if(typeof lineDecorationsOrginal[k] === 'undefined') {
                     continue;
                 }
-                var label = lineDecorationsOrginal[k].options.technologies;
+                var techs = lineDecorationsOrginal[k].options.technologies;
+                var cssClass = lineDecorationsOrginal[k].options.linesDecorationsClassName;
                 var line = lineDecorationsOrginal[k].range.startLineNumber;
                 
                 let mappedLine = line
@@ -554,14 +662,15 @@ export default {
                   }
                 }
 
-                data[file.filename][mappedLine] = label;
+                data[file.filename][mappedLine] = {'technologies': techs, 'selectionType': cssClass};
            }
            var lineDecorationsModified = this.decorationsObjectsRight;
            for(var k = 0; k < lineDecorationsModified.length; k++) {
                 if(typeof lineDecorationsModified[k] === 'undefined') {
                     continue;
                 }
-                var label = lineDecorationsModified[k].options.technologies;
+                var techs = lineDecorationsModified[k].options.technologies;
+                var cssClass = lineDecorationsModified[k].options.linesDecorationsClassName;
                 var line = lineDecorationsModified[k].range.startLineNumber;
 
                 let mappedLine = line
@@ -571,7 +680,7 @@ export default {
                   }
                 }
 
-                data[file.filename][mappedLine] = label;
+                data[file.filename][mappedLine] = {'technologies': techs, 'selectionType': cssClass};
            }
             return data;
         }

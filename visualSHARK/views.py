@@ -1237,9 +1237,17 @@ class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
 
                 tmp = {'project': c.project_name, 'commit': c.revision_hash, 'committer_date': str(commit.committer_date), 'author': str(a.name), 'file': f.path, 'hunk_id': str(h.id), 'full_hunk': h.content, 'lines': []}
                 for lno, hl in enumerate(h.content.split('\n')):
-                    techs = ll.get(str(lno), [])
+                    line = ll.get(str(lno), {})
+
+                    techs = []
+                    seltype = ''
+
+                    if line:
+                        techs = line.get('technologies', [])
+                        seltype = line.get('selectionType', '')
+
                     if hl.startswith(('-', '+')):
-                        tmp['lines'].append({'hunk_line': lno, 'code': hl, 'technologies': techs})
+                        tmp['lines'].append({'hunk_line': lno, 'code': hl, 'technologies': techs, 'selectionType': seltype})
 
                 out['data'].append(tmp)
 
@@ -1349,11 +1357,18 @@ class TechnologyLabeling(APIView):
                         if line['hunk_id'] not in to_save.keys():
                             to_save[line['hunk_id']] = {}
                         if str(line['number']) in labels[change['filename']]:
-                            if labels[change['filename']][str(line['number'])] not in to_save[line['hunk_id']].keys():
-                                to_save[line['hunk_id']][int(line['hunk_line'])] = []
-                            techs = labels[change['filename']][str(line['number'])]
+                            # print(labels[change['filename']][str(line['number'])])
+                            # print(line['hunk_id'])
+                            if str(line['hunk_line']) not in to_save[line['hunk_id']].keys():
+                            # if labels[change['filename']][str(line['number'])] not in to_save[line['hunk_id']].keys():
+                                to_save[line['hunk_id']][int(line['hunk_line'])] = {'technologies': [], 'selectionType': ''}
+                            techs = labels[change['filename']][str(line['number'])]['technologies']
+                            seltype = labels[change['filename']][str(line['number'])]['selectionType']
+                            print(techs)
+                            print(seltype)
                             if techs:
-                                to_save[line['hunk_id']][int(line['hunk_line'])] += [t for t in techs.split(',')]
+                                to_save[line['hunk_id']][int(line['hunk_line'])]['technologies'] += [t for t in techs.split(',')]
+                                to_save[line['hunk_id']][int(line['hunk_line'])]['selectionType'] = seltype
                                 technologies += [t for t in techs.split(',')]
 
         tlc, _ = TechnologyLabelCommit.objects.get_or_create(user=request.user, revision_hash=revision_hash, project_name=p.name)

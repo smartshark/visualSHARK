@@ -193,12 +193,13 @@ export default {
                       if(this.$refs.diffView[i].isModified(position.lineNumber, isOriginal)) {
                         //console.log('line number', position.lineNumber, 'in', this.$refs.diffView[i].file.filename, 'original', isOriginal)
                         let techs = this.$refs.diffView[i].getTechnologiesForLine(position.lineNumber, isOriginal)
-                        //console.log(techs)
+                        console.log(techs)
                         return {
                           //range: new monaco.Range(1, 1, model.getLineCount(), model.getLineMaxColumn(model.getLineCount())),
                           contents: [
                             { value: '**Technologies**' },
-                            { value:  techs}
+                            { value:  techs['techs']},
+                            { value:  techs['type']}
                           ]
                         }
 
@@ -326,34 +327,13 @@ margin-right: 10px;
   text-align: center;
   padding-top: 2px;
 }
-
-.bugfix {
+.per-line {
     background: #FF0000;
     width: 5px !important;
     margin-left: 3px;
 }
-.whitespace {
-  background-color: #bbb;
-    width: 5px !important;
-    margin-left: 3px;
-}
-.documentation {
-  background-color: #442727;
-    width: 5px !important;
-    margin-left: 3px;
-}
-.test {
-  background-color: #00FF00;
-    width: 5px !important;
-    margin-left: 3px;
-}
-.refactoring {
-  background-color: #0779e4;
-    width: 5px !important;
-    margin-left: 3px;
-}
-.unrelated {
-  background-color: #ffbd69;
+.per-block {
+    background: #333333;
     width: 5px !important;
     margin-left: 3px;
 }
