@@ -62,6 +62,7 @@ from .util.helper import tag_filter, OntdekBaan
 from .util.helper import Label, TICKET_TYPE_MAPPING
 from .util.helper import get_change_view, refactoring_lines, get_correction_view, get_control_view
 from .util.line_label import get_commit_data, get_technology_commit, get_correction_data
+from .util.exporter import export_technology_labels
 
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
@@ -1220,38 +1221,9 @@ class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
 
     @list_route(methods=['get'])
     def export(self, request):
+        out = export_technology_labels(request.user)
 
-        # todo:
-        # - should we allow single exports via detail_route?
-
-        # get all labels for current user and construct output
-        out = {'user': request.user.username, 'data': []}
-        for c in TechnologyLabelCommit.objects.filter(user=request.user):
-            for hunk_id, ll in json.loads(c.changes).items():
-                h = Hunk.objects.get(id=hunk_id)
-                fa = FileAction.objects.get(id=h.file_action_id)
-                commit = Commit.objects.only('author_id', 'committer_date').get(id=fa.commit_id)
-                a = People.objects.get(id=commit.author_id)
-
-                f = File.objects.get(id=fa.file_id)
-
-                tmp = {'project': c.project_name, 'commit': c.revision_hash, 'committer_date': str(commit.committer_date), 'author': str(a.name), 'file': f.path, 'hunk_id': str(h.id), 'full_hunk': h.content, 'lines': []}
-                for lno, hl in enumerate(h.content.split('\n')):
-                    line = ll.get(str(lno), {})
-
-                    techs = []
-                    seltype = ''
-
-                    if line:
-                        techs = line.get('technologies', [])
-                        seltype = line.get('selectionType', '')
-
-                    if hl.startswith(('-', '+')):
-                        tmp['lines'].append({'hunk_line': lno, 'code': hl, 'technologies': techs, 'selectionType': seltype})
-
-                out['data'].append(tmp)
-
-        f = io.BytesIO(json.dumps(out).encode('utf-8'))
+        f = io.BytesIO(json.dumps(out, sort_keys=True, indent=4).encode('utf-8'))
         response = HttpResponse(f, content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="export_{}.json"'.format(request.user.username)
         return response
@@ -1295,7 +1267,7 @@ class TechnologyLabeling(APIView):
         project_name = request.GET.get('project_name', None)
         tl_id = request.GET.get('id', None)
 
-        print('got id', tl_id)
+        # print('got id', tl_id)
         if tl_id:
             tlc = TechnologyLabelCommit.objects.get(id=tl_id, user=request.user)
             project_name = tlc.project_name

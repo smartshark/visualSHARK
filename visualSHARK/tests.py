@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""Some assortet tests of functionality."""
 
 import json
 import importlib
@@ -7,6 +7,16 @@ from django.test import TestCase
 
 from visualSHARK.util.helper import Label
 from visualSHARK.models import Project, VCSSystem, Commit
+
+
+class ExporterTests(TestCase):
+    """Test the export for the technology labeling."""
+
+    def _load_fixture(self):
+        pass
+
+    def test_export(self):
+        pass
 
 
 class HelperTests(TestCase):
