@@ -27,7 +27,7 @@
         <div class="card-block">
           <ul>
             <li>Select changed code to label</li>
-            <li>Press 1 on keyboard</li>
+            <li>Press 1 or 2 on keyboard, 1 starts a line-wise label, 2 starts block-wise label</li>
             <li>Use dropdown to select technologies or add new ones</li>
             <li>Press set button</li>
             <li>To remove a label follow the same procedure without selecting a technology</li>

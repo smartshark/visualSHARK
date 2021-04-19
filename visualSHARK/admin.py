@@ -78,6 +78,11 @@ class ChangeTypeLabelDisagreementAdmin(admin.ModelAdmin):
     list_filter = ('has_label', 'is_perfective', 'is_corrective')
 
 
+class ProjectAttributesAdmin(admin.ModelAdmin):
+    list_display = ('project_name', 'is_visible')
+    list_filter = ('is_visible',)
+
+
 class TechnologyLabelCommitAdmin(admin.ModelAdmin):
     list_display = ('user', 'project_name', 'revision_hash', 'is_labeled', 'changed_at')
     list_filter = ('user', 'project_name', 'is_labeled')
@@ -100,7 +105,7 @@ admin.site.register(VSJobType, VSJobTypeAdmin)
 admin.site.register(UserProfile)
 admin.site.register(IssueValidation, IssueValidationAdmin)
 admin.site.register(IssueValidationUser, IssueValidationUserAdmin)
-admin.site.register(ProjectAttributes)
+admin.site.register(ProjectAttributes, ProjectAttributesAdmin)
 admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
 admin.site.register(CorrectionIssue, CorrectionIssueAdmin)
 admin.site.register(ChangeTypeLabel, ChangeTypeLabelAdmin)
