@@ -250,7 +250,7 @@ def get_technology_commit(project_path, commit, labels):
 
         source_file = folder + '/' + f.path
         if not os.path.exists(source_file):
-            # print('file', source_file, 'not existing, skipping')
+            # print('file', source_file, '({})'.format(f.path), 'not existing, skipping')
             continue
 
         # for now we are only interested in cs files

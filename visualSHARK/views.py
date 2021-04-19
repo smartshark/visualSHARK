@@ -1252,7 +1252,7 @@ class TechnologyLabeling(APIView):
                 #     continue
 
                 f = File.objects.get(id=fa.file_id)
-                if f.path.lower().endswith('.cs'):
+                if f.path.lower().endswith('.cs') and fa.mode.lower() != 'd':
                     sample_commit = c
                     break
 
@@ -1293,6 +1293,8 @@ class TechnologyLabeling(APIView):
             sample_commit = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=tlc.revision_hash)
             commits = get_technology_commit(project_path, sample_commit, json.loads(tlc.changes))
 
+        # print(sample_commit.revision_hash)
+        # print(commits)
         # sample_commit = Commit.objects.get(revision_hash='07b15a15038f69612d2bba75f750814cbfbe0a08')
         result = {'warning': '',
                   'project_name': p.name,
