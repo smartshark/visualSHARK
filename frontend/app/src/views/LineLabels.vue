@@ -1,10 +1,10 @@
 <template>
 <div class="wrapper">
   <template v-if="flashes">
-    <alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" type="success" dismissable>
+    <b-alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" variant="success" dismissable>
       <span class="icon-info-circled alert-icon-float-left"></span>
       <p>{{flash.message}}</p>
-    </alert>
+    </b-alert>
   </template>
   <div class="card" v-bind:class="{'isLoading': isLoading}">
     <div class="card-header">
@@ -60,7 +60,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 import rest from '../api/rest'
 
 import DiffView from '@/components/DiffView.vue'
@@ -82,7 +81,6 @@ export default {
     }
   },
   components: {
-    alert,
     DiffView,
     modal
   },

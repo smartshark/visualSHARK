@@ -71,7 +71,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 import rest from '../api/rest'
 
 export default {
@@ -85,7 +84,6 @@ export default {
     }
   },
   components: {
-    alert
   },
   mounted() {
     this.$store.dispatch('pushLoading')

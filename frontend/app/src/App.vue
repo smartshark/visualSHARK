@@ -1,12 +1,12 @@
 <template>
   <div id="app">
     <template v-if="error">
-      <alert v-for="err in errors" :key="err.id" placement="top-right" duration="0" type="danger" width="400px" dismissable @input="dismiss(err.id)">
+      <b-alert v-for="err in errors" :key="err.id" placement="top-right" duration="0" type="danger" width="400px" dismissable @input="dismiss(err.id)">
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>Error</strong>
         <p>{{err.message}}</p>
         <p v-if="err.full_error.config">{{err.full_error.config.url}}</p>
-      </alert>
+      </b-alert>
     </template>
     <vue-progress-bar :autoFinish="false"></vue-progress-bar>
     <router-view></router-view>
@@ -16,12 +16,9 @@
 <script>
 import { mapGetters } from 'vuex'
 
-import { alert } from 'vue-strap'
-
 export default {
   name: 'app',
   components: {
-    alert
   },
   computed: mapGetters({
     loading: 'loading',

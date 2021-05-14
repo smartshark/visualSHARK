@@ -112,6 +112,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Django3
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
@@ -119,8 +122,8 @@ STATIC_ROOT = os.path.normpath(BASE_DIR + '/static/')
 STATIC_URL = '/static/'
 
 CORS_ORIGIN_WHITELIST = (
-    '127.0.0.1',
-    'localhost:8080',
+    'http://127.0.0.1',
+    'http://localhost:8080',
 )
 
 CORS_ALLOW_HEADERS = (

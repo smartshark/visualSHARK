@@ -43,7 +43,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { dropdown } from 'vue-strap'
 
 export default {
   name: 'history',
@@ -53,7 +52,6 @@ export default {
     }
   },
   components: {
-    dropdown
   },
   mounted () {
     // this.$store.dispatch('getProducts', {filter: '&vcs_system_id=' + this.currentVcs.id, order: 'name'})

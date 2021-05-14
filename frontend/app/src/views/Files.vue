@@ -6,36 +6,35 @@
         <div class="card-block">
           <grid :gridColumns="grid.columns" :data="gridFiles.data" :count="gridFiles.count" :defaultPerPage="15" defaultFilterField="" :triggerRefresh="triggerRefresh" @refresh="refreshGrid">
             <template slot="file" slot-scope="props">
-              <td>{{ props.object.path }}</router-link></td>
+              <td>{{ props.object.path }}</td>
             </template>
           </grid>
         </div>
       </div>
     </div>
     <div class="animated fadeIn" v-if="currentProject && !currentVcs">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No VCS</strong>
         <p>
           No Issue System set for Project {{ currentProject.name }}
         </p>
-      </alert>
+      </b-alert>
     </div>
     <div class="animated fadeIn" v-if="!currentProject">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Project Selected</strong>
         <p>
           Select a Project first
         </p>
-      </alert>
+      </b-alert>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 import Grid from '@/components/Grid.vue'
 // import rest from '../api/rest'
@@ -53,7 +52,7 @@ export default {
     }
   },
   components: {
-    Grid, alert
+    Grid
   },
   mounted () {
   },

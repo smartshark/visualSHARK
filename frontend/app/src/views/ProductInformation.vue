@@ -60,7 +60,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { dropdown } from 'vue-strap'
 
 import rest from '../api/rest'
 
@@ -91,7 +90,7 @@ export default {
     }
   },
   components: {
-    FilePathInformation, Grid, dropdown
+    FilePathInformation, Grid
   },
   mounted () {
     this.$store.dispatch('getProducts', {filter: '&vcs_system_id=' + this.currentVcs.id, order: 'name'})

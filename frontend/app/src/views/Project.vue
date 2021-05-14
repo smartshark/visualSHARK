@@ -34,7 +34,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 export default {
   name: 'project',
@@ -43,7 +42,6 @@ export default {
     }
   },
   components: {
-    alert
   },
   computed: mapGetters({
     currentProject: 'currentProject',

@@ -99,13 +99,12 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 import Grid from '@/components/Grid.vue'
-import modal from '@/components/Modal'
 
 export default {
   name: 'people',
+  /* eslint-disable vue/require-prop-type-constructor */
   props: {id: false},
   data () {
     return {
@@ -160,7 +159,7 @@ export default {
     }
   },
   components: {
-    Grid, modal, alert
+    Grid
   },
   mounted () {
     if (this.id !== false && typeof this.id !== 'undefined') {

@@ -52,7 +52,7 @@
                   <i class="fa fa-comments"></i> Comments
                 </div>
                 <div class="card-block">
-                  <div v-for="comment in currentPullRequest.comments">
+                  <div v-for="comment in currentPullRequest.comments" :key="comment.external_id">
                     <div>{{comment.author.name}} - {{comment.created_at}}</div>
                     <div>{{comment.comment}}</div>
                     <br/>
@@ -66,7 +66,7 @@
                   <i class="fa fa-bullhorn"></i> Events
                 </div>
                 <div class="card-block">
-                  <div v-for="event in currentPullRequest.events">
+                  <div v-for="event in currentPullRequest.events" :key="event.external_id">
                     <div>{{event.author.name}} - {{event.created_at}}</div>
                     <div>{{event.event_type}}</div>
                     <div>{{event.additional_data}}</div>
@@ -83,7 +83,7 @@
                   <i class="fa fa-code"></i> Commits
                 </div>
                 <div class="card-block">
-                  <div v-for="commit in currentPullRequest.commits">
+                  <div v-for="commit in currentPullRequest.commits" :key="commit.commit_sha">
                     <div>{{commit.author.name}}</div>
                     <div>{{commit.commit_sha}}</div>
                     <div>{{commit.message}}</div>
@@ -98,7 +98,7 @@
                   <i class="fa fa-copy"></i> Files
                 </div>
                 <div class="card-block">
-                  <div v-for="file in currentPullRequest.files">
+                  <div v-for="file in currentPullRequest.files" :key="file.path">
                     <div>{{file.path}}</div>
                     <div>{{file.status}}</div>
                     <div>additions: {{file.additions}}, deletions: {{file.deletions}}</div>
@@ -113,7 +113,7 @@
                   <i class="fa fa-search"></i> Reviews
                 </div>
                 <div class="card-block">
-                  <div v-for="review in currentPullRequest.reviews">
+                  <div v-for="review in currentPullRequest.reviews" :key="review.external_id">
                     <div>{{review.external_id}} - {{review.state}} - {{review.submitted_at}} - {{review.creator.name}}</div>
                     <div>{{review.description}}</div>
                     <div v-if="review.pull_request_commit">{{review.pull_request_commit.commit_sha}}</div>
@@ -146,35 +146,34 @@
       </div>
     </div>
     <div class="animated fadeIn" v-if="currentPrs && !currentPrs.id">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Pull Request System</strong>
         <p>
           No Pull Request System set for Project {{ currentProject.name }}
         </p>
-      </alert>
+      </b-alert>
     </div>
     <div class="animated fadeIn" v-if="!currentPrs">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Pull Request System Selected</strong>
         <p>
           Select a Pull Request System first
         </p>
-      </alert>
+      </b-alert>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 import Grid from '@/components/Grid.vue'
-import modal from '@/components/Modal'
 
 export default {
   name: 'pulls',
+  /* eslint-disable vue/require-prop-type-constructor */
   props: {id: false},
   data () {
     return {
@@ -196,7 +195,7 @@ export default {
     }
   },
   components: {
-    Grid, modal, alert
+    Grid
   },
   computed: mapGetters({
     gridPullRequests: 'gridPullRequests',
@@ -210,10 +209,12 @@ export default {
     }
   },
   watch: {
+    /* eslint-disable no-unused-vars */
     currentProject (value) {
       this.id = false
       this.triggerRefresh = true
     },
+    /* eslint-disable no-unused-vars */
     currentPrs (value) {
       this.id = false
       this.triggerRefresh = true

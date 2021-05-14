@@ -4,20 +4,19 @@
       <router-view></router-view>
     </div>
     <div class="animated fadeIn" v-if="!isSuperuser">
-      <alert type="danger" dismissable>
+      <b-alert variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>Access denied</strong>
         <p>
           no access to system
         </p>
-      </alert>
+      </b-alert>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 export default {
   name: 'system',
@@ -26,7 +25,6 @@ export default {
     }
   },
   components: {
-    alert
   },
   computed: mapGetters({
     isSuperuser: 'isSuperuser'

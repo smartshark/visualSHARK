@@ -25,20 +25,19 @@
       </div>
     </div>
     <div class="animated fadeIn" v-if="!currentMl">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Mailinglist selected</strong>
         <p>
           Select a Mailinglist first
         </p>
-      </alert>
+      </b-alert>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 import Grid from '@/components/Grid.vue'
 import Message from '@/views/Message.vue'
@@ -46,6 +45,7 @@ import Message from '@/views/Message.vue'
 
 export default {
   name: 'messages',
+  /* eslint-disable vue/require-prop-type-constructor */
   props: {id: false},
   data () {
     return {
@@ -59,7 +59,7 @@ export default {
     }
   },
   components: {
-    Grid, alert, Message
+    Grid, Message
   },
   mounted () {
   },

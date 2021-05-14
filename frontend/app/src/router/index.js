@@ -106,7 +106,14 @@ const router = new Router({
         {
           path: 'people',
           name: 'People',
-          component: People
+          component: People,
+          props: true,
+          children: [
+            {
+              path: ':id',
+              name: 'Person'
+            }
+          ]
         },
         {
           path: 'messages',

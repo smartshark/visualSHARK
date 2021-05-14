@@ -37,27 +37,26 @@
       </div>
     </div>
     <div class="animated fadeIn" v-if="!currentVcs">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No VCS Selected</strong>
         <p>
           Select a VCS first
         </p>
-      </alert>
+      </b-alert>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 import Grid from '@/components/Grid.vue'
 import Commit from '@/views/Commit.vue'
-import modal from '@/components/Modal'
 
 export default {
   name: 'commits',
+  /* eslint-disable vue/require-prop-type-constructor */
   props: {id: false},
   data () {
     return {
@@ -84,7 +83,7 @@ export default {
     }
   },
   components: {
-    Grid, modal, alert, Commit
+    Grid, Commit
   },
   mounted () {
     if (this.id !== false && typeof this.id !== 'undefined') {
@@ -99,11 +98,13 @@ export default {
     currentVcs: 'currentVcs'
   }),
   watch: {
+    /* eslint-disable no-unused-vars */
     currentProject (value) {
       this.triggerRefresh = true
       this.triggerRefreshTags = true
       this.id = false
     },
+    /* eslint-disable no-unused-vars */
     currentVcs (value) {
       this.triggerRefresh = true
       this.triggerRefreshTags = true

@@ -107,7 +107,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert, dropdown } from 'vue-strap'
 import hljs from 'highlight.js/lib/highlight';
 import java from 'highlight.js/lib/languages/java';
 import xml from 'highlight.js/lib/languages/xml';
@@ -136,7 +135,6 @@ export default {
     }
   },
   components: {
-    alert, dropdown
   },
   computed: mapGetters({
     currentProject: 'currentProject',

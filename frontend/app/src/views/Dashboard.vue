@@ -174,11 +174,11 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr v-for="project in projects">
+                        <tr v-for="project in projects" :key="project.name">
                             <td>{{ project.name }}</td>
                             <td>
                                 <template v-if="project.vcs">
-                                <div v-for="vcs in project.vcs">
+                                <div v-for="vcs in project.vcs" :key="vcs.url">
                                     <i class="fa fa-github"></i> <a :href="vcs.url" target="_blank">{{ vcs.repository_type }}</a><br/>
                                     <span class="updated">{{ vcs.last_updated | momentfromnow }}</span>
                                 </div>
@@ -186,7 +186,7 @@
                             </td>
                             <td>
                                 <template v-if="project.prs">
-                                <div v-for="prs in project.prs">
+                                <div v-for="prs in project.prs" :key="prs.url">
                                     <a :href="prs.url" target="_blank">{{prs.url}}</a><br/>
                                     <span class="updated">{{ prs.last_updated | momentfromnow }}</span>
                                 </div>
@@ -194,7 +194,7 @@
                             </td>
                             <td>
                                 <template v-if="project.its">
-                                    <div v-for="is in project.its">
+                                    <div v-for="is in project.its" :key="is.url">
                                     <a :href="is.url" target="_blank">{{ is.url }}</a><br/>
                                     <span class="updated">{{ is.last_updated | momentfromnow }}</span>
                                     <br/>
@@ -203,7 +203,7 @@
                             </td>
                             <td>
                                 <template v-if="project.ml.length > 0">
-                                    <div v-for="ml in project.ml">
+                                    <div v-for="ml in project.ml" :key="ml.name">
                                     <a :href="ml.name" target="_blank">{{ ml.name }}</a><br/>
                                     <span class="updated">{{ ml.last_updated | momentfromnow }}</span>
                                     <br/>

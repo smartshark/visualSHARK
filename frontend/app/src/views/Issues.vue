@@ -171,35 +171,34 @@
       </div>
     </div>
     <div class="animated fadeIn" v-if="currentIts && !currentIts.id">
-      <alert type="danger" dismissable>
+      <b-alert variant="danger" show dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Issue System</strong>
         <p>
           No Issue System set for Project {{ currentProject.name }}
         </p>
-      </alert>
+      </b-alert>
     </div>
     <div class="animated fadeIn" v-if="!currentIts">
-      <alert type="danger" dismissable>
+      <b-alert variant="danger" show dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No ITS Selected</strong>
         <p>
           Select a ITS first
         </p>
-      </alert>
+      </b-alert>
     </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 
 import Grid from '@/components/Grid.vue'
-import modal from '@/components/Modal'
 
 export default {
   name: 'commits',
+  /* eslint-disable vue/require-prop-type-constructor */
   props: {id: false},
   data () {
     return {
@@ -231,7 +230,7 @@ export default {
     }
   },
   components: {
-    Grid, modal, alert
+    Grid
   },
   computed: mapGetters({
     gridIssues: 'gridIssues',
@@ -245,11 +244,13 @@ export default {
     }
   },
   watch: {
+    /* eslint-disable no-unused-vars */
     currentProject (value) {
       this.id = false
       this.triggerRefresh = true
       this.triggerRefreshEvents = true
     },
+    /* eslint-disable no-unused-vars */
     currentIts (value) {
       this.id = false
       this.triggerRefresh = true

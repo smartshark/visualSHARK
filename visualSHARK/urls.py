@@ -16,7 +16,7 @@ from .views import CorrectionBoardView, ChangeTypeLabelViewSet, ChangeTypeLabelD
 from .views import PullRequestSystemViewSet, PullRequestViewSet
 
 
-# Routers provide an easy way of automatically determining the URL conf.
+# MongoDB router
 router = routers.DefaultRouter()
 router.register(r'commit', CommitViewSet)
 router.register(r'tag', TagViewSet)
@@ -36,6 +36,7 @@ router.register(r'hunk', HunkViewSet)
 router.register(r'prs', PullRequestSystemViewSet)
 router.register(r'pulls', PullRequestViewSet)
 
+# Default router for the MySQL Overlay or non db-views.
 rrouter = rrouters.DefaultRouter()
 rrouter.register(r'commitgraph', CommitGraphViewSet)
 rrouter.register(r'commitlabel', CommitLabelFieldViewSet)

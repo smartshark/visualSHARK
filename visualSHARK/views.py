@@ -30,7 +30,7 @@ from rest_framework import exceptions
 from rest_framework import viewsets as rviewsets
 from rest_framework.response import Response
 from rest_framework_mongoengine import viewsets
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework import filters
 from rest_framework import status
 import django_filters
@@ -586,7 +586,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
     lookup_field = ('vcs_system_id')
     filter_fields = ('vcs_system_id')
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def mark_nodes(self, request, vcs_system_id=None):
         """Generic node marker.
 
@@ -638,7 +638,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         return Response({'results': response})
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def articulation_points(self, request, vcs_system_id=None):
         """Return list of nodes that are articulation points."""
         cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
@@ -648,7 +648,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         return Response({'results': mark})
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def product_path(self, request, vcs_system_id=None):
         """Return path for the approach used in this exact product."""
         cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
@@ -683,7 +683,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         return Response(resp)
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def ontdekbaan(self, request, vcs_system_id=None):
         cg = CommitGraph.objects.get(vcs_system_id=vcs_system_id)
 
@@ -731,12 +731,12 @@ class ProductViewSet(MongoReadOnlyModelViewSet):
     filter_fields = ('vcs_system_id',)
     ordering_fields = ('name',)
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def file(self, request, id=None):
         version = MynbouData.objects.get(id=id)
         return Response(json.loads(version.file.read()))
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def file_download(self, request, id=None):
         version = MynbouData.objects.get(id=id)
         f = io.BytesIO(version.file.read())
@@ -900,14 +900,14 @@ class VSJobViewSet(rviewsets.ModelViewSet):
         qry = super().get_queryset()
         return qry.filter(requested_by=self.request.user)
 
-    @detail_route(methods=['post'])
+    @action(detail=True, methods=['post'])
     def requeue(self, request, pk=None):
         j = VSJob.objects.get(pk=pk)
         j.requeue()
 
         return HttpResponse(status=202)
 
-    @list_route(methods=['post'])
+    @action(detail=False, methods=['post'])
     def collect_other(self, request, pk=None):
         dat = request.data
         dat['api_url'] = settings.SERVERSHARK_API_URL
@@ -921,7 +921,7 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 
         return HttpResponse(status=202)
 
-    @list_route(methods=['post'])
+    @action(detail=False, methods=['post'])
     def collect_revision(self, request, pk=None):
 
         # enrich with our data
@@ -937,7 +937,7 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 
         return HttpResponse(status=202)
 
-    @list_route(methods=['post'])
+    @action(detail=False, methods=['post'])
     def test_connection_servershark(self, request, pk=None):
 
         dat = request.data
@@ -952,7 +952,7 @@ class VSJobViewSet(rviewsets.ModelViewSet):
 
         return HttpResponse(status=202)
 
-    @list_route(methods=['post'])
+    @action(detail=False, methods=['post'])
     def test_connection_worker(self, request, pk=None):
         dat = request.data
         jt = VSJobType.objects.get(ident='test_connection_worker')
@@ -1219,7 +1219,7 @@ class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
         qry = super().get_queryset()
         return qry.filter(user=self.request.user)
 
-    @list_route(methods=['get'])
+    @action(detail=False, methods=['get'])
     def export(self, request):
         out = export_technology_labels(request.user)
 
@@ -1947,7 +1947,7 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
         return qry.filter(user=self.request.user)
 
     # TODO: this is a get but changes stuff, UGLY
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def unskip(self, request, pk=None):
         j = CorrectionIssue.objects.get(pk=pk, user=request.user)
         j.is_skipped = False
@@ -1955,7 +1955,7 @@ class CorrectionOverviewSet(rviewsets.ReadOnlyModelViewSet):
         j.save()
         return HttpResponse(status=200)
 
-    @detail_route(methods=['get'])
+    @action(detail=True, methods=['get'])
     def skip(self, request, pk=None):
         j = CorrectionIssue.objects.get(pk=pk, user=request.user)
         j.is_skipped = True

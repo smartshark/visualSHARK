@@ -167,7 +167,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { dropdown } from 'vue-strap'
 
 import rest from '../api/rest'
 
@@ -206,7 +205,7 @@ export default {
     }
   },
   components: {
-    Grid, dropdown
+    Grid
   },
   computed: mapGetters({
     currentVcs: 'currentVcs',

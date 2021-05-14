@@ -4,16 +4,12 @@
       <div class="card">
         <div class="card-header"><i class="fa fa-code"></i> Labeled commits 
           <div class="card-actions">
-            <dropdown class="inline">
-              <span slot="button">
+            <b-dropdown variant="link">
+              <template #button-content>
                 <i class="fa fa-gear"></i>
-              </span>
-              <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                <div class="dropdown-header text-center"><strong>Options</strong></div>
-                <div class="input-group-btn"><button type="button" class="btn btn-primary btn-override" @click="downloadLabels()"><i class="fa fa-download"></i> export
-                  </button></div>
-              </div>
-            </dropdown>
+              </template>
+              <b-dropdown-item @click=downloadLabels()>export</b-dropdown-item>
+            </b-dropdown>
           </div>
         </div>
         <div class="card-block">
@@ -55,7 +51,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { dropdown } from 'vue-strap'
 import rest from '../api/rest'
 
 import Grid from '@/components/Grid.vue'
@@ -84,7 +79,7 @@ export default {
     }
   },
   components: {
-    Grid, dropdown
+    Grid
   },
   computed: {
     ...mapGetters({

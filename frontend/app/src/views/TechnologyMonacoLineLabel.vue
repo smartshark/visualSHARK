@@ -1,21 +1,21 @@
 <template>
   <div class="wrapper">
     <template v-if="flashes">
-      <alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" type="success" dismissable>
+      <b-alert v-for="flash in flashes" :key="flash.id" placement="top-center" duration="5" variant="success" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <p>{{flash.message}}</p>
-      </alert>
+      </b-alert>
     </template>
     <div class="animated fadeIn">
       <div v-if="error.length > 0">
-        <alert placement="top-center" duration="5" type="warning">
+        <b-alert placement="top-center" duration="5" variant="warning">
           <ul>
             <li v-for="item in error">
               Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
               <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
             </li>
           </ul>
-        </alert>
+        </b-alert>
       </div>
       <button class="btn btn-primary" v-on:click="submitLabels()" style="float: right; margin-bottom: 5px;">Submit labels</button>
       <button v-if="loadId" class="btn btn-primary" v-on:click="loadNext()" style="float: right; margin-bottom: 5px; margin-right: 5px;">Load next</button>
@@ -74,7 +74,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert } from 'vue-strap'
 import rest from '../api/rest'
 import TechnologyMonacoDiffView from '@/components/TechnologyMonacoDiffView.vue'
 import Multiselect from 'vue-multiselect'
@@ -162,7 +161,6 @@ export default {
     },
     components: {
         TechnologyMonacoDiffView,
-        alert,
         Multiselect
     },
     methods: {

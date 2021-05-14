@@ -7,20 +7,20 @@
             <div class="card-header">
               <i class="fa fa-code"></i> Commit Graph for {{currentProject.name}}
               <div class="card-actions">
-                <dropdown class="inline" v-model="showDownload">
+                <b-dropdown class="inline" v-model="showDownload">
                   <span slot="button">
                     <i class="fa fa-cloud-download"></i>
                   </span>
-                  <div slot="dropdown-menu"class="dropdown-menu dropdown-menu-right">
+                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
                     <div class="dropdown-header text-center"><strong>Download Graph</strong></div>
                       <a id="fillGraph" v-text="dlText"></a>
                   </div>
-                </dropdown>
+                </b-dropdown>
                 <dropdown class="inline">
                   <span slot="button">
                     <i class="fa fa-plus"></i>
                   </span>
-                  <div slot="dropdown-menu"class="dropdown-menu dropdown-menu-right">
+                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
                     <div class="dropdown-header text-center"><strong>Releases</strong></div>
                     <a href="javascript:void(0)" @click="selectRelease">
                       <template v-if="releaseCommit">{{ releaseCommit.revisionHash }}</template>
@@ -32,7 +32,7 @@
                   <span slot="button">
                     <i class="fa fa-search"></i>
                   </span>
-                  <div slot="dropdown-menu"class="dropdown-menu dropdown-menu-right">
+                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
                     <div class="dropdown-header text-center"><strong>Search Commits</strong></div>
                     <div class="input-group" style="width: 600px">
                       <span class="input-group-addon">Message</span>
@@ -44,7 +44,7 @@
                   <span slot="button">
                     <i class="fa fa-random"></i>
                   </span>
-                  <div slot="dropdown-menu"class="dropdown-menu dropdown-menu-right">
+                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
                     <div class="dropdown-header text-center"><strong>Find Path</strong></div>
                     <ul class="path-dropdown">
                       <li>
@@ -121,22 +121,22 @@
       </div>
     </div>
     <div class="animated fadeIn" v-if="currentProject && !currentVcs">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No VCS</strong>
         <p>
           No VCS set for Project {{ currentProject.name }}
         </p>
-      </alert>
+      </b-alert>
     </div>
     <div class="animated fadeIn" v-if="!currentProject">
-      <alert type="danger" dismissable>
+      <b-alert show variant="danger" dismissable>
         <span class="icon-info-circled alert-icon-float-left"></span>
         <strong>No Project Selected</strong>
         <p>
           Select a Project first
         </p>
-      </alert>
+      </b-alert>
     </div>
 
     <div class="commitView" v-if="showCommit && currentCommit.revision_hash">
@@ -149,12 +149,12 @@
           {{ currentCommit.message }}<br/>
           <span v-if="currentCommit.tags.length > 0">Tags:<br/></span>
           <ul v-if="currentCommit.tags.length > 0">
-            <li v-for="tag in currentCommit.tags">{{ tag.name }}</li>
+            <li v-for="tag in currentCommit.tags" :key="tag.name">{{ tag.name }}</li>
           </ul>
           <span v-if="currentCommit.labels.length > 0"><br/>Labels: </span>
           <template v-for="label in currentCommit.labels">{{ label.name }} : {{ label.value }}&nbsp;</template>
           <span v-if="currentCommit.issue_links.length > 0"><br/>Issue links: </span>
-          <template v-for="il in currentCommit.issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link>&nbsp;</template>
+          <router-link v-for="il in currentCommit.issue_links" :key="il.id" :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link>
           <br/>
           {{ currentCommit.branches }}
         </div>
@@ -165,7 +165,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert, dropdown, checkbox } from 'vue-strap'
 import { debounce } from 'lodash'
 
 import Multiselect from 'vue-multiselect'
@@ -173,6 +172,7 @@ import Graph from '@/components/Graph'
 
 export default {
   name: 'analytics',
+  /* eslint-disable vue/require-prop-type-constructor */
   props: {id: false},
   data () {
     return {
@@ -214,7 +214,7 @@ export default {
     }
   },
   components: {
-    alert, Graph, dropdown, checkbox, Multiselect
+    Graph, Multiselect
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -313,6 +313,7 @@ export default {
         this.$store.dispatch('clearArticulationPoints')
       }
     },
+    /* eslint-disable no-unused-vars */
     currentProducts (value) {
       if (this.showProduct === true) {
         this.$store.dispatch('getProductPaths', {commitGraph: this.currentVcs.id, productIds: this.currentProducts.map(a => a.id)})

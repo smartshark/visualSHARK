@@ -8,29 +8,24 @@
       </li>
     </ul>
     <ul class="nav navbar-nav ml-auto">
-      <dropdown size="nav" class="nav-item">
-        <span slot="button">
+      <b-dropdown size="md" variant="link" toggle-class="text-decoration-none" no-caret dropleft>
+        <template #button-content>
           <i class="icon-bell"></i><span :class="{'badge': true, 'badge-pill': true, 'badge-danger': userMessages.length > 0, 'badge-success': userMessages.length == 0}">{{ userMessages.length }}</span>
-        </span>
-        <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-          <div class="dropdown-header text-center"><strong>Messages</strong></div>
-          <ul v-if="userMessages.length > 0" class="msgList">
-            <li v-for="msg in userMessages">
+        </template>
+        <b-dropdown-header>Messages</b-dropdown-header>
+          <template v-if="userMessages.length > 0" class="msgList">
+            <b-dropdown-item v-for="msg in userMessages" :key="msg.msg">
               <a href="javascript:void(0)" @click="ack(msg)" title="acknowledge message"><i class="fa fa-check"></i></a>{{ msg.msg }} <template v-if="msg.success">Success!</template>
-            </li>
-          </ul>
-          <span v-else><div style="padding: 0.5rem; text-align: center;">No Messages</div></span>
+            </b-dropdown-item>
+          </template>
+          <template v-else><b-dropdown-text style="padding: 0.5rem; text-align: center;">No Messages</b-dropdown-text></template>
         </div>
-      </dropdown>
-      <dropdown size="nav" class="nav-item">
-        <span slot="button">
-          <span class="hidden-md-down">{{ user }}</span>
-        </span>
-        <div slot="dropdown-menu"class="dropdown-menu dropdown-menu-right">
-          <div class="dropdown-header text-center"><strong>Account</strong></div>
-          <router-link :to="'/logout'" class="dropdown-item"><i class="fa fa-lock"></i> Logout</router-link>
+      </b-dropdown>
+      <b-dropdown size="md" variant="link" class="nav-item" :text="user" dropleft>
+          <b-dropdown-header>Account</b-dropdown-header>
+          <b-dropdown-item><router-link :to="'/logout'" class="dropdown-item"><i class="fa fa-lock"></i> Logout</router-link></b-dropdown-item>
         </div>
-      </dropdown>
+      </b-dropdown>
       <li class="nav-item hidden-md-down">
         <a class="nav-link navbar-toggler aside-menu-toggler" href="#" @click="asideToggle">&#9776;</a>
       </li>
@@ -41,15 +36,13 @@
 import { mapGetters } from 'vuex'
 
 import navbar from './Navbar'
-import { dropdown } from 'vue-strap'
 
 import { version } from '../../package.json'
 
 export default {
   name: 'header',
   components: {
-    navbar,
-    dropdown
+    navbar
   },
   methods: {
     click () {
