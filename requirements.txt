@@ -44,5 +44,5 @@ sphinx-rtd-theme==0.4.1
 sphinxcontrib-websupport==1.1.0
 sqlparse==0.3.0
 uritemplate==3.0.0
-urllib3==1.24.2
+urllib3==1.26.5
 python-magic==0.4.15
