@@ -1,4 +1,5 @@
 0.1.5 (in progress)
+- update js and python dependencies
 [ ] fix warning for loading attribute of grid
 [ ] allow creation of commitgraph from webfrontend, handover to peon worker process, get update when work is finished via websocket
 

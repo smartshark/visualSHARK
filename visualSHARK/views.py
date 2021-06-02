@@ -1221,7 +1221,12 @@ class TechnologyLabelingOverviewSet(rviewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def export(self, request):
-        out = export_technology_labels(request.user)
+        if request.user.username == settings.TECHNOLOGY_LABEL_ADMIN:
+            out = {}
+            for user in User.objects.filter(groups__name=settings.TECHNOLOGY_LABEL_GROUP):
+                out[user.username] = export_technology_labels(user)
+        else:
+            out = export_technology_labels(request.user)
 
         f = io.BytesIO(json.dumps(out, sort_keys=True, indent=4).encode('utf-8'))
         response = HttpResponse(f, content_type='application/json')
