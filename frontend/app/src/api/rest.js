@@ -644,6 +644,13 @@ export default {
       'Authorization': 'Token ' + this.token
     }})
   },
+  getTechLeaderboard () {
+    let req = this.getUrl('labeling/tech_leaderboard')
+    return axios.get(req, {headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token ' + this.token
+    }})
+  },
   getCorrectionBoard () {
     let req = this.getUrl('labeling/correctionboard')
     return axios.get(req, {headers: {

@@ -11,7 +11,7 @@ from .views import Auth, StatsView
 
 from .views import CommitViewSet, ProjectViewSet, VcsViewSet, IssueSystemViewSet, FileActionViewSet, TagViewSet, CodeEntityStateViewSet, MessageViewSet, PeopleViewSet, IssueViewSet, MailingListViewSet, FileViewSet, ProductViewSet, BranchViewSet, HunkViewSet
 from .views import CommitGraphViewSet, StatsHistoryView, CommitLabelFieldViewSet, PredictionEvaluationView, PredictionView, VSJobViewSet, ReleaseView, IssueLinkCandidatesView, AffectedEntitiesView, IssueLabelSet, IssueConflictSet, IssueLinkSet, LineLabelSet
-from .views import LeaderboardSet, TechnologyLabeling, Technologies, LineLabelCorrectionSet, LineLabelControlSet, CorrectionOverviewSet
+from .views import LeaderboardSet, TechLeaderboardSet, TechnologyLabeling, Technologies, LineLabelCorrectionSet, LineLabelControlSet, CorrectionOverviewSet
 from .views import CorrectionBoardView, ChangeTypeLabelViewSet, ChangeTypeLabelDisagreementViewSet, TechnologyLabelingOverviewSet
 from .views import PullRequestSystemViewSet, PullRequestViewSet
 
@@ -66,6 +66,7 @@ urlpatterns = [
     url(r'^labeling/links', IssueLinkSet.as_view()),
     url(r'^labeling/lines', LineLabelSet.as_view()),
     url(r'^labeling/leaderboard', LeaderboardSet.as_view()),
+    url(r'^labeling/tech_leaderboard', TechLeaderboardSet.as_view()),
     url(r'^labeling/technology', TechnologyLabeling.as_view()),
     url(r'^labeling/technologies', Technologies.as_view()),
     url(r'^labeling/line_correction', LineLabelCorrectionSet.as_view()),

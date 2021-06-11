@@ -29,6 +29,7 @@ import CorrectionOverview from '@/views/CorrectionOverview'
 import CorrectionBoard from '@/views/CorrectionBoard'
 
 import TechnologyLabelOverview from '@/views/TechnologyLabelOverview'
+import TechLeaderboard from '@/views/TechLeaderboard'
 import ChangeTypeLabel from '@/views/ChangeTypeLabel'
 import ChangeTypeLabelDisagreement from '@/views/ChangeTypeLabelDisagreement'
 
@@ -206,6 +207,11 @@ const router = new Router({
               path: 'leaderboard',
               name: 'Leaderboard',
               component: Leaderboard
+            },
+            {
+              path: 'techleaderboard',
+              name: 'Technology Label Leaderboard',
+              component: TechLeaderboard
             },
             {
               path: 'correctionboard',

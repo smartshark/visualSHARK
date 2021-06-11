@@ -3,51 +3,6 @@
     <div class="animated fadeIn">
       <div class="card">
         <div class="card-header"><i class="fa fa-tags"></i> Release finder
-        <div v-if="isSuperuser" class="card-actions">
-          <dropdown class="inline">
-            <span slot="button">
-              <i class="fa fa-gear"></i>
-            </span>
-            <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-              <div class="dropdown-header text-center"><strong>Mine dataset</strong></div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">start commit</span>
-                <input type="text" class="form-control" v-model="startCommit">
-              </div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">end commit</span>
-                <input type="text" class="form-control" v-model="endCommit">
-              </div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">dataset name</span>
-                <input type="text" class="form-control" v-model="dataset">
-              </div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">file ending (without dot)</span>
-                <input type="text" class="form-control" v-model="fileEnding">
-              </div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">defect label name</span>
-                <input type="text" class="form-control" v-model="defectLabelName" value="">
-              </div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">label path approach</span>
-                <input type="text" class="form-control" v-model="labelPathApproach" value=""><br/>
-              </div>
-              <div class="input-group" style="width: 600px;">
-                <span class="input-group-addon">metric approach</span>
-                <input type="text" class="form-control" v-model="metricApproach"><br/>
-              </div>
-              <div class="input-group" style="width: 600px">
-                <select v-model="runPlugin" class="form-control">
-                  <option v-for="item in datasetPlugins" :value="item.name">{{ item.name }}</option>
-                </select>
-                <div class="input-group-btn"><button type="button" class="btn btn-primary btn-override" @click="schedulePlugin()"><i class="fa fa-clock-o"></i> schedule plugin
-                </button></div>
-              </div>
-            </div>
-          </dropdown>
-        </div>
         </div>
         <div class="card-block">
           <div class="row">
@@ -88,8 +43,6 @@
 <script>
 import { mapGetters } from 'vuex'
 
-import rest from '../api/rest'
-
 import Grid from '@/components/Grid.vue'
 
 export default {
@@ -115,17 +68,7 @@ export default {
       triggerRefreshTags: false,
       discardPatch: true,
       discardQualifiers: true,
-      discardFliers: true,
-
-      startCommit: null,
-      endCommit: null,
-      defectLabelName: 'adjustedszz_bugfix',
-      labelPathApproach: 'commit_to_commit',
-      metricApproach: 'sum_only',
-      dataset: null,
-      fileEnding: 'java',
-      runPlugin: null,
-      datasetPlugins: [{'name': 'mynbouSHARK'}]
+      discardFliers: true
     }
   },
   components: {
@@ -138,7 +81,6 @@ export default {
     currentVcs: 'currentVcs',
     gridReleases: 'gridReleases',
     gridTags: 'gridTags',
-    isSuperuser: 'isSuperuser',
     loading: 'loading'
   }),
   watch: {
@@ -148,27 +90,17 @@ export default {
         this.triggerRefreshTags = true
       }
     },
-    discardQualifiers (value) {
+    discardQualifiers () {
       this.triggerRefresh = true
     },
-    discardPatch (value) {
+    discardPatch () {
       this.triggerRefresh = true
     },
-    discardFliers (value) {
+    discardFliers () {
       this.triggerRefresh = true
     }
   },
   methods: {
-    schedulePlugin () {
-      let dat = {plugin_ids: [this.runPlugin], url: this.currentVcs.url, project_mongo_ids: [this.currentProject.id], start_commit: this.startCommit, end_commit: this.endCommit, path_approach: this.labelPathApproach, defect_label_name: this.defectLabelName, metric_approach: this.metricApproach, dataset: this.dataset, file_ending: this.fileEnding}
-      rest.createOtherJob(dat)
-        .then(response => {
-          this.$store.dispatch('popLoading')
-        })
-        .catch(e => {
-          this.$store.dispatch('pushError', e)
-        })
-    },
     refreshGrid (dat) {
       this.triggerRefresh = false
       dat.filter = dat.filter + '&vcs_system_id=' + this.currentVcs.id + '&discard_qualifiers=' + this.discardQualifiers + '&discard_patch=' + this.discardPatch + '&discard_fliers=' + this.discardFliers

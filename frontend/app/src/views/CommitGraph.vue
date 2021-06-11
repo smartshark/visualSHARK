@@ -7,45 +7,43 @@
             <div class="card-header">
               <i class="fa fa-code"></i> Commit Graph for {{currentProject.name}}
               <div class="card-actions">
-                <b-dropdown class="inline" v-model="showDownload">
-                  <span slot="button">
+                <b-dropdown @click="showDownload()">
+                  <template #button-content>
                     <i class="fa fa-cloud-download"></i>
-                  </span>
-                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-header text-center"><strong>Download Graph</strong></div>
-                      <a id="fillGraph" v-text="dlText"></a>
-                  </div>
+                  </template>
+                  <b-dropdown-header>Download Graph</b-dropdown-header>
+                  <b-dropdown-text><a id="fillGraph" v-text="dlText"></a></b-dropdown-text>
                 </b-dropdown>
-                <dropdown class="inline">
-                  <span slot="button">
+                <b-dropdown>
+                  <template #button-content>
                     <i class="fa fa-plus"></i>
-                  </span>
-                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-header text-center"><strong>Releases</strong></div>
+                  </template>
+                  <b-dropdown-header>Releases</b-dropdown-header>
+                  <b-dropdown-text>
                     <a href="javascript:void(0)" @click="selectRelease">
                       <template v-if="releaseCommit">{{ releaseCommit.revisionHash }}</template>
                       <template v-else>select</template>
                     </a>
-                  </div>
-                </dropdown>
-                <dropdown class="inline">
-                  <span slot="button">
+                  </b-dropdown-text>
+                </b-dropdown>
+                <b-dropdown dropleft>
+                  <template #button-content>
                     <i class="fa fa-search"></i>
-                  </span>
-                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-header text-center"><strong>Search Commits</strong></div>
+                  </template>
+                  <b-dropdown-header>Search Commits</b-dropdown-header>
+                  <b-dropdown-form>
                     <div class="input-group" style="width: 600px">
                       <span class="input-group-addon">Message</span>
                       <input type="text" v-model="searchMessageDebounce" class="form-control">
                     </div>
-                  </div>
-                </dropdown>
-                <dropdown class="inline">
-                  <span slot="button">
+                  </b-dropdown-form>
+                </b-dropdown>
+                <b-dropdown class="inline">
+                  <template #button-content>
                     <i class="fa fa-random"></i>
-                  </span>
-                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-header text-center"><strong>Find Path</strong></div>
+                  </template>
+                  <b-dropdown-header>Find Path</b-dropdown-header>
+                  <b-dropdown-text>
                     <ul class="path-dropdown">
                       <li>
                         <a href="javascript:void(0)" @click="startPath">
@@ -60,14 +58,14 @@
                         </a>
                       </li>
                     </ul>
-                  </div>
-                </dropdown>
-                <dropdown>
-                  <span slot="button">
+                  </b-dropdown-text>
+                </b-dropdown>
+                <b-dropdown>
+                  <template #button-content>
                     <i class="fa fa-eye"></i>
-                  </span>
-                  <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-header text-center"><strong>View Options</strong></div>
+                  </template>
+                  <b-dropdown-header>Find Path</b-dropdown-header>
+                  <b-dropdown-form>
                     <div class="input-group" style="width: 600px">
                       <span class="input-group-addon">Radius {{ nodeRadiusDebounce }}</span>
                       <input type="range" v-model.number="nodeRadiusDebounce" min="0.1" max="10" step="0.1" class="form-control">
@@ -107,8 +105,8 @@
                       <input type="checkbox" v-model="graphOptions.onlyCodeFiles" class="checkbox-dropdown">
                       <div class="checkbox-label">Only Code Files</div>
                     </div>
-                  </div>
-                </dropdown>
+                  </b-dropdown-form>
+                </b-dropdown>
               </div>
             </div>
             <div class="card-block" style="overflow: scroll" @mousemove.prevent="dragster" @mousedown.prevent="resetOffsets" @wheel.prevent="zoom" id="svg-container">
@@ -178,7 +176,6 @@ export default {
     return {
       scaleFactor: 1000,
       wheelScroll: 1,
-      showDownload: false,
       nodeRadius: 5,
       nodeRadiusDebounce: 5,
       filesCommittedDebounce: 0,
@@ -240,40 +237,6 @@ export default {
     this.$store.dispatch('getCommitGraph', this.currentVcs.id)
   },
   watch: {
-    showDownload (value) {
-      // this is the simplest method available to save the svg by embedding all of it into the download attribute of the a tag.
-      // this will not scale to big graphs
-      // TODO: rebuild this to server side job, fetch the resulting file like in ProductInformation.vue
-      if (value === true) {
-        const svgStyles = `
-  <defs>
-    <style type="text/css">
-      <![CDATA[
-      ]]>
-    </style>
-  </defs>
-`
-        const svgHeader = `
-<?xml version="1.0" standalone="no"?>
-
-<?xml-stylesheet href="style.css" type="text/css"?>
-
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg">
-        `
-
-        const svgFooter = `
-</svg>
-        `
-        let a = document.getElementById('fillGraph')
-        let g = document.getElementById('svg-graph')
-        a.setAttributeNS(null, 'href-lang', 'image/svg+xml')
-        a.setAttributeNS(null, 'href', 'data:image/svg+xml;utf8,' + svgHeader + svgStyles + g.innerHTML + svgFooter)
-        a.setAttributeNS(null, 'download', this.currentProject.name + '_commitgaph.svg')
-        a.setAttributeNS(null, 'target', '_blank')
-        this.dlText = 'Save SVG'
-      }
-    },
     currentVcs (value) {
       // we reset the graph configuration here, in the future this could be replaced by a per graph configuration inthe global state so that one can switch between projects witout losing information
       if (typeof value.id !== 'undefined') {
@@ -378,6 +341,38 @@ export default {
     }
   },
   methods: {
+    showDownload () {
+      // this is the simplest method available to save the svg by embedding all of it into the download attribute of the a tag.
+      // this will not scale to big graphs
+      // TODO: rebuild this to server side job, fetch the resulting file like in ProductInformation.vue
+      const svgStyles = `
+  <defs>
+    <style type="text/css">
+      <![CDATA[
+      ]]>
+    </style>
+  </defs>
+`
+        const svgHeader = `
+<?xml version="1.0" standalone="no"?>
+
+<?xml-stylesheet href="style.css" type="text/css"?>
+
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg">
+        `
+
+        const svgFooter = `
+</svg>
+        `
+      let a = document.getElementById('fillGraph')
+      let g = document.getElementById('svg-graph')
+      a.setAttributeNS(null, 'href-lang', 'image/svg+xml')
+      a.setAttributeNS(null, 'href', 'data:image/svg+xml;utf8,' + svgHeader + svgStyles + g.innerHTML + svgFooter)
+      a.setAttributeNS(null, 'download', this.currentProject.name + '_commitgaph.svg')
+      a.setAttributeNS(null, 'target', '_blank')
+      this.dlText = 'Save SVG'
+    },
     debounceInputRadius: debounce(function () {
       this.nodeRadius = this.nodeRadiusDebounce
     }, 500),

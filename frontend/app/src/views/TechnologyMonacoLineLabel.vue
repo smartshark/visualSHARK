@@ -10,7 +10,7 @@
       <div v-if="error.length > 0">
         <b-alert placement="top-center" duration="5" variant="warning">
           <ul>
-            <li v-for="item in error">
+            <li v-for="item in error" :key="item.parent_revision_hash+item.filename">
               Missing labels in commit {{ item.parent_revision_hash }}, file {{ item.filename }}
               <button class="btn btn-primary btn-xs" v-on:click="jumpToChange(item)">Jump to</button>
             </li>
@@ -44,7 +44,7 @@
         </div>
       </div>
       <template v-for="c in commits">
-        <div class="card" :id="c.revision_hash">
+        <div class="card" :id="c.revision_hash" :key="c.revision_hash">
           <div class="card-header">
             <div v-on:click="scrollToCommit(c)">
               <i class="fa fa-code"></i> Commit <a :href="vcs_url + c.revision_hash" target="_blank">{{c.revision_hash}}</a>
@@ -62,7 +62,7 @@
             </div>
             <div>
               <template v-for="f in c.changes">
-                <TechnologyMonacoDiffView :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" :readOnly="true" ref="diffView" @editorWillMount="editorWillMount" @addTechnology="addTechnology"/>
+                <TechnologyMonacoDiffView :key="c.revision_hash + f.filename" :commit="c" :file="f" :lines="f.lines" :existingTechnologies="technologies" :readOnly="true" ref="diffView" @editorWillMount="editorWillMount" @addTechnology="addTechnology"/>
               </template>
             </div>
           </div>
@@ -76,7 +76,6 @@
 import { mapGetters } from 'vuex'
 import rest from '../api/rest'
 import TechnologyMonacoDiffView from '@/components/TechnologyMonacoDiffView.vue'
-import Multiselect from 'vue-multiselect'
 
 export default {
     data() {
@@ -117,7 +116,7 @@ export default {
             this.$store.dispatch('pushError', e)
           });
 
-        var that = this;
+        //var that = this;
 
         // Start background request
         this.$store.dispatch('pushLoading')
@@ -160,8 +159,7 @@ export default {
             });
     },
     components: {
-        TechnologyMonacoDiffView,
-        Multiselect
+        TechnologyMonacoDiffView
     },
     methods: {
         addTechnology: function(tech) {
@@ -245,7 +243,7 @@ export default {
         },
         getData: function() {
             var data = {};
-            var hash = this.commit.revision_hash;
+            //var hash = this.commit.revision_hash;
             for(var i = 0; i < this.$refs.diffView.length; i++)
             {
                 data = Object.assign({}, data, this.$refs.diffView[i].getData());
@@ -255,14 +253,6 @@ export default {
         jumpToChange: function(change)
         {
             document.getElementById('file' + change.filename + change.parent_revision_hash).scrollIntoView();
-        },
-        getEditors: function() {
-           var editors = [];
-           for(var i = 0; i < this.$refs.diffView.length; i++)
-           {
-           editors = editors.concat(this.$refs.diffView[i].getEditors());
-           }
-           return editors;
         },
         validateAll: function () {
             var that = this;
@@ -282,7 +272,7 @@ export default {
              var data = {revision_hash: this.commits[0].revision_hash, project_name: this.currentProject.name, labels: labels}
               this.$store.dispatch('pushLoading')
               rest.setCommitForTechnologyLabeling(data)
-                .then(response => {
+                .then(response => { // eslint-disable-line no-unused-vars
                   this.$store.dispatch('popLoading');
                   this.$router.push('/labeling/technology/')
                   setTimeout(() => {

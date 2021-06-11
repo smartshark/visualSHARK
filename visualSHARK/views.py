@@ -2161,3 +2161,29 @@ class LeaderboardSet(APIView):
                 ret[k] = v
 
         return Response({'board': ret['users'], 'projects': ret['projects'], 'last_updated': lb.created_at})
+
+
+class TechLeaderboardSet(APIView):
+    read_perm = 'view_technology_labels'
+
+    def get(self, request):
+
+        users = {}
+        projects = {}
+
+        anon = 0
+        for c in TechnologyLabelCommit.objects.all():
+            if c.project_name not in projects.keys():
+                projects[c.project_name] = {'commits': 0}
+            if c.user == request.user or request.user.is_superuser:
+                username = c.user.username
+            else:
+                username = 'anonymized{}'.format(anon)
+                anon += 1
+            if username not in users.keys():
+                users[username] = {'commits': 0}
+
+            users[username]['commits'] += 1
+            projects[c.project_name]['commits'] += 1
+
+        return Response({'users': users, 'projects': projects, 'last_updates': str(datetime.today())})

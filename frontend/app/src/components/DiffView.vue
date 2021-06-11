@@ -58,7 +58,7 @@
       </select>
       <div class="diffEditor">
         <div class="lineLabels noselect">
-            <div class="lineno" v-for="line in lines">
+            <div class="lineno" v-for="line in lines" :key="line.number">
             <template v-if="line.consensus_label">
               <div>{{line.consensus_label}}</div>
             </template>
@@ -89,12 +89,12 @@
           </div>
         </div>
         <div class="linesOld noselect">
-          <div class="lineno" v-for="line in lines">
+          <div class="lineno" v-for="line in lines" :key="line.number">
             {{line.old}}
           </div>
         </div>
         <div class="linesNew noselect">
-          <div class="lineno" v-for="line in lines">
+          <div class="lineno" v-for="line in lines" :key="line.number">
             {{line.new}}
           </div>
         </div>
@@ -155,7 +155,7 @@ export default {
       this.initializeModel()
       console.log(newValue)
     },
-    isDocumentation(oldValue, newValue) {
+    isDocumentation(oldValue, newValue) { // eslint-disable-line no-unused-vars
       if(this.isDocumentation === true) {
         this.setAllModels('documentation')
       }
@@ -164,7 +164,7 @@ export default {
       }
       this.showDropdown = false
     },
-    isTest(oldValue, newValue) {
+    isTest(oldValue, newValue) { // eslint-disable-line no-unused-vars
       if(this.isTest === true) {
         this.setAllModels('test')
       }
@@ -173,7 +173,7 @@ export default {
       }
       this.showDropdown = false
     },
-    isUnrelated(oldValue, newValue) {
+    isUnrelated(oldValue, newValue) { // eslint-disable-line no-unused-vars
       if(this.isUnrelated === true) {
         this.setAllModels('unrelated')
       }
@@ -312,7 +312,7 @@ export default {
         }
       }
     },
-    selectOne(event) {
+    selectOne(event) { // eslint-disable-line no-unused-vars
       this.countSelected()
     },
     countSelected() {
@@ -340,7 +340,7 @@ export default {
       let end = parseInt(fp.dataset.line)
 
       let tmp = start
-      if(end > start) {
+      if(end > start) { // eslint-disable no-empty
       }
       else if(end < start) {
         start = end
@@ -440,7 +440,7 @@ export default {
       this.checkComplete()
       this.countSelected()
     },
-    changeLabel(modelIdx) {
+    changeLabel(modelIdx) { // eslint-disable-line no-unused-vars
       // check completeness
       this.checkComplete()
     },

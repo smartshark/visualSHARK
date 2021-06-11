@@ -5,25 +5,8 @@
         <div class="card-header">
           Commit {{ currentCommit.revision_hash }}, parents: 
           <template v-for="p in currentCommit.parents">
-            <router-link :to="{ name: 'Commit', params: { id: p }}">{{ p }}</router-link>&nbsp;
+            <router-link :key="p" :to="{ name: 'Commit', params: { id: p }}">{{ p }}</router-link>&nbsp;
           </template>
-          <div v-if="isSuperuser" class="card-actions">
-            <dropdown class="inline">
-              <span slot="button">
-                <i class="fa fa-gear"></i>
-              </span>
-              <div slot="dropdown-menu" class="dropdown-menu dropdown-menu-right">
-                <div class="dropdown-header text-center"><strong>Schedule plugin on commit</strong></div>
-                <div class="input-group" style="width: 600px">
-                  <select v-model="runPlugin" class="form-control">
-                    <option v-for="item in commitPlugins" :value="item.name">{{ item.name }}</option>
-                  </select>
-                  <div class="input-group-btn"><button type="button" class="btn btn-primary btn-override" @click="schedulePlugin()"><i class="fa fa-clock-o"></i> schedule plugin
-                  </button></div>
-                </div>
-              </div>
-            </dropdown>
-          </div>
         </div>
         <div class="card-block">
           <div class="row">
@@ -85,22 +68,22 @@
                     <tr>
                       <td>
                         <ul class="commit-label-list">
-                          <li v-for="validation in currentCommit.validations">{{ validation }}</li>
+                          <li :key="validation" v-for="validation in currentCommit.validations">{{ validation }}</li>
                         </ul>
                       </td>
                       <td>
                         <ul class="commit-label-list">
-                          <li v-for="label in currentCommit.labels">{{ label.name }} : {{ label.value }}</li>
+                          <li :key="label.name" v-for="label in currentCommit.labels">{{ label.name }} : {{ label.value }}</li>
                         </ul>
                       </td>
                       <td>
                         <ul class="commit-link-list">
-                          <li v-for="il in currentCommit.issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link></li>
+                          <li :key="il.id" v-for="il in currentCommit.issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link></li>
                         </ul>
                       </td>
                       <td>
                         <ul class="commit-link-list">
-                          <li v-for="il in currentCommit.validated_issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link></li>
+                          <li :key="il.id" v-for="il in currentCommit.validated_issue_links"><router-link :to="{ name: 'Issue', params: { id: il.id }}">{{ il.name }}</router-link></li>
                         </ul>
                       </td>
                     </tr>
@@ -147,13 +130,11 @@
 <script>
 import { mapGetters } from 'vuex'
 
-import rest from '../api/rest'
-
 import Grid from '@/components/Grid.vue'
 
 export default {
   name: 'singlecommit',
-  props: {id: false, showFA: true, showCES: true},
+  props: {id: false, showFA: true, showCES: true},  // eslint-disable-line vue/require-prop-type-constructor
   data () {
     return {
       gridFA: {
@@ -204,7 +185,7 @@ export default {
       console.log('getting defects')
       console.log(value)
     },
-    currentProject (value) {
+    currentProject () {
       this.id = false
     },
     id (value) {
@@ -225,17 +206,7 @@ export default {
     }
   },
   methods: {
-    schedulePlugin () {
-      let dat = {plugin_ids: [this.runPlugin], url: this.currentVcs.url, project_mongo_ids: [this.currentProject.id], revisions: [this.currentCommit.revision_hash]}
-      rest.createRevisionJob(dat)
-        .then(response => {
-          this.$store.dispatch('popLoading')
-        })
-        .catch(e => {
-          this.$store.dispatch('pushError', e)
-        })
-    },
-    getCommit (id) {
+    getCommit (id) {  // eslint-disable-line no-unused-vars
       this.$store.dispatch('getCommit', {vcsSystemId: this.currentVcs.id, revisionHash: this.id})
     },
     refreshGridFA (dat) {
