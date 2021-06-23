@@ -1,3 +1,4 @@
+import logging
 import tempfile
 import git
 import os
@@ -6,6 +7,7 @@ import shutil
 
 from visualSHARK.models import Commit, FileAction, File, Hunk, Refactoring
 
+log = logging.getLogger('util')
 
 def refactoring_lines(commit_id, file_action_id):
     """Return lines from one file in one commit which are detected as Refactorings by rMiner.
@@ -244,6 +246,7 @@ def get_technology_commit(project_path, commit, labels):
     fa_qry = FileAction.objects.filter(commit_id=commit.id)
 
     # print('commit', commit.revision_hash)
+    log.debug('getting technology files for %s', commit.revision_hash)
     changes = []
     for fa in fa_qry:
         f = File.objects.get(id=fa.file_id)
@@ -251,10 +254,12 @@ def get_technology_commit(project_path, commit, labels):
         source_file = folder + '/' + f.path
         if not os.path.exists(source_file):
             # print('file', source_file, '({})'.format(f.path), 'not existing, skipping')
+            log.warning('skipping source file %s because it does not exist', source_file)
             continue
 
         # for now we are only interested in cs files
         if not f.path.endswith('.cs'):
+            log.warning('skipping source file %s as it does not end in .cs', source_file)
             continue
 
         # print('open file', source_file, end='')
@@ -273,9 +278,11 @@ def get_technology_commit(project_path, commit, labels):
             continue
 
         # unknown encoding error
+        log.debug('loading file: %s, encoding: %s', source_file, encoding)
         try:
             nfile = open(source_file, 'rb').read().decode(encoding)
-        except LookupError:
+        except LookupError as e:
+            log.error('encoding error in file %s, %s', source_file, e)
             continue
         nfile = nfile.replace('\r\n', '\n')
         nfile = nfile.replace('\r', '\n')

@@ -210,6 +210,16 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'util': {
+            'handlers': ['file_debug', 'file_info', 'file_error'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'view': {
+            'handlers': ['file_debug', 'file_info', 'file_error'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     }
 }
 

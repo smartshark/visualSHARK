@@ -1257,7 +1257,7 @@ class TechnologyLabeling(APIView):
                 #     continue
 
                 f = File.objects.get(id=fa.file_id)
-                if f.path.lower().endswith('.cs') and fa.mode.lower() != 'd':
+                if f.path.lower().endswith('.cs') and fa.mode.lower() != 'd' and fa.mode.lower() != 'r':
                     sample_commit = c
                     break
 
@@ -1288,19 +1288,24 @@ class TechnologyLabeling(APIView):
         project_path = settings.LOCAL_REPOSITORY_PATH + p.name
 
         if not os.path.exists(project_path):
-            log.error('no such path ' + project_path)
+            log.error('no such path %s', project_path)
             return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not tl_id:
             sample_commit = self._sample_commit(vcs, request.user)
+            if not sample_commit:
+                return Response({'warning': 'no_more_issues'})
             commits = get_technology_commit(project_path, sample_commit, {})
         else:
             sample_commit = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=tlc.revision_hash)
+            if not sample_commit:
+                return Response({'warning': 'no_more_issues'})
             commits = get_technology_commit(project_path, sample_commit, json.loads(tlc.changes))
 
         # print(sample_commit.revision_hash)
         # print(commits)
         # sample_commit = Commit.objects.get(revision_hash='07b15a15038f69612d2bba75f750814cbfbe0a08')
+        log.debug('got %s commits for %s', len(commits), sample_commit.revision_hash)
         result = {'warning': '',
                   'project_name': p.name,
                   'commits': commits,
