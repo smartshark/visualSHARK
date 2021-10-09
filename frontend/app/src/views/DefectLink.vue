@@ -3,7 +3,7 @@
     <div class="animated fadeIn">
       <div class="card">
         <div class="card-header">
-          <i class="fa fa-link"></i> Current Commit {{ commit.revision_hash }}, parents: 
+          <i class="fa fa-link"></i> Current Commit {{ commit.revision_hash }}, parents:
           <template v-for="p in currentCommit.parents">
             {{ p }}&nbsp;
           </template>
@@ -22,8 +22,10 @@
                       <th>Author</th>
                     </tr>
                     <tr>
-                      <td><router-link :to="{ name: 'Person', params: { id: commit.committer.id }}">{{ commit.committer.name }} ({{ commit.committer.email }})</router-link></td>
-                      <td><router-link :to="{ name: 'Person', params: { id: commit.author.id }}">{{ commit.author.name }} ({{ commit.author.email }})</router-link></td>
+                      <td v-if="commit.committer"><router-link :to="{ name: 'Person', params: { id: commit.committer.id }}">{{ commit.committer.name }} ({{ commit.committer.email }})</router-link></td>
+                      <td v-else>Not set</td>
+                      <td v-if="commit.author"><router-link :to="{ name: 'Person', params: { id: commit.author.id }}">{{ commit.author.name }} ({{ commit.author.email }})</router-link></td>
+                      <td v-else>Not set</td>
                     </tr>
                   </table>
                 </div>
@@ -68,7 +70,7 @@
                       <th>Last update</th>
                       <th>Confidence</th>
                     </tr>
-                    <tr v-for="c in links">
+                    <tr v-for="c in links" :key="c.issue_id">
                       <td v-if="c.issue_id"><router-link :to="{ name: 'Issue', params: { id: c.issue_id }}">{{ c.issue }}</router-link></td>
                       <td v-else>{{c.issue}}</td>
                       <td>{{c.type}}</td>
@@ -121,7 +123,7 @@
             <div class="col-sm-12">
               <div class="card">
                 <div class="card-header">
-                  <i class="fa fa-bar-chart"></i> Affected Entities 
+                  <i class="fa fa-bar-chart"></i> Affected Entities
                 </div>
                 <div class="card-block">
                   <table class="table" v-if="entitiesLoaded">
@@ -131,7 +133,7 @@
                       <th>Type</th>
                       <th>Content</th>
                     </tr>
-                    <tr v-for="e in entities">
+                    <tr v-for="e in entities" :key="e.long_name">
                       <td>{{e.path}}</td>
                       <td>{{e.long_name}}</td>
                       <td>{{e.type}}</td>
@@ -215,12 +217,6 @@ export default {
     currentProject: 'currentProject',
     isSuperuser: 'isSuperuser'
   }),
-  watch: {
-    currentVcs (value) {
-      if (typeof value.id !== 'undefined') {
-      }
-    }
-  },
   mounted () {
     this.getLinks()
     this.clearGrids()

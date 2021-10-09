@@ -238,3 +238,5 @@ SUBSTITUTIONS = {
 
 # this sets up mongomock connection to the database
 TEST_RUNNER = 'sntest.test_runner.MockDbTestRunner'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

@@ -53,7 +53,7 @@
                 </div>
                 <div class="card-block">
                   <div v-for="comment in currentPullRequest.comments" :key="comment.external_id">
-                    <div>{{comment.author.name}} - {{comment.created_at}}</div>
+                    <div><span v-if="comment.author">{{comment.author.name}}</span><span v-else>Not set</span> - {{comment.created_at}}</div>
                     <div>{{comment.comment}}</div>
                     <br/>
                   </div>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="card-block">
                   <div v-for="event in currentPullRequest.events" :key="event.external_id">
-                    <div>{{event.author.name}} - {{event.created_at}}</div>
+                    <div><span v-if="event.author">{{event.author.name}}</span><span v-else>Not set</span> - {{event.created_at}}</div>
                     <div>{{event.event_type}}</div>
                     <div>{{event.additional_data}}</div>
                     <br/>
@@ -84,7 +84,7 @@
                 </div>
                 <div class="card-block">
                   <div v-for="commit in currentPullRequest.commits" :key="commit.commit_sha">
-                    <div>{{commit.author.name}}</div>
+                    <div><span v-if="commit.author">{{commit.author.name}}</span><span v-else>Not set</span></div>
                     <div>{{commit.commit_sha}}</div>
                     <div>{{commit.message}}</div>
                     <br/>
@@ -114,7 +114,7 @@
                 </div>
                 <div class="card-block">
                   <div v-for="review in currentPullRequest.reviews" :key="review.external_id">
-                    <div>{{review.external_id}} - {{review.state}} - {{review.submitted_at}} - {{review.creator.name}}</div>
+                    <div>{{review.external_id}} - {{review.state}} - {{review.submitted_at}} - <span v-if="review.creator">{{review.creator.name}}</span><span v-else>Not set</span></div>
                     <div>{{review.description}}</div>
                     <div v-if="review.pull_request_commit">{{review.pull_request_commit.commit_sha}}</div>
                     <div v-else>pull request not linked to commit</div>
@@ -137,7 +137,7 @@
             <div class="card-block">
               <grid :gridColumns="grid.columns" :data="gridPullRequests.data" :count="gridPullRequests.count" :defaultPerPage="15" defaultFilterField="external_id" :defaultOrder="grid.defaultOrder" :triggerRefresh="triggerRefresh" @refresh="refreshGrid">
                 <template slot="external_id" slot-scope="props">
-                  <td><router-link :to="{ name: 'Pull Requests', params: { id: props.row.id }}">{{ props.object }}</router-link></td>
+                  <td><router-link :to="{ name: 'Pull Request', params: { id: props.row.id }}">{{ props.object }}</router-link></td>
                 </template>
               </grid>
             </div>

@@ -2,7 +2,7 @@
   <div class="wrapper">
     <div class="animated fadeIn">
       <div class="card">
-        <div class="card-header"><i class="fa fa-code"></i> Labeled commits 
+        <div class="card-header"><i class="fa fa-code"></i> Labeled commits
           <div class="card-actions">
             <b-dropdown variant="link">
               <template #button-content>
@@ -33,7 +33,7 @@
             <template slot="technologies" slot-scope="props">
               <td>
                 <ul v-if="props.row.technologies" class="tech-list">
-                  <li v-for="tech in props.row.technologies">{{tech.name}}</li>
+                  <li :key="tech.name" v-for="tech in props.row.technologies">{{tech.name}}</li>
                 </ul>
               </td>
             </template>
@@ -114,7 +114,7 @@ export default {
     unskip (id) {
       this.$store.dispatch('pushLoading')
       rest.unskipIssue(id)
-        .then(response => {
+        .then(() => {
             this.$store.dispatch('popLoading')
             this.triggerRefresh = true
         })

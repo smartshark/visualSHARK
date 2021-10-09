@@ -22,8 +22,10 @@
                       <th>Author</th>
                     </tr>
                     <tr>
-                      <td><router-link :to="{ name: 'Person', params: { id: currentCommit.committer.id }}">{{ currentCommit.committer.name }} ({{ currentCommit.committer.email }})</router-link></td>
-                      <td><router-link :to="{ name: 'Person', params: { id: currentCommit.author.id }}">{{ currentCommit.author.name }} ({{ currentCommit.author.email }})</router-link></td>
+                      <td v-if="currentCommit.committer"><router-link :to="{ name: 'Person', params: { id: currentCommit.committer.id }}">{{ currentCommit.committer.name }} ({{ currentCommit.committer.email }})</router-link></td>
+                      <td v-else>Unknown</td>
+                      <td v-if="currentCommit.author"><router-link :to="{ name: 'Person', params: { id: currentCommit.author.id }}">{{ currentCommit.author.name }} ({{ currentCommit.author.email }})</router-link></td>
+                      <td v-else>Unknown</td>
                     </tr>
                   </table>
                 </div>
@@ -186,7 +188,7 @@ export default {
       console.log(value)
     },
     currentProject () {
-      this.id = false
+      this.id = false  // eslint-disable-line vue/no-mutating-props
     },
     id (value) {
       if (value !== false && typeof value !== 'undefined') {

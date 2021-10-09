@@ -115,7 +115,8 @@
                   <template v-if="currentIssue.events">
                   <grid :gridColumns="gridEvents.columns" :data="gridEventData" :count="currentIssue.events.length" :defaultPerPage="15" defaultFilterField="" :triggerRefresh="triggerRefreshEvents" @refresh="refreshGridEvents">
                     <template slot="author" slot-scope="props">
-                      <td><router-link :to="{ name: 'Person', params: { id: props.object.id }}">{{ props.object.name }} ({{ props.object.email }})</router-link></td>
+                      <td v-if="props.object"><router-link :to="{ name: 'Person', params: { id: props.object.id }}">{{ props.object.name }} ({{ props.object.email }})</router-link></td>
+                      <td v-else>Not set</td>
                     </template>
                     <template slot="created_at" slot-scope="props">
                       <td>{{props.object|momentgerman}}</td>

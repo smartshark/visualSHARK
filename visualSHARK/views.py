@@ -240,8 +240,16 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
             labels.append({'name': l, 'value': v})
 
         dat = commit.to_mongo()
-        dat['author'] = People.objects.get(id=commit.author_id)
-        dat['committer'] = People.objects.get(id=commit.committer_id)
+        try:
+            author = People.objects.get(id=commit.author_id)
+        except People.DoesNotExist:
+            author = None
+        try:
+            committer = People.objects.get(id=commit.committer_id)
+        except People.DoesNotExist:
+            committer = None
+        dat['author'] = author
+        dat['committer'] = committer
         dat['tags'] = tags
         dat['issue_links'] = issue_links
         dat['validated_issue_links'] = validated_issue_links
@@ -380,18 +388,28 @@ class PullRequestViewSet(MongoReadOnlyModelViewSet):
 
         dat['comments'] = []
         for c in PullRequestComment.objects.filter(pull_request_id=id):
-            c.author = People.objects.get(id=c.author_id)
+            try:
+                c.author = People.objects.get(id=c.author_id)
+            except People.DoesNotExist:
+                c.author = None
             dat['comments'].append(c)
 
         dat['events'] = []
         for c in PullRequestEvent.objects.filter(pull_request_id=id):
-            c.author = People.objects.get(id=c.author_id)
+            try:
+                c.author = People.objects.get(id=c.author_id)
+            except People.DoesNotExist:
+                c.author = None
             dat['events'].append(c)
 
         dat['commits'] = []
         for c in PullRequestCommit.objects.filter(pull_request_id=id):
-            c.author = People.objects.get(id=c.author_id)
-            c.committer = People.objects.get(id=c.committer_id)
+            try:
+                c.author = People.objects.get(id=c.author_id)
+                c.committer = People.objects.get(id=c.committer_id)
+            except People.DoesNotExist:
+                c.author = None
+                c.committer = None
             dat['commits'].append(c)
 
         dat['files'] = []
@@ -487,17 +505,34 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
         dat['reporter'] = None
         dat['creator'] = None
         dat['assignee'] = None
+
         if r.reporter_id:
-            dat['reporter'] = People.objects.get(id=r.reporter_id)
+            try:
+                dat['reporter'] = People.objects.get(id=r.reporter_id)
+            except People.DoesNotExist:
+                pass
+
         if r.creator_id:
-            dat['creator'] = People.objects.get(id=r.creator_id)
+            try:
+                dat['creator'] = People.objects.get(id=r.creator_id)
+            except People.DoesNotExist:
+                pass
+
         if r.assignee_id:
-            dat['assignee'] = People.objects.get(id=r.assignee_id)
+            try:
+                dat['assignee'] = People.objects.get(id=r.assignee_id)
+            except People.DoesNotExist:
+                pass
 
         dat['events'] = []
         for e in Event.objects.filter(issue_id=r.id).order_by('created_at'):
             ev = {'created_at': e.created_at, 'author_id': e.author_id, 'status': e.status, 'old_value': e.old_value, 'new_value': e.new_value}
-            ev['author'] = People.objects.get(id=e.author_id)
+            if e.author_id:
+                try:
+                    ev['author'] = People.objects.get(id=e.author_id)
+                except People.DoesNotExist:
+                    ev['author'] = None
+
             dat['events'].append(ev)
         serializer = SingleIssueSerializer(dat)
         return Response(serializer.data)
@@ -536,7 +571,10 @@ class MessageViewSet(MongoReadOnlyModelViewSet):
 
         recipients = []
         for li in obj.to_ids:
-            recipients.append(People.objects.get(id=li))
+            try:
+                recipients.append(People.objects.get(id=li))
+            except People.DoesNotExist:
+                pass
 
         cc_ids = []
         for li in obj.cc_ids:
@@ -556,7 +594,10 @@ class MessageViewSet(MongoReadOnlyModelViewSet):
         if obj.in_reply_to_id:
             dat['in_reply_to_id'] = Message.objects.get(id=obj.in_reply_to_id)
         if obj.from_id:
-            dat['sender'] = People.objects.get(id=obj.from_id)
+            try:
+                dat['sender'] = People.objects.get(id=obj.from_id)
+            except People.DoesNotExist:
+                pass
         dat['recipients'] = recipients
         dat['reference_ids'] = reference_ids
         dat['cc_ids'] = cc_ids
@@ -600,16 +641,16 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         if travis:
             travis_states = travis.split(',')
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id).only(['revision_hash', 'id']):
-                states = []
+            for v in Commit.objects.filter(vcs_system_id=vcs_system_id).only('revision_hash', 'id'):
+                states = set()
                 for tj in TravisBuild.objects.filter(vcs_system_id=vcs_system_id, commit_id=v.id):
                     if tj.state.upper() not in travis_states:
                         continue
-                    states.append('travis_{}'.format(tj.state))
+                    states.add('travis_{}'.format(tj.state))
                 if states:
                     if v.revision_hash not in response.keys():
                         response[v.revision_hash] = []
-                    response[v.revision_hash].append(list(set(states)))
+                    response[v.revision_hash].append(list(states))
 
         if label:
             for lid in label.split(','):

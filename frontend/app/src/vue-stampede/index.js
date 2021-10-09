@@ -7,7 +7,7 @@ export default {
     let id = null
     Vue.prototype.$stomp = Stomp.client(options.uri)
     Vue.prototype.$stomp.debug = () => {}
-    Vue.prototype.$stomp.connect(options.user, options.pw, con => {
+    Vue.prototype.$stomp.connect(options.user, options.pw, () => {
       const channel = store.getters.channel
       if (channel === '') {
         return
@@ -31,7 +31,7 @@ export default {
 
     Vue.discoChannel = function () {
       Vue.prototype.$stomp.unsubscribe(id)
-      Vue.prototype.$stomp.disconnect(f => { console.log('disconnected') })
+      Vue.prototype.$stomp.disconnect(() => { console.log('disconnected') })
     }
 
     Vue.connectChannel = function () {

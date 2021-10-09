@@ -21,12 +21,14 @@
                       <th v-if="currentMessage.cc_ids && currentMessage.cc_ids.length > 0">CCs</th>
                     </tr>
                     <tr>
-                      <td><router-link v-if="currentMessage.sender" :to="{ name: 'Person', params: { id: currentMessage.sender.id }}">{{ currentMessage.sender.name }} ({{ currentMessage.sender.email }})</router-link></td>
-                      <td>
+                      <td v-if="currentMessage.sender"><router-link v-if="currentMessage.sender" :to="{ name: 'Person', params: { id: currentMessage.sender.id }}">{{ currentMessage.sender.name }} ({{ currentMessage.sender.email }})</router-link></td>
+                      <td v-else>Not set</td>
+                      <td v-if="currentMessage.recipients">
                         <ul>
                             <li v-for="recipient in currentMessage.recipients"><router-link :to="{ name: 'Person', params: { id: recipient.id }}">{{ recipient.name }} ({{ recipient.email }})</router-link></li>
                         </ul>
                       </td>
+                      <td v-else>Not set</td>
                       <td v-if="currentMessage.cc_ids && currentMessage.cc_ids.length > 0">
                         <ul>
                             <li v-for="recipient in currentMessage.cc_ids"><router-link :to="{ name: 'Person', params: { id: recipient.id }}">{{ recipient.name }} ({{ recipient.email }})</router-link></li>
@@ -138,7 +140,7 @@ export default {
     currentMessage: 'currentMessage'
   }),
   watch: {
-    currentMl (value) {
+    currentMl () {
       this.id = false
     },
     id (value) {
@@ -148,7 +150,7 @@ export default {
     }
   },
   methods: {
-    getMessage (id) {
+    getMessage () {
       this.$store.dispatch('getMessage', this.id)
     }
   }

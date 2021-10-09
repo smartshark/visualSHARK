@@ -100,7 +100,8 @@ const router = new Router({
           children: [
             {
               path: ':id',
-              name: 'Pull Requests'
+              name: 'Pull Request',
+              component: PullRequests
             }
           ]
         },
