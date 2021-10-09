@@ -16,7 +16,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, key, index) in board.users">
+              <tr v-for="(item, key, index) in board.users" :key="index">
                 <td>{{key}}</td>
                 <td>{{item.all_issues}}</td>
                 <td>{{item.skipped_issues}}</td>
@@ -30,7 +30,6 @@
                 <td>{{board.skipped_issues}}</td>
                 <td>{{board.corrected_issues}}</td>
               </tr>
-              </tr>
             </tfoot>
           </table>
         </div>
@@ -40,7 +39,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import rest from '../api/rest'
 
 export default {

@@ -93,7 +93,7 @@ const actions = {
   testConnectionWorker ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.testConnectionWorkerJob(dat)
-      .then(response => {
+      .then(() => {
         commit(types.POP_LOADING)
       })
       .catch(error => {
@@ -104,7 +104,7 @@ const actions = {
   testConnectionServershark ({commit}, dat) {
     commit(types.PUSH_LOADING)
     rest.testConnectionServersharkJob(dat)
-      .then(response => {
+      .then(() => {
         commit(types.POP_LOADING)
       })
       .catch(error => {
@@ -168,7 +168,7 @@ const mutations = {
   [types.POP_LOADING] (state) {
     state.loading.pop()
   },
-  [types.LOGIN_ERROR] (state, { error }) {
+  [types.LOGIN_ERROR] (state) {
     state.loginMessage = 'Login failed'
   },
   [types.PUSH_ERROR] (state, { error }) {

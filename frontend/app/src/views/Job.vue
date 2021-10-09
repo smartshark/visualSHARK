@@ -53,17 +53,12 @@ import { mapGetters } from 'vuex'
 
 import rest from '../api/rest'
 
-import Grid from '@/components/Grid.vue'
-
 export default {
   name: 'singlejob',
   props: {id: false},
   data () {
     return {
     }
-  },
-  components: {
-    Grid
   },
   mounted () {
     if (this.id !== false && typeof this.id !== 'undefined') {
@@ -77,7 +72,7 @@ export default {
     isSuperuser: 'isSuperuser'
   }),
   watch: {
-    currentProject (value) {
+    currentProject () {
       this.id = false
     },
     id (value) {
@@ -89,14 +84,14 @@ export default {
   methods: {
     requeueJob () {
       rest.requeueJob(this.id)
-        .then(response => {
+        .then(() => {
           this.$store.dispatch('popLoading')
         })
         .catch(e => {
           this.$store.dispatch('pushError', e)
         })
     },
-    getJob (id) {
+    getJob () {
       this.$store.dispatch('getJob', this.id)
     }
   }

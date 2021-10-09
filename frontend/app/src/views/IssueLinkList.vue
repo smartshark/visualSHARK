@@ -59,7 +59,7 @@ export default {
     isSuperuser: 'isSuperuser'
   }),
   watch: {
-    currentVcs (value) {
+    currentVcs () {
       this.$store.dispatch('clearCurrentCommit')
       this.triggerRefresh = true
     }

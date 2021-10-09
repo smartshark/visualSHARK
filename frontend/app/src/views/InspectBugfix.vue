@@ -43,17 +43,19 @@
         <pre class="force-wrap">{{issue.desc}}</pre>
       </div>
     </div>
-    <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
-      <div class="card-header">
-        <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a> ({{commit.changes.length}} files)
+    <template v-if="commit.changes.length > 0">
+      <div class="card" v-for="commit in commits">
+        <div class="card-header">
+          <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a> ({{commit.changes.length}} files)
+        </div>
+        <div class="card-block">
+          <pre>{{commit.message}}</pre>
+        </div>
+        <template v-for="c in commit.changes">
+          <DiffView :commit="commit.revision_hash" :parent="c.parent_revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
+        </template>
       </div>
-      <div class="card-block">
-        <pre>{{commit.message}}</pre>
-      </div>
-      <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :parent="c.parent_revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
-      </template>
-    </div>
+    </template>
   </div>
 </div>
 </template>
@@ -64,7 +66,6 @@ import { alert } from 'vue-strap'
 import rest from '../api/rest'
 
 import DiffView from '@/components/DiffView2.vue'
-import modal from '@/components/Modal'
 
 export default {
   name: 'InspectBugfix',
@@ -82,8 +83,7 @@ export default {
   },
   components: {
     alert,
-    DiffView,
-    modal
+    DiffView
   },
   computed: mapGetters({
     isSuperuser: 'isSuperuser',
@@ -91,14 +91,8 @@ export default {
     projectsVcs: 'projectsVcs',
     projectsIts: 'projectsIts'
   }),
-  watch: {
-    currentProject (value) {
-    }
-  },
-  mounted() {
-  },
   methods: {
-    loadBugfix: function(event) {
+    loadBugfix: function() {
       console.log(this.external_id, 'loading bugfix')
       this.$store.dispatch('pushLoading')
       this.result = []

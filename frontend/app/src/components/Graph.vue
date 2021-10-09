@@ -5,8 +5,8 @@
       <marker id="arrow" markerWidth="11" markerHeight="11" refX="-4" refY="6" orient="auto">
         <path d="M2,2 L2,11 L10,6 L2,2" style="fill: #000000;" />
       </marker>
-      <line v-for="item in edges" :x1="item.x1" :y1="item.y1" :x2="item.x2" :y2="item.y2" :class="{edge: true, showDirection: options.showDirection, markEdge: myMarkPath.indexOf(item.key1) !== -1 || myMarkPath.indexOf(item.key2) !== -1}" :style="{strokeWidth: nodeRadius/10, stroke: releaseColor(item.key2)}"></line>
-      <circle v-for="(n, k) in myNodes" :cx="n.x" :cy="n.y" :r="nodeRadius" @mouseover="hovernode(k)" @click="clicknode(k)" @mouseout="outnode(k)" :class="{bugFixing: bugFixingNodes.indexOf(k) !== -1 && showBugFixing, commit: true, markCommit2: articulationPoints.indexOf(k) !== -1}" :style="{fill: productColors[k], strokeWidth: nodeRadius, stroke: markColor(k)}"></circle>
+      <line :key="''+item.x1+'-'+item.y1+'-'+item.x2+'-'+item.y2" v-for="item in edges" :x1="item.x1" :y1="item.y1" :x2="item.x2" :y2="item.y2" :class="{edge: true, showDirection: options.showDirection, markEdge: myMarkPath.indexOf(item.key1) !== -1 || myMarkPath.indexOf(item.key2) !== -1}" :style="{strokeWidth: nodeRadius/10, stroke: releaseColor(item.key2)}"></line>
+      <circle :key="''+n.x+'-'+n.y" v-for="(n, k) in myNodes" :cx="n.x" :cy="n.y" :r="nodeRadius" @mouseover="hovernode(k)" @click="clicknode(k)" @mouseout="outnode(k)" :class="{bugFixing: bugFixingNodes.indexOf(k) !== -1 && showBugFixing, commit: true, markCommit2: articulationPoints.indexOf(k) !== -1}" :style="{fill: productColors[k], strokeWidth: nodeRadius, stroke: markColor(k)}"></circle>
     </g>
   </g>
 </template>
@@ -63,7 +63,7 @@ export default {
       return (c)
     },
     markColor (revisionHash) {
-      if (this.markNodes.hasOwnProperty(revisionHash)) {
+      if (this.markNodes.hasOwnProperty(revisionHash)) {  // eslint-disable-line no-prototype-builtins
         const conv = this.markNodes[revisionHash].join(' & ')
         let s = ''
         for (let i = 0; i < conv.length; i++) {
@@ -73,7 +73,7 @@ export default {
         // duplicate code with legend
         let labels = []
         for (let att in this.markNodes) {
-          if (this.markNodes.hasOwnProperty(att)) {
+          if (this.markNodes.hasOwnProperty(att)) {  // eslint-disable-line no-prototype-builtins
             let conv = this.markNodes[att].join(' & ')
             if (labels.indexOf(conv) === -1) {
               labels.push(conv)
@@ -143,7 +143,7 @@ export default {
       // find unique combinations for legend
       let labels = []
       for (let att in this.markNodes) {
-        if (this.markNodes.hasOwnProperty(att)) {
+        if (this.markNodes.hasOwnProperty(att)) {  // eslint-disable-line no-prototype-builtins
           let conv = this.markNodes[att].join(' & ')
           if (labels.indexOf(conv) === -1) {
             labels.push(conv)
@@ -193,7 +193,7 @@ export default {
       }
     },
     releaseColor (k) {
-      if (this.productColors.hasOwnProperty(k)) {
+      if (this.productColors.hasOwnProperty(k)) {  // eslint-disable-line no-prototype-builtins
         return this.productColors[k]
       }
     },
@@ -232,13 +232,13 @@ export default {
     }
   },
   watch: {
-    productPaths (value) {
+    productPaths () {
       this.productColors = {}
       this.createProductColors()
       this.removeLegend()
       this.drawLegend()
     },
-    markNodes (value) {
+    markNodes () {
       this.removeLegend()
       this.drawLegend()
     },

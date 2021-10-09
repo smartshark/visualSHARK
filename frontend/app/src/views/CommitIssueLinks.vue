@@ -67,16 +67,16 @@ export default {
     this.loadRandomIssueLinks()
   },
   watch: {
-    currentProject (value) {
+    currentProject () {
       this.loadRandomIssueLinks()
     },
-    currentVcs (value) {
+    currentVcs () {
       this.loadRandomIssueLinks()
     },
-    linked (value) {
+    linked () {
       this.loadRandomIssueLinks()
     },
-    issueType (value) {
+    issueType () {
       this.loadRandomIssueLinks()
     }
   },

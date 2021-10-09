@@ -168,7 +168,7 @@ const persist = (store) => {
       console.log(e)
     }
   }
-  store.subscribe((mutation, state) => {
+  store.subscribe((mutation, state) => { // eslint-disable-line no-unused-vars
     const type = mutation.type
     if (type === 'SESSIONLOGIN') {
       Vue.discoChannel()

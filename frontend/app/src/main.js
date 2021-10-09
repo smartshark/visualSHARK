@@ -11,7 +11,7 @@ import store from './store'
 import VueProgressBar from 'vue-progressbar'
 import VueStomp from './vue-stampede'
 
-import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import { BootstrapVue } from 'bootstrap-vue'
 
 Vue.use(VueProgressBar, {
   color: 'rgb(143, 255, 199)',

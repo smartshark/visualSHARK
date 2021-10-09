@@ -17,7 +17,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, key, index) in board">
+              <tr v-for="(item, key, index) in board" :key="index">
                 <td>{{item.user}}</td>
                 <td>{{item.lines}}</td>
                 <td>{{item.files}}</td>
@@ -51,7 +51,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, key, index) in projects">
+              <tr v-for="(item, key, index) in projects" :key="index">
                 <template v-if="onlyProjects.includes(key)">
                   <td>{{key}}</td>
                   <td class="td-number">{{item.need_issues}}</td>

@@ -21,9 +21,9 @@
       <div v-if="result.length > 0">
         Submitted and validated changes:
         <div v-for="change in result">
-          <div v-for="(item, key, index) in change">
+          <div v-for="(item, key, index) in change" :key="index">
             <strong>FileChange: {{key}}</strong><br/>
-            <div v-for="(item2, key2, index2) in item">
+            <div v-for="(item2, key2, index2) in item" :key="index2">
               <strong>Hunk: {{key2}}</strong><br/>
               <div v-for="l in item2">
                 {{l}}
@@ -43,17 +43,19 @@
         <pre class="force-wrap">{{issue.desc}}</pre>
       </div>
     </div>
-    <div class="card" v-for="commit in commits" v-if="commit.changes.length > 0">
-      <div class="card-header">
-        <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a> ({{commit.changes.length}} files)
+    <template v-if="commit.changes.length > 0">
+      <div class="card" v-for="commit in commits">
+        <div class="card-header">
+          <i class="fa fa-code"></i> <a :href="vcs_url + commit.revision_hash" target="_blank">{{commit.revision_hash}}</a> ({{commit.changes.length}} files)
+        </div>
+        <div class="card-block">
+          <pre>{{commit.message}}</pre>
+        </div>
+        <template v-for="c in commit.changes">
+          <DiffView :commit="commit.revision_hash" :parent="c.parent_revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
+        </template>
       </div>
-      <div class="card-block">
-        <pre>{{commit.message}}</pre>
-      </div>
-      <template v-for="c in commit.changes">
-        <DiffView :commit="commit.revision_hash" :parent="c.parent_revision_hash" :filename="c.filename" :lines="c.lines" ref="diffView" :key="commit.revision_hash + c.parent_revision_hash + c.filename"/>
-      </template>
-    </div>
+    </template>
   </div>
 </div>
 </template>
@@ -63,7 +65,6 @@ import { mapGetters } from 'vuex'
 import rest from '../api/rest'
 
 import DiffView from '@/components/DiffView.vue'
-import modal from '@/components/Modal'
 
 export default {
   name: 'linelabels',
@@ -81,8 +82,7 @@ export default {
     }
   },
   components: {
-    DiffView,
-    modal
+    DiffView
   },
   computed: mapGetters({
     isSuperuser: 'isSuperuser',
@@ -91,7 +91,7 @@ export default {
     projectsIts: 'projectsIts'
   }),
   watch: {
-    currentProject (value) {
+    currentProject () {
       this.loadSample()
     }
   },

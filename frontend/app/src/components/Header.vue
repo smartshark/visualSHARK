@@ -19,12 +19,10 @@
             </b-dropdown-item>
           </template>
           <template v-else><b-dropdown-text style="padding: 0.5rem; text-align: center;">No Messages</b-dropdown-text></template>
-        </div>
       </b-dropdown>
       <b-dropdown size="md" variant="link" class="nav-item" :text="user" dropleft>
-          <b-dropdown-header>Account</b-dropdown-header>
-          <b-dropdown-item><router-link :to="'/logout'" class="dropdown-item"><i class="fa fa-lock"></i> Logout</router-link></b-dropdown-item>
-        </div>
+        <b-dropdown-header>Account</b-dropdown-header>
+        <b-dropdown-item><router-link :to="'/logout'" class="dropdown-item"><i class="fa fa-lock"></i> Logout</router-link></b-dropdown-item>
       </b-dropdown>
       <li class="nav-item hidden-md-down">
         <a class="nav-link navbar-toggler aside-menu-toggler" href="#" @click="asideToggle">&#9776;</a>

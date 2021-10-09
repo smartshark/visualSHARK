@@ -63,7 +63,6 @@
 <script>
 
 import { mapGetters } from 'vuex'
-import Grid from '@/components/Grid.vue'
 import rest from '../api/rest'
 
 export default {
@@ -78,9 +77,6 @@ export default {
       max: 0
     }
   },
-  components: {
-    Grid
-  },
   computed: mapGetters({
     gridIssues: 'gridIssues',
     currentProject: 'currentProject',
@@ -92,16 +88,16 @@ export default {
     this.loadConflicted()
   },
   watch: {
-    currentProject (value) {
+    currentProject () {
       this.loadConflicted()
     },
-    currentIts (value) {
+    currentIts () {
       this.loadConflicted()
     },
-    linked (value) {
+    linked () {
       this.loadConflicted()
     },
-    issueType (value) {
+    issueType () {
       this.loadConflicted()
     }
   },

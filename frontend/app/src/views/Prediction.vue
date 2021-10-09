@@ -210,7 +210,7 @@ export default {
         this.chart.destroy()
       }
     },
-    drawChart (data) {
+    drawChart () {
       try {
         let ctx = document.getElementById('predictionResults').getContext('2d')
         ctx.canvas.height = 400
@@ -325,7 +325,7 @@ export default {
           dat.title = this.predictionModel + ', train: ' + this.getNames(this.trainingProducts).join(',') + ', test: ' + this.getNames(this.testProducts).join(',')
           this.results.push(dat)
           this.clearChart()
-          this.drawChart(response.data)
+          this.drawChart()
         })
         .catch(e => {
           this.$store.dispatch('pushError', e)

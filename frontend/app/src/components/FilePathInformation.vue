@@ -2,7 +2,9 @@
   <div>
     <i v-if="release" class="fa fa-home" style="float:left; line-height: 1.4rem; cursor: pointer" @click.prevent="currentPath = ''"></i>
     <ul class="fpi-breadcrumps">
-      <li v-if="p !== ''" v-for="(p, index) in pathLinks" @click.prevent="clickcrump(index)" style="cursor: pointer">{{ p }}</li>
+      <template v-if="p !== ''">
+      <li v-for="(p, index) in pathLinks" @click.prevent="clickcrump(index)" style="cursor: pointer">{{ p }}</li>
+      </template>
     </ul>
     <svg width="100%" height="400" id="fpi-svg" @mousemove.prevent="dragster" @wheel.prevent="zoom">
       <g id="fpi-legend"></g>

@@ -8,8 +8,8 @@
         <button v-if="currentRange.length > 0" v-on:click="setTechnologies()" class="btn btn-primary">Set</button>
       </div>
 
-      <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next ></button>
-      <button class="btn btn-primary" v-on:click="back()" style="float: right;">< Previous</button>
+      <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next &gt;</button>
+      <button class="btn btn-primary" v-on:click="back()" style="float: right;">&lt; Previous</button>
       <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
     </div>
     <div>
@@ -33,7 +33,7 @@ import MonacoEditor from 'vue-monaco'
 import Multiselect from 'vue-multiselect'
 
 // we override this stuff from the monaco editor to get the correct diffs
-var LineChange = /** @class */ (function () {
+var LineChange = /** @class */ (function () {  // eslint-disable-line no-unused-vars
     function LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges) {
         this.originalStartLineNumber = originalStartLineNumber;
         this.originalEndLineNumber = originalEndLineNumber;
@@ -66,13 +66,13 @@ var LineChange = /** @class */ (function () {
         if (shouldComputeCharChanges && diffChange.originalLength !== 0 && diffChange.modifiedLength !== 0 && continueProcessingPredicate()) {
             var originalCharSequence = originalLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.originalStart, diffChange.originalStart + diffChange.originalLength - 1);
             var modifiedCharSequence = modifiedLineSequence.getCharSequence(shouldIgnoreTrimWhitespace, diffChange.modifiedStart, diffChange.modifiedStart + diffChange.modifiedLength - 1);
-            var rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueProcessingPredicate, true, null);
+            var rawChanges = computeDiff(originalCharSequence, modifiedCharSequence, continueProcessingPredicate, true, null);  // eslint-disable-line no-undef
             if (shouldPostProcessCharChanges) {
-                rawChanges = postProcessCharChanges(rawChanges);
+                rawChanges = postProcessCharChanges(rawChanges);  // eslint-disable-line no-undef
             }
             charChanges = [];
             for (var i = 0, length_2 = rawChanges.length; i < length_2; i++) {
-                charChanges.push(CharChange.createFromDiffChange(rawChanges[i], originalCharSequence, modifiedCharSequence));
+                charChanges.push(CharChange.createFromDiffChange(rawChanges[i], originalCharSequence, modifiedCharSequence));   // eslint-disable-line no-undef
             }
         }
         return new LineChange(originalStartLineNumber, originalEndLineNumber, modifiedStartLineNumber, modifiedEndLineNumber, charChanges);
@@ -180,7 +180,7 @@ export default {
           }
           if(isOriginal && typeof this.decorationsObjectsLeft[lineNumber] === 'undefined') {
             this.decorationsObjectsLeft[lineNumber] = {
-              range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+              range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
               options: {
                     isWholeLine: true,
                     linesDecorationsClassName: selectionType,
@@ -194,7 +194,7 @@ export default {
           }
           if(!isOriginal && typeof this.decorationsObjectsRight[lineNumber] === 'undefined') {
             this.decorationsObjectsRight[lineNumber] = {
-              range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+              range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
               options: {
                     isWholeLine: true,
                     linesDecorationsClassName: selectionType,
@@ -223,7 +223,7 @@ export default {
           }
           return returnHunk
         },
-        setTechnologies: function(click) {
+        setTechnologies: function() {
           const isOriginal = this.selectedEditorType === this.$refs.editor.getEditor().getOriginalEditor()
           console.log('setting', this.selectedTechnologies, 'on', this.currentRange, 'on original?', isOriginal)
           
@@ -238,7 +238,7 @@ export default {
             for(let lineNumber of this.currentRange) {
               let hunk = this.getOriginalChangeForLine(lineNumber)
               this.decorationsObjectsLeft[lineNumber] = {
-                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
                 options: {
                     isWholeLine: true,
                     linesDecorationsClassName: dec,
@@ -252,7 +252,7 @@ export default {
             for(let lineNumber of this.currentRange) {
               let hunk = this.getModifiedChangeForLine(lineNumber)
               this.decorationsObjectsRight[lineNumber] = {
-                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
                 options: {
                     isWholeLine: true,
                     linesDecorationsClassName: dec,  // this.selectedTechnologies.join()
@@ -297,12 +297,12 @@ export default {
 
             console.log('show me the money!')
             console.log(this.file)
-            var labelCssClass = ['per-line', 'per-block'];
+            /*var labelCssClass = ['per-line', 'per-block'];*/
             for(var i = 0; i < this.file.lines.length; i++)
             {
               var line = this.file.lines[i];
               if(line.label > 0) {
-                labelCssClass = line.techs['selectionType']
+                /*labelCssClass = line.techs['selectionType']*/
                 
                 if(line.techs !== 'undefined') {
                   if(line.new == '-') {
@@ -412,7 +412,7 @@ export default {
             var action = {
                 id: 'backQ',
                 label: "Jump to previous diff",
-                keybindings: [ monaco.KeyCode.KEY_Q ],
+                keybindings: [ monaco.KeyCode.KEY_Q ],  // eslint-disable-line no-undef
                 precondition: null,
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
@@ -427,7 +427,7 @@ export default {
              var action2 = {
                 id: 'nextW',
                 label: "Jump to next diff",
-                keybindings: [ monaco.KeyCode.KEY_W ],
+                keybindings: [ monaco.KeyCode.KEY_W ],  // eslint-disable-line no-undef
                 precondition: null,
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
@@ -469,11 +469,11 @@ export default {
           return null
         },
         addActionToEditor: function(editor) {
-          this.addSingleActionToEditor2(editor, '1', 'Set technologies', [ monaco.KeyCode.KEY_1 ], 'per-line')
-          this.addSingleActionToEditor2(editor, '2', 'Set technologies separately', [ monaco.KeyCode.KEY_2 ], 'per-block')
-          this.addSingleActionToEditor(editor, '7', 'Remove technologies', [ monaco.KeyCode.KEY_7 ], '');
+          this.addSingleActionToEditor2(editor, '1', 'Set technologies', [ monaco.KeyCode.KEY_1 ], 'per-line')  // eslint-disable-line no-undef
+          this.addSingleActionToEditor2(editor, '2', 'Set technologies separately', [ monaco.KeyCode.KEY_2 ], 'per-block')  // eslint-disable-line no-undef
+          this.addSingleActionToEditor(editor, '7', 'Remove technologies', [ monaco.KeyCode.KEY_7 ], '');  // eslint-disable-line no-undef
         },
-        markLineInEditorLeft(lineNumber, className, editor, ed, techs) {
+        markLineInEditorLeft(lineNumber, className, editor, ed, techs) {  // eslint-disable-line no-unused-vars
                     var that = this;
                     var changes = editor.getEditor().getLineChanges();
                     var isInChange = false;
@@ -493,7 +493,7 @@ export default {
                       delete that.decorationsObjectsLeft[lineNumber];
                     } else {
                        that.decorationsObjectsLeft[lineNumber] = {
-                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
                         options: {
                             isWholeLine: true,
                             linesDecorationsClassName: className
@@ -525,7 +525,7 @@ export default {
                       delete that.decorationsObjectsRight[lineNumber];
                     } else {
                     that.decorationsObjectsRight[lineNumber] = {
-                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
                         options: {
                             isWholeLine: true,
                             linesDecorationsClassName: className
@@ -618,7 +618,7 @@ export default {
                  }
                  if(change.modifiedEndLineNumber != 0)
                  {
-                    for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
+                    for(let j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
                     {
                     if(typeof lineDecorationsModified[j] === 'undefined') {
                     isThisMissing = true;
@@ -647,13 +647,13 @@ export default {
            var file = this.file;
            data[file.filename] = {};
            var lineDecorationsOrginal = this.decorationsObjectsLeft;
-           for(var k = 0; k < lineDecorationsOrginal.length; k++) {
+           for(let k = 0; k < lineDecorationsOrginal.length; k++) {
                 if(typeof lineDecorationsOrginal[k] === 'undefined') {
                     continue;
                 }
-                var techs = lineDecorationsOrginal[k].options.technologies;
-                var cssClass = lineDecorationsOrginal[k].options.linesDecorationsClassName;
-                var line = lineDecorationsOrginal[k].range.startLineNumber;
+                let techs = lineDecorationsOrginal[k].options.technologies;
+                let cssClass = lineDecorationsOrginal[k].options.linesDecorationsClassName;
+                let line = lineDecorationsOrginal[k].range.startLineNumber;
                 
                 let mappedLine = line
                 for(let ml of this.lines) {
@@ -665,13 +665,13 @@ export default {
                 data[file.filename][mappedLine] = {'technologies': techs, 'selectionType': cssClass};
            }
            var lineDecorationsModified = this.decorationsObjectsRight;
-           for(var k = 0; k < lineDecorationsModified.length; k++) {
+           for(let k = 0; k < lineDecorationsModified.length; k++) {
                 if(typeof lineDecorationsModified[k] === 'undefined') {
                     continue;
                 }
-                var techs = lineDecorationsModified[k].options.technologies;
-                var cssClass = lineDecorationsModified[k].options.linesDecorationsClassName;
-                var line = lineDecorationsModified[k].range.startLineNumber;
+                let techs = lineDecorationsModified[k].options.technologies;
+                let cssClass = lineDecorationsModified[k].options.linesDecorationsClassName;
+                let line = lineDecorationsModified[k].range.startLineNumber;
 
                 let mappedLine = line
                 for(let ml of this.lines) {

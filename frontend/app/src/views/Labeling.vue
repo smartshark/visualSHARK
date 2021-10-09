@@ -24,9 +24,6 @@ export default {
     return {
     }
   },
-  components: {
-    alert
-  },
   computed: mapGetters({
     currentProject: 'currentProject'
   })

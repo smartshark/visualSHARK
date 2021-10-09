@@ -24,8 +24,8 @@
 
 
 </div>
-             <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next ></button>
-             <button class="btn btn-primary" v-on:click="back()" style="float: right;">< Previous</button>
+             <button class="btn btn-primary" v-on:click="next()" style="float: right;">Next &gt;</button>
+             <button class="btn btn-primary" v-on:click="back()" style="float: right;">&lt; Previous</button>
              <button class="btn btn-primary" v-on:click="top()" style="float: right;">Jump to top</button>
 
  </div>
@@ -194,7 +194,7 @@ export default {
             var action = {
                 id: 'backQ',
                 label: "Jump to previous diff",
-                keybindings: [ monaco.KeyCode.KEY_Q ],
+                keybindings: [ monaco.KeyCode.KEY_Q ],  // eslint-disable-line no-undef
                 precondition: null,
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
@@ -209,7 +209,7 @@ export default {
              var action2 = {
                 id: 'nextW',
                 label: "Jump to next diff",
-                keybindings: [ monaco.KeyCode.KEY_W ],
+                keybindings: [ monaco.KeyCode.KEY_W ],  // eslint-disable-line no-undef
                 precondition: null,
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
@@ -239,7 +239,7 @@ export default {
             var foldingContribModified = editor.getEditor().getModifiedEditor().getContribution('editor.contrib.folding');
             foldingContribModified.getFoldingModel().then(foldingModelModified => {
                 foldingContrib.getFoldingModel().then(foldingModel => {
-                    foldingModel.onDidChange((e) => {
+                    foldingModel.onDidChange(() => {
                         var regions = foldingModel.regions;
                         var regionsModified = foldingModelModified.regions;
                         let toToggle = [];
@@ -251,7 +251,7 @@ export default {
                         foldingModelModified.toggleCollapseState(toToggle);
                     });
 
-                    foldingModelModified.onDidChange((e) => {
+                    foldingModelModified.onDidChange(() => {
                         var regions = foldingModel.regions;
                         var regionsModified = foldingModelModified.regions;
                         let toToggle = [];
@@ -281,13 +281,13 @@ export default {
             });
         },
         addActionToEditor: function(editor) {
-           this.addSingleActionToEditor(editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');
-           this.addSingleActionToEditor(editor, '2', 'Whitespace', [ monaco.KeyCode.KEY_2 ], 'whitespace');
-           this.addSingleActionToEditor(editor, '3', 'Documentation', [ monaco.KeyCode.KEY_3 ], 'documentation');
-           this.addSingleActionToEditor(editor, '4', 'Refactoring', [ monaco.KeyCode.KEY_4 ], 'refactoring');
-           this.addSingleActionToEditor(editor, '5', 'Test', [ monaco.KeyCode.KEY_5 ], 'test');
-           this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');
-           this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');
+           this.addSingleActionToEditor(editor, '1', 'Bugfix', [ monaco.KeyCode.KEY_1 ], 'bugfix');  // eslint-disable-line no-undef
+           this.addSingleActionToEditor(editor, '2', 'Whitespace', [ monaco.KeyCode.KEY_2 ], 'whitespace');  // eslint-disable-line no-undef
+           this.addSingleActionToEditor(editor, '3', 'Documentation', [ monaco.KeyCode.KEY_3 ], 'documentation');  // eslint-disable-line no-undef
+           this.addSingleActionToEditor(editor, '4', 'Refactoring', [ monaco.KeyCode.KEY_4 ], 'refactoring');  // eslint-disable-line no-undef
+           this.addSingleActionToEditor(editor, '5', 'Test', [ monaco.KeyCode.KEY_5 ], 'test');  // eslint-disable-line no-undef
+           this.addSingleActionToEditor(editor, '6', 'Unrelated', [ monaco.KeyCode.KEY_6 ], 'unrelated');  // eslint-disable-line no-undef
+           this.addSingleActionToEditor(editor, '7', 'Remove label', [ monaco.KeyCode.KEY_7 ], '');  // eslint-disable-line no-undef
         },
         markLineInEditorLeftPre(lineNumber, className, editor, ed) {
           if(this.originalRequiredLines.includes(lineNumber)) {
@@ -297,7 +297,7 @@ export default {
             // in case there is no label only a pre label
             }else {
               this.decorationsObjectsLeft[lineNumber] = {
-                range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
                 options: {
                     isWholeLine: true,
                     glyphMarginClassName: className
@@ -354,7 +354,7 @@ export default {
                     } else {
                       console.log('mark line', lineNumber)
                     that.decorationsObjectsRight[lineNumber] = {
-                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                        range: new monaco.Range(lineNumber, 1, lineNumber, 1),  // eslint-disable-line no-undef
                         options: {
                             isWholeLine: true,
                             linesDecorationsClassName: className
@@ -418,7 +418,7 @@ export default {
             this.decorationsObjectsLeft[line].options.change = change
           }else {
             this.decorationsObjectsLeft[line] = {
-              range: new monaco.Range(line, 1, line, 1),
+              range: new monaco.Range(line, 1, line, 1),  // eslint-disable-line no-undef
               options: {
                   isWholeLine: true,
                   linesDecorationsClassName: label
@@ -433,7 +433,7 @@ export default {
         validateEditor: function() {
              var changes = this.$refs.editor.getEditor().getLineChanges();
              var isSomethingMissing = false;
-             var lineDecorationsOrginal = this.decorationsObjectsLeft;
+             var lineDecorationsOrginal = this.decorationsObjectsLeft;  // eslint-disable-line no-unused-vars
              var lineDecorationsModified = this.decorationsObjectsRight;
              this.missingChanges = [];
              if(changes == null)
@@ -443,7 +443,7 @@ export default {
                  var isThisMissing = false;
                  if(change.originalEndLineNumber != 0)
                  {
-                    for(var j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++)
+                    for(let j = change.originalStartLineNumber; j <= change.originalEndLineNumber; j++)
                     {
                     if(!this.hasLabelLeft(j)) {
                     isThisMissing = true;
@@ -453,7 +453,7 @@ export default {
                  }
                  if(change.modifiedEndLineNumber != 0)
                  {
-                    for(var j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
+                    for(let j = change.modifiedStartLineNumber; j <= change.modifiedEndLineNumber; j++)
                     {
                     if(typeof lineDecorationsModified[j] === 'undefined') {
                     isThisMissing = true;
@@ -486,8 +486,8 @@ export default {
                           if(!this.hasLabelLeft(k)) {
                             continue;
                           }
-                          var label = lineDecorationsOrginal[k].options.linesDecorationsClassName;
-                          var line = lineDecorationsOrginal[k].range.startLineNumber;
+                          let label = lineDecorationsOrginal[k].options.linesDecorationsClassName;
+                          let line = lineDecorationsOrginal[k].range.startLineNumber;
                 
                           let mappedLine = line
                           for(let ml of this.lines) {
@@ -504,8 +504,8 @@ export default {
                           if(typeof lineDecorationsModified[k] === 'undefined') {
                               continue;
                           }
-                          var label = lineDecorationsModified[k].options.linesDecorationsClassName;
-                          var line = lineDecorationsModified[k].range.startLineNumber;
+                          let label = lineDecorationsModified[k].options.linesDecorationsClassName;
+                          let line = lineDecorationsModified[k].range.startLineNumber;
 
                           let mappedLine = line
                           for(let ml of this.lines) {
@@ -543,7 +543,7 @@ export default {
             }
             for(let line = change.modifiedStartLineNumber; line <= change.modifiedEndLineNumber; line++) {
               newDecorationsRight.push({
-                range: new monaco.Range(line, 1, line, 1),
+                range: new monaco.Range(line, 1, line, 1),  // eslint-disable-line no-undef
                 options: {
                   isWholeLine: true,
                   linesDecorationsClassName: className

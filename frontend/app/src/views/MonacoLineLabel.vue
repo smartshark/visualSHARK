@@ -62,13 +62,12 @@
             </div>
             </div>
           </div>
-              <template v-for="c in commits">
+              <div v-for="c in commits">
                 <MonacoCommitDiffView :commit="c" :vcs_url="vcs_url" ref="commitDiffView" />
-              </template>
+              </div>
           </div>
 
     </div>
-  </div>
 </template>
 
 <script>
@@ -160,27 +159,24 @@ export default {
         },
         registerFoldingModel: function() {
             var that = this;
-            monaco.languages.registerFoldingRangeProvider("java", {
-                provideFoldingRanges: function(model, context, token) {
+            monaco.languages.registerFoldingRangeProvider("java", {  // eslint-disable-line no-undef
+                provideFoldingRanges: function(model, context, token) {  // eslint-disable-line no-unused-vars
                     var margin = 2;
                     var ranges = [];
                     // Detect editor
                     var editor = null;
-                    var isOrginial = false;
                     var editors = that.getEditors();
-                    for (var i = 0; i < editors.length; i++) {
+                    for (let i = 0; i < editors.length; i++) {
                         var currentEditor = editors[i].getEditor();
                         if (currentEditor.getOriginalEditor().getModel() == model) {
                             editor = currentEditor;
-                            isOrginial = true;
                         } else if (currentEditor.getModifiedEditor().getModel() == model) {
                             editor = currentEditor;
-                            isOrginial = false;
                         }
                     }
                     var startLine = 1;
                     var changes = editor.getLineChanges();
-                    for (var i = 0; i < changes.length; i++) {
+                    for (let i = 0; i < changes.length; i++) {
                         var change = changes[i];
                         var ende = change.originalStartLineNumber;
                         if (ende > change.modifiedStartLineNumber) {
@@ -190,7 +186,7 @@ export default {
                         var range = {
                             start: startLine,
                             end: ende,
-                            kind: monaco.languages.FoldingRangeKind.Region
+                            kind: monaco.languages.FoldingRangeKind.Region  // eslint-disable-line no-undef
                         };
                         ranges.push(range);
 
@@ -209,7 +205,7 @@ export default {
                     ranges.push({
                         start: startLine + margin,
                         end: model.getLineCount(),
-                        kind: monaco.languages.FoldingRangeKind.Region
+                        kind: monaco.languages.FoldingRangeKind.Region  // eslint-disable-line no-undef
                     });
                     return ranges;
                 }
@@ -226,7 +222,7 @@ export default {
         submitLabels : function() {
              // check if anything is missing
              var correct = [];
-             for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
+             for (let i = 0; i < this.$refs.commitDiffView.length; i++) {
                   correct = correct.concat(this.$refs.commitDiffView[i].validate());
                   this.$refs.commitDiffView[i].showValidation(true);
              }
@@ -239,7 +235,7 @@ export default {
              }
              // else collect data for transmit
              var data = {};
-             for (var i = 0; i < this.$refs.commitDiffView.length; i++) {
+             for (let i = 0; i < this.$refs.commitDiffView.length; i++) {
                  data = Object.assign({}, data, this.$refs.commitDiffView[i].getData());
              }
 
@@ -247,7 +243,7 @@ export default {
             this.$store.dispatch('pushLoading')
             var result = {labels : data, issue_id: this.issue.id}
             rest.saveLabelsOfCommits({ data : result, 'type': 'old_new' })
-            .then(response => {
+            .then(() => {
                 this.$store.dispatch('popLoading');
                 window.location.reload(false);
             })

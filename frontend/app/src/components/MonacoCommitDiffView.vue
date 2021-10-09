@@ -15,9 +15,9 @@
             <pre class="form-control">{{ commit.message }}</pre>
             </div>
             </div>
-            <template v-for="c in commit.changes">
+            <div v-for="c in commit.changes" :key="c.revision_hash">
                 <MonacoDiffView :file="c" :lines="c.lines" ref="diffView" />
-            </template>
+            </div>
             </div>
             </div>
 </div>

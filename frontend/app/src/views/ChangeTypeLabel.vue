@@ -98,7 +98,7 @@ export default {
     submit() {
       this.$store.dispatch('pushLoading')
       rest.setChangeType({data: this.commit})
-        .then(response => {
+        .then(() => {
           this.$store.dispatch('popLoading')
           this.commit = {}
           this.loadSample()

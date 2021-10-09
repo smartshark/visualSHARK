@@ -12,7 +12,8 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'vue/require-prop-type-constructor': 'off',
     'vue/require-v-for-key': 'off',
-    'vue/no-mutating-props': 'off'
+    'vue/no-mutating-props': 'off',
+    'no-console': 'off'
   },
   parserOptions: {
     parser: 'babel-eslint'

@@ -79,7 +79,7 @@ export default {
     unskip (id) {
       this.$store.dispatch('pushLoading')
       rest.unskipIssue(id)
-        .then(response => {
+        .then(() => {
             this.$store.dispatch('popLoading')
             this.triggerRefresh = true
         })

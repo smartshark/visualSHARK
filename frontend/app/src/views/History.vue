@@ -62,12 +62,6 @@ export default {
     currentVcsBranches: 'currentVcsBranches',
     isSuperuser: 'isSuperuser'
   }),
-  watch: {
-    currentVcs (value) {
-    }
-  },
-  methods: {
-  }
 }
 </script>
 

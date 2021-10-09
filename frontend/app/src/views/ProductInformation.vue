@@ -113,7 +113,7 @@ export default {
     schedulePlugin () {
       let dat = {plugin_ids: [this.runPlugin], url: this.currentVcs.url, project_mongo_ids: [this.currentProject.id], start_commit: this.currentProductComplete.start_commit, end_commit: this.currentProductComplete.end_commit, path_approach: this.currentProductComplete.label_path_approach, defect_label_name: this.currentProductComplete.defect_link_approach + '_bugfix', metric_approach: this.currentProductComplete.metrics_approach, dataset: this.currentProduct.name, file_ending: this.currentProductComplete.file_ending}
       rest.createOtherJob(dat)
-        .then(response => {
+        .then(() => {
           this.$store.dispatch('popLoading')
         })
         .catch(e => {

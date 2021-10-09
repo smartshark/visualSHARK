@@ -110,7 +110,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { alert, dropdown } from 'vue-strap'
+import { dropdown } from 'vue-strap'
 import hljs from 'highlight.js/lib/highlight';
 import java from 'highlight.js/lib/languages/java';
 import xml from 'highlight.js/lib/languages/xml';
@@ -139,7 +139,7 @@ export default {
     }
   },
   components: {
-    alert, dropdown
+    dropdown
   },
   computed: mapGetters({
     currentProject: 'currentProject',
@@ -160,7 +160,7 @@ export default {
       this.initializeModel()
       console.log(newValue)
     },
-    isDocumentation(oldValue, newValue) {
+    isDocumentation() {
       if(this.isDocumentation === true) {
         this.setAllModels('documentation')
       }
@@ -169,7 +169,7 @@ export default {
       }
       this.showDropdown = false
     },
-    isTest(oldValue, newValue) {
+    isTest() {
       if(this.isTest === true) {
         this.setAllModels('test')
       }
@@ -178,7 +178,7 @@ export default {
       }
       this.showDropdown = false
     },
-    isUnrelated(oldValue, newValue) {
+    isUnrelated() {
       if(this.isUnrelated === true) {
         this.setAllModels('unrelated')
       }
@@ -317,7 +317,7 @@ export default {
         }
       }
     },
-    selectOne(event) {
+    selectOne() {
       this.countSelected()
     },
     countSelected() {
@@ -345,7 +345,7 @@ export default {
       let end = parseInt(fp.dataset.line)
 
       let tmp = start
-      if(end > start) {
+      if(end > start) {  // eslint-disable-line no-empty
       }
       else if(end < start) {
         start = end
@@ -445,7 +445,7 @@ export default {
       this.checkComplete()
       this.countSelected()
     },
-    changeLabel(modelIdx) {
+    changeLabel() {
       // check completeness
       this.checkComplete()
     },

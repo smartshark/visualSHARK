@@ -221,7 +221,7 @@ export default {
         this.refresh()
       }
     },
-    perPage (value) {
+    perPage () {
       this.currentPage = 0
       this.refresh()
     },
@@ -255,11 +255,11 @@ export default {
       this.currentPage = page - 1
       this.refresh()
     },
-    next (event) {
+    next () {
       this.currentPage += 1
       this.refresh()
     },
-    prev (event) {
+    prev () {
       this.currentPage -= 1
       this.refresh()
     }

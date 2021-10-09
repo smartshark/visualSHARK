@@ -118,7 +118,7 @@ const getters = {
       if (pr.length > 0) {
         prId = pr[0].id
       }
-      pwvcs.push({vcs: vcs, its: its, ml: ml, prs: pr, id: item.id, name: item.name, vcs_id: vcsId, its_id: itsId, ml_id: mlId})
+      pwvcs.push({vcs: vcs, its: its, ml: ml, prs: pr, id: item.id, name: item.name, vcs_id: vcsId, its_id: itsId, ml_id: mlId, pr_id: prId})
     })
 
     return pwvcs

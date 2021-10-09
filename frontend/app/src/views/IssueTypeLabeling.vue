@@ -62,7 +62,6 @@
 <script>
 
 import { mapGetters } from 'vuex'
-import Grid from '@/components/Grid.vue'
 import rest from '../api/rest'
 
 export default {
@@ -78,9 +77,6 @@ export default {
       max: 0
     }
   },
-  components: {
-    Grid
-  },
   computed: mapGetters({
     gridIssues: 'gridIssues',
     currentProject: 'currentProject',
@@ -91,19 +87,19 @@ export default {
     this.loadRandomIssue()
   },
   watch: {
-    currentIts (value) {
+    currentIts () {
       this.loadRandomIssue()
     },
-    currentProject (value) {
+    currentProject () {
       this.loadRandomIssue()
     },
-    linked (value) {
+    linked () {
       this.loadRandomIssue()
     },
-    issueType (value) {
+    issueType () {
       this.loadRandomIssue()
     },
-    labeledByOtherUser (value) {
+    labeledByOtherUser () {
       this.loadRandomIssue()
     }
   },

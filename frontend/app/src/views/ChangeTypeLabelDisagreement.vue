@@ -125,7 +125,7 @@ export default {
     generate() {
       this.$store.dispatch('pushLoading')
       rest.setChangeTypeDisagreement({action: 'sync'})
-        .then(response => {
+        .then(() => {
           this.$store.dispatch('popLoading')
           this.commit = {}
           this.loadSample()
@@ -138,7 +138,7 @@ export default {
     submit() {
       this.$store.dispatch('pushLoading')
       rest.setChangeTypeDisagreement({data: this.commit, action: 'resolve'})
-        .then(response => {
+        .then(() => {
           this.$store.dispatch('popLoading')
           this.commit = {}
           this.loadSample()
