@@ -14,6 +14,8 @@ from visualSHARK.models import CommitGraph, VCSSystem, Commit, Project, FileActi
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
+# VCSSystem._meta['collection'] = 'v_c_s_system'
+
 
 class Command(BaseCommand):
     """Builds Graph representation of the commits for a VCS System and calculates positions of the nodes and saves it as JSON for later use in the CommitGraph View"""

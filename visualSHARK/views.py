@@ -63,11 +63,15 @@ from .util.helper import Label, TICKET_TYPE_MAPPING
 from .util.helper import get_change_view, refactoring_lines, get_correction_view, get_control_view
 from .util.line_label import get_commit_data, get_technology_commit, get_correction_data
 from .util.exporter import export_technology_labels
-
+from pycoshark.mongomodels import VCSSystem, Commit, File, Branch, Tag
+from bson import ObjectId  
 # from visibleSHARK.util.label import LabelPath
 # from mynbou.label import LabelPath
+import logging
+logger = logging.getLogger('django')
 
 log = logging.getLogger()
+# VCSSystem._meta['collection'] = 'v_c_s_system'
 
 
 class RelatedOrderingFilter(OrderingFilter):
@@ -990,8 +994,25 @@ class IssueLabelSet(APIView):
         # we need this for the commit urls
         vcs = VCSSystem.objects.get(project_id=issue_system.project_id)
         vcs_url = vcs.url.replace('.git', '') + '/commit/'
+        # try:
+        #     # This asks MongoEngine exactly what collection name it maps to:
+        #     mongoengine_collection = VCSSystem._get_collection_name()
+        #     logger.info(f"VCSSystem model is looking at MongoDB collection name: '{mongoengine_collection}'")
+            
+        #     # Check if it found any vcs_system_id
+        #     logger.info(f"Successfully loaded VCS system object from DB! ID is: {vcs.id}")
+        # except Exception as e:
+        #     logger.error(f"Failed to extract collection name log: {e}")
 
         issue_query = IssueValidation.objects.filter(issue_system_id=issue_system.id, linked=linked)
+
+        try:
+            logger.info(f"Front-end query params -> linked: {linked}, issue_type: {request.GET.get('issue_type')}, labeled_by_other_user: {request.GET.get('labeled_by_other_user')}")
+            logger.info(f"Target Issue System ID: {issue_system.id}")
+            logger.info(f"Raw Issue Count in DB: {issue_query.count()}")
+        except Exception as e:
+            logger.error(f"Logging failed: {e}")
+
         if request.GET["issue_type"] != "all":
             issue_query = issue_query.filter(issue_type_unified=request.GET["issue_type"])
         if request.GET["labeled_by_other_user"] == "true":
@@ -1162,9 +1183,24 @@ class IssueLinkSet(APIView):
         result['commits'] = []
         limit = int(request.GET["limit"])
         vcs_system = VCSSystem.objects.get(project_id=request.GET['project_id'])
+        # project_id = request.GET['project_id']
+        
+        # print(f"Incoming request for project_id string: '{project_id}'")
+
+        # # Fallback query structure: removes strict label dependencies to pull the data cleanly
+        # vcs_systems = VCSSystem.objects.filter(project_id=ObjectId(project_id))
+        # vcs_ids = [vcs.id for vcs in vcs_systems]
+
+        # # 2. Structure the query to use the actual collection mapping tokens
+        # raw_query = {
+        #     'validations': 'issue_links',
+        #     'vcs_system_ids': { '$in': vcs_ids } # Looks up matching array tags natively!
+        # }
         query = Commit.objects.filter(Q(vcs_system_id=vcs_system.id)).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
         result['max'] = query.count()
-        commits = query.order_by('?')[:limit]
+        print(f"Found {query.count()} validated commits matching this project signature.")
+        result['max'] = query.count()
+        commits = query[:limit]
         for commit in commits:
             if (commit.linked_issue_ids is not None and len(commit.linked_issue_ids)) > 0 or (commit.szz_issue_ids is not None and len(commit.szz_issue_ids) > 0):
                 result_commit = {}

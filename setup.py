@@ -8,7 +8,7 @@ setup(
     name='django-visualSHARK',
     version=VERSION,
     python_requires='>=3.6',
-    install_requires=['pycoshark>=1.0.21', 'networkx>=2.0', 'pika'],
+    install_requires=['pycoshark==1.4.5', 'networkx>=2.0', 'pika'],
     dependency_links=['git+https://github.com/smartshark/pycoSHARK.git@1.0.21#egg=pycoshark-1.0.21'],
     packages=find_packages(),
     include_package_data=True,

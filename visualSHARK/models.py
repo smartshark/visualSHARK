@@ -198,8 +198,8 @@ class IssueValidation(models.Model):
     issue_id = models.CharField(max_length=255)
     issue_type = models.TextField()
     issue_type_unified = models.TextField()
-    linked = models.BooleanField()
-    resolution = models.BooleanField()
+    linked = models.BooleanField(null=True, blank=True)
+    resolution = models.BooleanField(null=True, blank=True)
 
 
 class IssueValidationUser(models.Model):
