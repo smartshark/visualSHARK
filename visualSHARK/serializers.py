@@ -8,9 +8,9 @@ from rest_framework_mongoengine.fields import ObjectIdField
 from rest_framework import serializers as rserializers
 # from rest_framework import fields as rfields
 
-from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingList, File, MynbouData, Branch, Event, Hunk
+from .models import Commit, Project, VCSSystem, IssueSystem, FileAction, Tag, CodeEntityState, Issue, Message, People, MailingSystem, File, MynbouData, Branch, IssueEvent, Hunk
 from .models import CommitGraph, CommitLabelField, VSJob, VSJobType, CorrectionIssue, TechnologyLabelCommit, TechnologyLabel
-from .models import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestCommit, PullRequestFile, PullRequestReview
+from .models import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestFile, PullRequestReview
 
 
 class CommitLabelFieldSerializer(rserializers.ModelSerializer):
@@ -34,10 +34,15 @@ class CommitGraphSerializer(rserializers.ModelSerializer):
 
 
 class FileSerializer(serializers.DocumentSerializer):
+    vcs_system_ids = rserializers.SerializerMethodField()
 
     class Meta:
         model = File
-        fields = ('id', 'vcs_system_id', 'path')
+        fields = ('id', 'vcs_system_ids', 'path')
+    def get_vcs_system_ids(self, obj):
+        if hasattr(obj, 'vcs_system_ids') and obj.vcs_system_ids:
+            return [str(vcs_id) for vcs_id in obj.vcs_system_ids]
+        return []
 
 
 class PersonSerializer(serializers.DocumentSerializer):
@@ -49,21 +54,27 @@ class PersonSerializer(serializers.DocumentSerializer):
 
 class CommitSerializer(serializers.DocumentSerializer):
     first_message_line = rserializers.SerializerMethodField()  # that this works is pretty awesome
+    vcs_system_ids = rserializers.SerializerMethodField()
 
     class Meta:
         model = Commit
-        fields = ('vcs_system_id', 'first_message_line', 'revision_hash', 'committer_date')
+        fields = ('vcs_system_ids', 'first_message_line', 'revision_hash', 'committer_date')
 
     def get_first_message_line(self, obj):
         return obj.message.split('\n')[0]
+    def get_vcs_system_ids(self, obj):
+        if hasattr(obj, 'vcs_system_ids') and obj.vcs_system_ids:
+            return [str(vcs_id) for vcs_id in obj.vcs_system_ids]
+        return []
 
 
 class TagSerializer(serializers.DocumentSerializer):
     commit = CommitSerializer()
+    commit_id = rserializers.CharField()
 
     class Meta:
         model = Tag
-        fields = ('vcs_system_id', 'name', 'commit_id', 'message', 'tagger_id', 'date', 'date_offset', 'commit')
+        fields = ('name', 'commit_id', 'message', 'tagger_id', 'date', 'date_offset', 'commit')
 
 
 class TagListSerializer(rserializers.Serializer):
@@ -92,7 +103,7 @@ class SingleCommitSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = Commit
-        fields = ('commit_id', 'validations', 'parents', 'revision_hash', 'vcs_system_id', 'revision_hash', 'committer_date', 'author_date', 'message', 'branches', 'author_id', 'committer_id', 'author', 'committer', 'committer_date_offset', 'author_date_offset', 'tags', 'issue_links', 'validated_issue_links', 'labels')
+        fields = ('commit_id', 'validations', 'parents', 'revision_hash', 'vcs_system_ids', 'revision_hash', 'committer_date', 'author_date', 'message', 'branches', 'author_id', 'committer_id', 'author', 'committer', 'committer_date_offset', 'author_date_offset', 'tags', 'issue_links', 'validated_issue_links', 'labels')
 
 
 class RecSingleMessageSerializer(serializers.DocumentSerializer):
@@ -118,18 +129,19 @@ class SingleMessageSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = Message
-        fields = ('subject', 'body', 'date', 'sender', 'recipients', 'mailing_list_id', 'reference_ids', 'in_reply_to_id', 'cc_ids', 'patches')
+        fields = ('subject', 'body', 'date', 'sender', 'recipients', 'mailing_system_ids', 'reference_ids', 'in_reply_to_id', 'cc_ids', 'patches')
 
 
 class IssueEventSerializer(serializers.DocumentSerializer):
     author = PersonSerializer()
 
     class Meta:
-        model = Event
+        model = IssueEvent
         fields = ('created_at', 'author_id', 'author', 'status', 'old_value', 'new_value')
 
 
 class SingleIssueSerializer(serializers.DocumentSerializer):
+    id = rserializers.CharField(read_only=True)
     creator = PersonSerializer()
     reporter = PersonSerializer()
     assignee = PersonSerializer()
@@ -170,37 +182,41 @@ class ProjectSerializer(serializers.DocumentSerializer):
 class VcsSerializer(serializers.DocumentSerializer):
     class Meta:
         model = VCSSystem
-        fields = ('id', 'project_id', 'last_updated', 'repository_type', 'url')
+        fields = ('id', 'project_id', 'collection_date', 'repository_type', 'url')
 
 
 class BranchSerializer(serializers.DocumentSerializer):
     class Meta:
         model = Branch
-        fields = ('id', 'vcs_system_id', 'commit_id', 'name', 'is_origin_head')
+        fields = ('id', 'commit_id', 'name', 'is_origin_head')
 
 
 class IssueSystemSerializer(serializers.DocumentSerializer):
     class Meta:
         model = IssueSystem
-        fields = ('id', 'project_id', 'url', 'last_updated')
+        fields = ('id', 'project_id', 'url', 'collection_date')
 
 
 class MailingListSerializer(serializers.DocumentSerializer):
+    name = rserializers.CharField(source='url')
     class Meta:
-        model = MailingList
-        fields = ('id', 'project_id', 'name', 'last_updated')
+        model = MailingSystem
+        fields = ('id', 'url', 'project_id', 'collection_date', 'name')
 
 
 class IssueSerializer(serializers.DocumentSerializer):
+    issue_system_ids = rserializers.ListField(
+        child=rserializers.CharField()
+    )
     class Meta:
         model = Issue
-        fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status')
+        fields = ('id', 'external_id', 'issue_system_ids', 'title', 'desc', 'created_at', 'updated_at', 'status')
 
 
 class IssueLabelSerializer(serializers.DocumentSerializer):
     class Meta:
         model = Issue
-        fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution')
+        fields = ('id', 'external_id', 'issue_system_ids', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution')
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
@@ -211,7 +227,7 @@ class IssueLabelSerializer(serializers.DocumentSerializer):
 class IssueLabelConflictSerializer(serializers.DocumentSerializer):
     class Meta:
         model = Issue
-        fields = ('id', 'external_id', 'issue_system_id', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution', 'issue_type_manual')
+        fields = ('id', 'external_id', 'issue_system_ids', 'title', 'desc', 'created_at', 'updated_at', 'status', 'issue_type', 'resolution', 'issue_type_manual')
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
@@ -222,7 +238,7 @@ class IssueLabelConflictSerializer(serializers.DocumentSerializer):
 class MessageSerializer(serializers.DocumentSerializer):
     class Meta:
         model = Message
-        fields = ('id', 'mailing_list_id', 'subject', 'body', 'date')
+        fields = ('id', 'mailing_system_ids', 'subject', 'body', 'date')
 
 
 class PeopleSerializer(serializers.DocumentSerializer):
@@ -289,14 +305,21 @@ class PullRequestSystemSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = PullRequestSystem
-        fields = ('id', 'project_id', 'url', 'last_updated')
+        fields = ('id', 'project_id', 'url', 'collection_date')
 
 
 class PullRequestSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = PullRequest
-        fields = ('id', 'external_id', 'pull_request_system_id', 'title', 'description', 'created_at', 'updated_at', 'merged_at', 'state', 'labels')
+        fields = ('id', 'external_id', 'pull_request_system_ids', 'title', 'description', 'created_at', 'updated_at', 'merged_at', 'state', 'labels')
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Convert any raw ObjectIds inside the list to strings
+        if 'pull_request_system_ids' in data and data['pull_request_system_ids']:
+            data['pull_request_system_ids'] = [str(id_) for id_ in data['pull_request_system_ids']]
+        return data
 
 
 class PullRequestCommentSerializer(serializers.DocumentSerializer):
@@ -320,8 +343,8 @@ class PullRequestCommitSerializer(serializers.DocumentSerializer):
     committer = PersonSerializer(many=False)
 
     class Meta:
-        model = PullRequestCommit
-        fields = ('id', 'pull_request_id', 'commit_sha', 'message', 'author_id', 'committer_id', 'author', 'committer', 'commit_repo_url', 'parents', 'commit_id')
+        model = Commit
+        fields = ('id', 'revision_hash', 'message', 'author_id', 'committer_id', 'author', 'committer', 'parents', 'vcs_system_ids')
 
 
 class PullRequestFileSerializer(serializers.DocumentSerializer):
@@ -349,5 +372,5 @@ class SinglePullRequestSerializer(serializers.DocumentSerializer):
 
     class Meta:
         model = PullRequest
-        fields = ('id', 'external_id', 'pull_request_system_id', 'title', 'description', 'created_at', 'updated_at', 'merged_at',
+        fields = ('id', 'external_id', 'pull_request_system_ids', 'title', 'description', 'created_at', 'updated_at', 'merged_at',
                   'state', 'labels', 'comments', 'events', 'commits', 'files', 'reviews')

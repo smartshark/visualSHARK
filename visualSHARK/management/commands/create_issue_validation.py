@@ -56,7 +56,7 @@ class Command(BaseCommand):
             for issue_system in issue_systems:
                 print(f"Processing IssueSystem ID: {issue_system.id}")
                 
-                issues = Issue.objects.timeout(False).filter(issue_system_id=issue_system.id)
+                issues = Issue.objects.timeout(False).filter(issue_system_ids=issue_system.id)
                 # issues = Issue.objects.timeout(False).filter(__raw__={'issue_system_ids': issue_system.id})
                 print(f"Found {issues.count()} raw Issues inside this IssueSystem.")
 
@@ -91,7 +91,6 @@ class Command(BaseCommand):
                         issue_type_unified = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
                         if not issue_type_unified:
                             issue_type_unified = 'other'
-                            self.stdout.write(self.style.WARNING('[WARN]') + ' Issue type {} not found in unified mapping, setting to {}'.format(issue.issue_type, issue_type_unified))
 
                     validation, created = IssueValidation.objects.get_or_create(
                         project_id=project.id,

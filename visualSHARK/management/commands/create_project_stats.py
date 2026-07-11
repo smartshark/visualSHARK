@@ -5,7 +5,7 @@ from datetime import date
 
 from django.core.management.base import BaseCommand
 
-from visualSHARK.models import VCSSystem, Commit, Project, File, Issue, MailingList, Message, IssueSystem
+from visualSHARK.models import VCSSystem, Commit, Project, File, Issue, MailingSystem, Message, IssueSystem
 from visualSHARK.models import ProjectStats
 
 
@@ -32,25 +32,25 @@ class Command(BaseCommand):
 
             # vcs / commits
             for vcs in VCSSystem.objects.filter(project_id=pro.id):
-                tmp['number_commits'] += Commit.objects.filter(vcs_system_id=vcs.id).count()
-                tmp['number_files'] += File.objects.filter(vcs_system_id=vcs.id).count()
-                people += Commit.objects.filter(vcs_system_id=vcs.id).distinct('author_id')
-                people += Commit.objects.filter(vcs_system_id=vcs.id).distinct('committer_id')
+                tmp['number_commits'] += Commit.objects.filter(vcs_system_ids=vcs.id).count()
+                tmp['number_files'] += File.objects.filter(vcs_system_ids=vcs.id).count()
+                people += Commit.objects.filter(vcs_system_ids=vcs.id).distinct('author_id')
+                people += Commit.objects.filter(vcs_system_ids=vcs.id).distinct('committer_id')
 
             # issue systems / issues
             for iss in IssueSystem.objects.filter(project_id=pro.id):
-                tmp['number_issues'] += Issue.objects.filter(issue_system_id=iss.id).count()
-                people += Issue.objects.filter(issue_system_id=iss.id).distinct('creator_id')
-                people += Issue.objects.filter(issue_system_id=iss.id).distinct('reporter_id')
-                people += Issue.objects.filter(issue_system_id=iss.id).distinct('assignee_id_id')
+                tmp['number_issues'] += Issue.objects.filter(issue_system_ids=iss.id).count()
+                people += Issue.objects.filter(issue_system_ids=iss.id).distinct('creator_id')
+                people += Issue.objects.filter(issue_system_ids=iss.id).distinct('reporter_id')
+                people += Issue.objects.filter(issue_system_ids=iss.id).distinct('assignee_id_id')
 
             # mailinglist / emails
-            for ml in MailingList.objects.filter(project_id=pro.id):
-                tmp['number_messages'] += Message.objects.filter(mailing_list_id=ml.id).count()
-                people += Message.objects.filter(mailing_list_id=ml.id).distinct('from_id')
-                for pidlist in Message.objects.filter(mailing_list_id=ml.id).values_list('to_ids'):
+            for ml in MailingSystem.objects.filter(project_id=pro.id):
+                tmp['number_messages'] += Message.objects.filter(mailing_system_ids=ml.id).count()
+                people += Message.objects.filter(mailing_system_ids=ml.id).distinct('from_id')
+                for pidlist in Message.objects.filter(mailing_system_ids=ml.id).values_list('to_ids'):
                     people += pidlist
-                for pidlist in Message.objects.filter(mailing_list_id=ml.id).values_list('cc_ids'):
+                for pidlist in Message.objects.filter(mailing_system_ids=ml.id).values_list('cc_ids'):
                     people += pidlist
 
             unic = list(set(people))

@@ -254,7 +254,7 @@ def get_technology_commit(project_path, commit, labels):
             continue
 
         # for now we are only interested in cs files
-        if not f.path.endswith('.cs'):
+        if not f.path.lower().endswith(('.cs', '.py')):
             continue
 
         # print('open file', source_file, end='')

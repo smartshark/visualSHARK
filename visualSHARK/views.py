@@ -39,13 +39,13 @@ from mongoengine.queryset.visitor import Q
 from bson.objectid import ObjectId
 
 from .models import Commit, Project, VCSSystem, IssueSystem, Token, People, FileAction, File, Tag, CodeEntityState, \
-    Issue, Message, MailingList, MynbouData, TravisBuild, Branch, Event, Hunk, ProjectAttributes
+    Issue, Message, MailingSystem, MynbouData, TravisBuild, Branch, IssueEvent, Hunk, ProjectAttributes
 from .models import CommitGraph, CommitLabelField, ProjectStats, VSJob, VSJobType, IssueValidation, IssueValidationUser, UserProfile
 from .models import LeaderboardSnapshot
 from .models import CorrectionIssue
 from .models import ChangeTypeLabel, ChangeTypeLabelDisagreement
 from .models import TechnologyLabelCommit, TechnologyLabel
-from .models import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestCommit, PullRequestFile, PullRequestReview
+from .models import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestFile, PullRequestReview
 
 from .serializers import CommitSerializer, ProjectSerializer, VcsSerializer, IssueSystemSerializer, AuthSerializer, SingleCommitSerializer, FileActionSerializer, TagSerializer, CodeEntityStateSerializer, IssueSerializer, PeopleSerializer, MessageSerializer, SingleIssueSerializer, MailingListSerializer, FileSerializer, BranchSerializer, HunkSerializer
 from .serializers import CommitGraphSerializer, CommitLabelFieldSerializer, ProductSerializer, SingleMessageSerializer, VSJobSerializer, IssueLabelSerializer, IssueLabelConflictSerializer
@@ -177,7 +177,7 @@ class TagViewSet(MongoReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     ordering_fields = ('name', 'date')
-    filter_fields = ('vcs_system_id', 'name')
+    filter_fields = ('vcs_system_ids', 'name')
     mongo_search_fields = ('name',)
 
     def _inject_data(self, qry):
@@ -202,9 +202,9 @@ class TagViewSet(MongoReadOnlyModelViewSet):
 class CommitViewSet(MongoReadOnlyModelViewSet):
     """API Endpoint for Commits."""
     read_perm = 'view_commits'
-    queryset = Commit.objects.only('id', 'revision_hash', 'vcs_system_id', 'committer_date', 'committer_date_offset', 'author_date', 'author_date_offset', 'message', 'committer_id', 'author_id', 'labels', 'linked_issue_ids', 'branches', 'parents')
+    queryset = Commit.objects.only('id', 'revision_hash', 'vcs_system_ids', 'committer_date', 'committer_date_offset', 'author_date', 'author_date_offset', 'message', 'committer_id', 'author_id', 'labels', 'linked_issue_ids', 'branches', 'parents')
     serializer_class = CommitSerializer
-    filter_fields = ('revision_hash', 'vcs_system_id', 'committer_date__gte', 'committer_date__lt')
+    filter_fields = ('revision_hash', 'vcs_system_ids', 'committer_date__gte', 'committer_date__lt')
     ordering_fields = ('id', 'revision_hash', 'committer_date')
     mongo_search_fields = ('revision_hash', 'committer_date', 'message')
 
@@ -218,9 +218,9 @@ class CommitViewSet(MongoReadOnlyModelViewSet):
 
     def retrieve(self, request, id=None):
         """Add additional information the each commit."""
-        vcs_system_id = self.request.query_params.get('vcs_system_id', None)
+        vcs_system_id = self.request.query_params.get('vcs_system_ids', None)
         if vcs_system_id:
-            commit = Commit.objects.get(vcs_system_id=vcs_system_id, revision_hash=id)
+            commit = Commit.objects.get(vcs_system_ids=vcs_system_id, revision_hash=id)
         else:
             commit = Commit.objects.get(revision_hash=id)
 
@@ -272,7 +272,7 @@ class FileActionViewSet(MongoReadOnlyModelViewSet):
             c = self.request.query_params.get('commit_id', None)
             if c:
                 commit = Commit.objects.get(id=c)
-                q_objects = Q(file_id__in=File.objects.filter(vcs_system_id=commit.vcs_system_id, path__icontains=search).values_list('id'))
+                q_objects = Q(file_id__in=File.objects.filter(vcs_system_ids=commit.vcs_system_id, path__icontains=search).values_list('id'))
             else:
                 q_objects = Q(file_id__in=File.objects.filter(path__icontains=search).values_list('id'))
             qry = qry.filter(q_objects)
@@ -353,7 +353,7 @@ class FileViewSet(MongoReadOnlyModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
     ordering_fields = ('path',)
-    filter_fields = ('vcs_system_id', 'path', 'id')
+    filter_fields = ('vcs_system_ids', 'path', 'id')
     mongo_search_fields = ('path',)
 
 
@@ -372,7 +372,7 @@ class PullRequestViewSet(MongoReadOnlyModelViewSet):
     read_perm = 'view_pull_requests'
     queryset = PullRequest.objects.all()
     serializer_class = PullRequestSerializer
-    filter_fields = ('project_id', 'state', 'title', 'pull_request_system_id')
+    filter_fields = ('project_id', 'state', 'title', 'pull_request_system_ids')
     ordering_fields = ('state', 'external_id', 'title', 'created_at', 'updated_at', 'merged_at')
     mongo_search_fields = ('title',)
 
@@ -392,7 +392,7 @@ class PullRequestViewSet(MongoReadOnlyModelViewSet):
             dat['events'].append(c)
 
         dat['commits'] = []
-        for c in PullRequestCommit.objects.filter(pull_request_id=id):
+        for c in Commit.objects.filter(pull_request_id=id):
             c.author = People.objects.get(id=c.author_id)
             c.committer = People.objects.get(id=c.committer_id)
             dat['commits'].append(c)
@@ -405,7 +405,7 @@ class PullRequestViewSet(MongoReadOnlyModelViewSet):
         for c in PullRequestReview.objects.filter(pull_request_id=id):
             c.creator = People.objects.get(id=c.creator_id)
             if c.pull_request_commit_id:
-                c.pull_request_commit = PullRequestCommit.objects.get(id=c.pull_request_commit_id)
+                c.pull_request_commit = Commit.objects.get(id=c.pull_request_commit_id)
                 c.pull_request_commit.author = People.objects.get(id=c.pull_request_commit.author_id)
                 c.pull_request_commit.committer = People.objects.get(id=c.pull_request_commit.committer_id)
             dat['reviews'].append(c)
@@ -454,7 +454,7 @@ class IssueSystemViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MailingListViewSet(viewsets.ReadOnlyModelViewSet):
     read_perm = 'view_messages'
-    queryset = MailingList.objects.all()
+    queryset = MailingSystem.objects.all()
     serializer_class = MailingListSerializer
     filter_fields = ('project_id')
 
@@ -463,7 +463,7 @@ class BranchViewSet(viewsets.ReadOnlyModelViewSet):
     read_perm = 'view_commits'
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
-    filter_fields = ('vcs_system_id')
+    filter_fields = ('vcs_system_ids')
 
 
 class IssueViewSet(MongoReadOnlyModelViewSet):
@@ -471,7 +471,7 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
     ordering_fields = ('external_id', 'title', 'created_at', 'updated_at', 'status')
-    filter_fields = ('issue_system_id', 'external_id', 'title', 'status')
+    filter_fields = ('issue_system_ids', 'external_id', 'title', 'status')
     mongo_search_fields = ('title',)
 
     def get_queryset(self):
@@ -498,12 +498,12 @@ class IssueViewSet(MongoReadOnlyModelViewSet):
             dat['assignee'] = People.objects.get(id=r.assignee_id)
 
         dat['events'] = []
-        for e in Event.objects.filter(issue_id=r.id).order_by('created_at'):
+        for e in IssueEvent.objects.filter(issue_id=r.id).order_by('created_at'):
             ev = {'created_at': e.created_at, 'author_id': e.author_id, 'status': e.status, 'old_value': e.old_value, 'new_value': e.new_value}
             ev['author'] = People.objects.get(id=e.author_id)
             dat['events'].append(ev)
         serializer = SingleIssueSerializer(dat)
-        return Response(serializer.data)
+        return Response(json.loads(json.dumps(serializer.data, default=str)))
 
 
 class PeopleViewSet(MongoReadOnlyModelViewSet):
@@ -521,7 +521,7 @@ class MessageViewSet(MongoReadOnlyModelViewSet):
 
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    filter_fields = ('mailing_list_id',)
+    filter_fields = ('mailing_system_ids',)
     ordering_fields = ('subject', 'date')
     mongo_search_fields = ('subject',)
 
@@ -603,9 +603,9 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
 
         if travis:
             travis_states = travis.split(',')
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id).only(['revision_hash', 'id']):
+            for v in Commit.objects.filter(vcs_system_ids=vcs_system_id).only(['revision_hash', 'id']):
                 states = []
-                for tj in TravisBuild.objects.filter(vcs_system_id=vcs_system_id, commit_id=v.id):
+                for tj in TravisBuild.objects.filter(vcs_system_ids=vcs_system_id, commit_id=v.id):
                     if tj.state.upper() not in travis_states:
                         continue
                     states.append('travis_{}'.format(tj.state))
@@ -618,7 +618,7 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
             for lid in label.split(','):
                 labelfield = CommitLabelField.objects.get(pk=lid)
                 label_name = '{}_{}'.format(labelfield.approach, labelfield.name)
-                qry = {'vcs_system_id': vcs_system_id, 'labels__{}'.format(label_name): True}
+                qry = {'vcs_system_ids': vcs_system_id, 'labels__{}'.format(label_name): True}
 
                 for c in Commit.objects.filter(**qry).only('revision_hash'):
                     if c.revision_hash in response.keys():
@@ -627,13 +627,13 @@ class CommitGraphViewSet(rviewsets.ReadOnlyModelViewSet):
                         response[c.revision_hash] = [label_name]
 
         if search:
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id, message__icontains=search).only('revision_hash'):
+            for v in Commit.objects.filter(vcs_system_ids=vcs_system_id, message__icontains=search).only('revision_hash'):
                 if v.revision_hash in response.keys():
                     response[v.revision_hash].append('search')
                 else:
                     response[v.revision_hash] = ['search']
 
-            for v in Commit.objects.filter(vcs_system_id=vcs_system_id, revision_hash__icontains=search).only('revision_hash'):
+            for v in Commit.objects.filter(vcs_system_ids=vcs_system_id, revision_hash__icontains=search).only('revision_hash'):
                 if v.revision_hash in response.keys():
                     response[v.revision_hash].append('search')
                 else:
@@ -842,19 +842,25 @@ class ReleaseView(APIView):
     read_perm = 'view_analytics'
 
     def get(self, request):
-        vcs_system_id = request.GET.get('vcs_system_id', None)
+        vcs_system_id = request.GET.get('vcs_system_ids', None)
 
         # its a get request
         discard_qualifiers = request.GET.get('discard_qualifiers', True) == 'true'
         discard_patch = request.GET.get('discard_patch', True) == 'true'
         discard_fliers = request.GET.get('discard_fliers', True) == 'true'
 
-        vcs = VCSSystem.objects.get(id=vcs_system_id)
-        project = Project.objects.get(id=vcs.project_id)
-
-        versions = tag_filter(project.name, Tag.objects.filter(vcs_system_id=vcs_system_id), discard_qualifiers=discard_qualifiers, discard_patch=discard_patch, discard_fliers=discard_fliers)
+        vcs = VCSSystem._get_collection().database["v_c_s_system"].find_one({"_id": ObjectId(vcs_system_id)})
+        if vcs:
+            project = Project.objects.filter(id=vcs.get("project_id")).first()
+            versions = tag_filter(project.name, Tag.objects.filter(vcs_system_ids=vcs_system_id), discard_qualifiers=discard_qualifiers, discard_patch=discard_patch, discard_fliers=discard_fliers)
+        else:
+            project = None
+            versions = []
+        
         history = {'count': len(versions), 'results': versions}
         # print(history)
+
+        
         return Response(history)
 
 
@@ -981,7 +987,7 @@ class IssueLabelSet(APIView):
         if 'issue_system_id' in request.GET.keys():
             issue_system = IssueSystem.objects.get(id=request.GET["issue_system_id"])
         else:
-            issue_system = IssueSystem.objects.get(project_id=request.GET['project_id'])
+            issue_system = IssueSystem.objects.filter(project_id=request.GET['project_id']).first()
 
         if 'jira' in issue_system.url:
             base_url = 'https://issues.apache.org/jira/browse/'
@@ -1018,7 +1024,7 @@ class IssueLabelSet(APIView):
             issue_ids.append(iv.issue_id)
 
         issue_id_links = {}
-        for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):
+        for c in Commit.objects.filter(vcs_system_ids=vcs.id, linked_issue_ids__in=issue_ids):
             for iid in c.linked_issue_ids:
                 key = str(iid)
                 if key not in issue_id_links.keys():
@@ -1032,6 +1038,8 @@ class IssueLabelSet(APIView):
             data = serializer.data
             data['url'] = base_url + issue.external_id
 
+            if 'issue_system_ids' in data and data['issue_system_ids']:
+                data['issue_system_ids'] = [str(x) for x in data['issue_system_ids']]
             if str(issue_id) not in issue_id_links.keys():
                 data['links'] = []
             else:
@@ -1119,7 +1127,7 @@ class IssueConflictSet(APIView):
                 result['max'] -= 1
 
         issue_id_links = {}
-        for c in Commit.objects.filter(vcs_system_id=vcs.id, linked_issue_ids__in=issue_ids):
+        for c in Commit.objects.filter(vcs_system_ids=vcs.id, linked_issue_ids__in=issue_ids):
             for iid in c.linked_issue_ids:
                 key = str(iid)
                 if key not in issue_id_links.keys():
@@ -1173,7 +1181,7 @@ class IssueLinkSet(APIView):
         result['commits'] = []
         limit = int(request.GET["limit"])
         vcs_system = VCSSystem.objects.get(project_id=request.GET['project_id'])
-        query = Commit.objects.filter(Q(vcs_system_id=vcs_system.id)).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
+        query = Commit.objects.filter(Q(vcs_system_ids=vcs_system.id)).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
         result['max'] = query.count()
         print(f"Found {query.count()} validated commits matching this project signature.")
         result['max'] = query.count()
@@ -1251,21 +1259,14 @@ class TechnologyLabeling(APIView):
         # sample commits, very simple, get first commit which changes at least one csharp file
         sample_commit = None
         skip_commit = False
-        for c in Commit.objects.filter(vcs_system_id=vcs.id, parents__1__exists=False, parents__0__exists=True).only('revision_hash', 'parents', 'message'):
+        for c in Commit.objects.filter(vcs_system_ids=vcs.id, parents__1__exists=False, parents__0__exists=True).only('revision_hash', 'parents', 'message'):
 
             if TechnologyLabelCommit.objects.filter(user=user, revision_hash=c.revision_hash).count() > 0:
                 continue
 
             for fa in FileAction.objects.filter(commit_id=c.id):
-                # skip the fa if the user already has labeled this
-                # want = {'file_action_id': fa.id,
-                #         'technologies_manual__{}__exists'.format(request.user.username): True}
-                # if Hunk.objects.filter(**want).count() > 0:
-                #     skip_commit = True
-                #     continue
-
                 f = File.objects.get(id=fa.file_id)
-                if f.path.lower().endswith('.cs') and fa.mode.lower() != 'd':
+                if f.path.lower().endswith(('.cs', '.py')) and fa.mode.lower() != 'd':
                     sample_commit = c
                     break
 
@@ -1303,7 +1304,7 @@ class TechnologyLabeling(APIView):
             sample_commit = self._sample_commit(vcs, request.user)
             commits = get_technology_commit(project_path, sample_commit, {})
         else:
-            sample_commit = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=tlc.revision_hash)
+            sample_commit = Commit.objects.get(vcs_system_ids=vcs.id, revision_hash=tlc.revision_hash)
             commits = get_technology_commit(project_path, sample_commit, json.loads(tlc.changes))
 
         # print(sample_commit.revision_hash)
@@ -1330,7 +1331,7 @@ class TechnologyLabeling(APIView):
         p = Project.objects.get(name=project_name)
         vcs = VCSSystem.objects.get(project_id=p.id)
 
-        commit = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=revision_hash)
+        commit = Commit.objects.get(vcs_system_ids=vcs.id, revision_hash=revision_hash)
 
         project_path = settings.LOCAL_REPOSITORY_PATH + p.name
         to_save = {}
@@ -1445,7 +1446,11 @@ class LineLabelSet(APIView):
 
     def _last_training_issue(self, username):
         for external_id in self.training_issues:
-            i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
+            try:
+                i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
+            except Exception:
+                # Fallback: find any available bug or simply the first issue in the collection
+                i = Issue.objects.filter(issue_type_verified='bug').first() or Issue.objects.first()
             for c in Commit.objects.filter(fixed_issue_ids=i.id).only('id'):
                 for fa in FileAction.objects.filter(commit_id=c.id):
                     for h in Hunk.objects.filter(file_action_id=fa.id):
@@ -1469,8 +1474,10 @@ class LineLabelSet(APIView):
                 return tr
 
         p = Project.objects.get(name=project_name)
-        its = IssueSystem.objects.get(project_id=p.id)
-        issues = list(Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug').order_by('?'))
+        its_list = IssueSystem.objects.filter(project_id=p.id)
+        log.debug("Found {} issue systems for this project".format(len(its_list)))
+        its = its_list.first()
+        issues = list(Issue.objects.filter(issue_system_ids=its.id, issue_type_verified='bug').order_by('?'))
         random.shuffle(issues)
 
         issue = None
@@ -1611,8 +1618,8 @@ class LineLabelSet(APIView):
                 revision_hash, parent_revision_hash, file_name = key.split('_')[0], key.split('_')[1], '_'.join(key.split('_')[2:])  # ugly :-(
 
                 # these are just sanity checks, the only important informaiton is the hunk_id
-                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_id=vcs.id)
-                f = File.objects.get(path=file_name, vcs_system_id=vcs.id)
+                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_ids=vcs.id)
+                f = File.objects.get(path=file_name, vcs_system_ids=vcs.id)
                 fa = FileAction.objects.get(commit_id=c.id, file_id=f.id, parent_revision_hash=parent_revision_hash)
 
                 write_changes = {}
@@ -1646,6 +1653,7 @@ class LineLabelSet(APIView):
     def get(self, request):
 
         project_name = request.GET.get('project_name', None)
+        log.debug('Found project named {}'.format(project_name))
         if not project_name:
             log.error('got no project')
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
@@ -1653,6 +1661,7 @@ class LineLabelSet(APIView):
         # if the user has no last_issue_id sample one
         load_last = False
         if not request.user.profile.line_label_last_issue_id:
+            log.debug('Get sample issue for user {}'.format(request.user))
             issue = self._sample_issue(request.user, project_name)
 
             if issue:
@@ -1728,7 +1737,7 @@ class LineLabelControlSet(APIView):
         project = Project.objects.get(name=ci.project_name)
         its = IssueSystem.objects.get(project_id=project.id)
 
-        issue = Issue.objects.get(external_id=external_id, issue_system_id=its.id)
+        issue = Issue.objects.get(external_id=external_id, issue_system_ids=its.id)
 
         if issue is None:
             return Response({'warning': 'no_more_issues', 'skipped': CorrectionIssue.objects.filter(user=user, is_skipped=True).count()})
@@ -1797,7 +1806,7 @@ class LineLabelCorrectionSet(APIView):
 
         p = Project.objects.get(name=ci.project_name)
         its = IssueSystem.objects.get(project_id=p.id)
-        issue = Issue.objects.get(external_id=ci.external_id, issue_system_id=its.id)
+        issue = Issue.objects.get(external_id=ci.external_id, issue_system_ids=its.id)
         return issue, p
 
     def get(self, request):
@@ -1911,8 +1920,8 @@ class LineLabelCorrectionSet(APIView):
                 revision_hash, parent_revision_hash, file_name = key.split('_')[0], key.split('_')[1], '_'.join(key.split('_')[2:])  # ugly :-(
 
                 # these are just sanity checks, the only important informaiton is the hunk_id
-                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_id=vcs.id)
-                f = File.objects.get(path=file_name, vcs_system_id=vcs.id)
+                c = Commit.objects.get(revision_hash=revision_hash, vcs_system_ids=vcs.id)
+                f = File.objects.get(path=file_name, vcs_system_ids=vcs.id)
                 fa = FileAction.objects.get(commit_id=c.id, file_id=f.id, parent_revision_hash=parent_revision_hash)
 
                 write_changes = {}
@@ -2020,7 +2029,7 @@ class ChangeTypeLabelViewSet(APIView):
         p = Project.objects.get(name=cl.project_name)
         vcs = VCSSystem.objects.get(project_id=p.id)
 
-        c = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=cl.revision_hash)
+        c = Commit.objects.get(vcs_system_ids=vcs.id, revision_hash=cl.revision_hash)
 
         issues = []
         for issue_id in c.linked_issue_ids:
@@ -2096,7 +2105,7 @@ class ChangeTypeLabelDisagreementViewSet(APIView):
         p = Project.objects.get(name=d.project_name)
         vcs = VCSSystem.objects.get(project_id=p.id)
 
-        c = Commit.objects.get(vcs_system_id=vcs.id, revision_hash=d.revision_hash)
+        c = Commit.objects.get(vcs_system_ids=vcs.id, revision_hash=d.revision_hash)
 
         finished = ChangeTypeLabelDisagreement.objects.filter(has_label=True).count()
         todo = ChangeTypeLabelDisagreement.objects.filter(has_label=False).count()
@@ -2149,10 +2158,10 @@ class LeaderboardSet(APIView):
         return user.replace('.', '')  # duplicate! also in LineLabelSet
 
     def get(self, request):
-        lb = LeaderboardSnapshot.objects.order_by('-created_at')[0]
+        lb = LeaderboardSnapshot.objects.order_by('-created_at').first()
         ret = {}
         anon = 0
-        for k, v in json.loads(lb.data).items():
+        for k, v in json.loads(lb.data if lb else "{}").items():
             if k not in ret.keys():
                 ret[k] = {}
             if k == 'users':
@@ -2168,4 +2177,4 @@ class LeaderboardSet(APIView):
             else:
                 ret[k] = v
 
-        return Response({'board': ret['users'], 'projects': ret['projects'], 'last_updated': lb.created_at})
+        return Response({'board': ret.get('users', []), 'projects': ret.get('projects', []), 'collection_date': getattr(lb, 'created_at', None)})

@@ -8,3 +8,4 @@ docs/build
 *build/*
 *.egg-info
 *.env.development.local
+*.pickle

@@ -44,7 +44,10 @@ def send_to_queue(queue, data):
 
     credentials = pika.PlainCredentials(user, password)
     parameters = pika.ConnectionParameters(server, int(port), vhost, credentials, ssl=ssl)
-    connection = pika.BlockingConnection(parameters)
+    try:
+        connection = pika.BlockingConnection(parameters)
+    except pika.exceptions.AMQPConnectionError:
+        return False
 
     channel = connection.channel()
     channel.queue_declare(queue=queue, durable=True)

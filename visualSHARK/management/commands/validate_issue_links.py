@@ -7,8 +7,7 @@ import sys
 import re
 
 from django.core.management.base import BaseCommand
-from mongoengine.fields import ListField, ObjectIdField
-from visualSHARK.models import Issue, VCSSystem, Project, Commit
+from visualSHARK.models import Issue, Project, Commit
 
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
@@ -20,10 +19,6 @@ e.setLevel(logging.ERROR)
 
 log.addHandler(i)
 log.addHandler(e)
-
-# if 'vcs_system_ids' not in Commit._fields:
-#     Commit._fields['vcs_system_ids'] = ListField(ObjectIdField(), db_field='vcs_system_ids', default=list)
-#     Commit._db_field_map['vcs_system_ids'] = 'vcs_system_ids'
 
 class Command(BaseCommand):
 
@@ -49,8 +44,7 @@ class Command(BaseCommand):
             __raw__={
                 'linked_issue_ids.0': {'$exists': True}
             }
-        # ).only('id', 'revision_hash', 'vcs_system_ids', 'linked_issue_ids', 'message', 'labels', 'szz_issue_ids')
-        ).only('id', 'revision_hash', 'vcs_system_id', 'linked_issue_ids', 'message', 'labels', 'szz_issue_ids')
+        ).only('id', 'revision_hash', 'vcs_system_ids', 'linked_issue_ids', 'message', 'labels', 'szz_issue_ids')
 
         print(f"Found {commits_query.count()} raw commits with active issue associations.")
 

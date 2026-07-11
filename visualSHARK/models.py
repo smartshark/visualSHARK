@@ -13,8 +13,8 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
 from mongoengine import connect
-from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingList, Event, MynbouData, TravisBuild, Branch, Hunk, Refactoring
-from pycoshark.mongomodels import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestCommit, PullRequestFile, PullRequestReview, PullRequestReviewComment
+from pycoshark.mongomodels import Project, VCSSystem, Commit, Tag, File, CodeEntityState, FileAction, People, IssueSystem, Issue, Message, MailingSystem, IssueEvent, MynbouData, TravisBuild, Branch, Hunk, Refactoring
+from pycoshark.mongomodels import PullRequestSystem, PullRequest, PullRequestComment, PullRequestEvent, PullRequestFile, PullRequestReview, PullRequestReviewComment
 
 from visualSHARK.util.rmq import send_to_queue, send_to_user
 
@@ -51,8 +51,8 @@ if not settings.TESTING:
     IssueSystem._meta = remove_index(IssueSystem)
     Issue._meta = remove_index(Issue)
     Message._meta = remove_index(Message)
-    MailingList._meta = remove_index(MailingList)
-    Event._meta = remove_index(Event)
+    MailingSystem._meta = remove_index(MailingSystem)
+    IssueEvent._meta = remove_index(IssueEvent)
     TravisBuild._meta = remove_index(TravisBuild)
     MynbouData._meta = remove_index(MynbouData)
     Branch._meta = remove_index(Branch)
@@ -63,7 +63,6 @@ if not settings.TESTING:
     PullRequest._meta = remove_index(PullRequest)
     PullRequestComment._meta = remove_index(PullRequestComment)
     PullRequestEvent._meta = remove_index(PullRequestEvent)
-    PullRequestCommit._meta = remove_index(PullRequestCommit)
     PullRequestFile._meta = remove_index(PullRequestFile)
     PullRequestReview._meta = remove_index(PullRequestReview)
     PullRequestReviewComment._meta = remove_index(PullRequestReviewComment)

@@ -29,7 +29,7 @@ class Command(BaseCommand):
             its = IssueSystem.objects.get(project_id=p.id)
 
             # 1. verified bug issues
-            for i in Issue.objects.filter(issue_system_id=its.id, issue_type_verified='bug'):
+            for i in Issue.objects.filter(issue_system_ids=its.id, issue_type_verified='bug'):
 
                 # 2. only linked ids
                 if Commit.objects.filter(fixed_issue_ids=i.id).count() == 0:
