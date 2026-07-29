@@ -1183,7 +1183,7 @@ class IssueLinkSet(APIView):
         vcs_system = VCSSystem.objects.get(project_id=request.GET['project_id'])
         query = Commit.objects.filter(Q(vcs_system_ids=vcs_system.id)).filter(Q(validations__ne='issue_links')).filter(Q(labels__issueonly_bugfix=True) | Q(labels__adjustedszz_bugfix=True)).only('id', 'message', 'linked_issue_ids', 'labels', 'szz_issue_ids')
         result['max'] = query.count()
-        print(f"Found {query.count()} validated commits matching this project signature.")
+        log.info(f"Found {query.count()} validated commits matching this project signature.")
         result['max'] = query.count()
         commits = query[:limit]
         for commit in commits:
@@ -1446,11 +1446,7 @@ class LineLabelSet(APIView):
 
     def _last_training_issue(self, username):
         for external_id in self.training_issues:
-            try:
-                i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
-            except Exception:
-                # Fallback: find any available bug or simply the first issue in the collection
-                i = Issue.objects.filter(issue_type_verified='bug').first() or Issue.objects.first()
+            i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
             for c in Commit.objects.filter(fixed_issue_ids=i.id).only('id'):
                 for fa in FileAction.objects.filter(commit_id=c.id):
                     for h in Hunk.objects.filter(file_action_id=fa.id):

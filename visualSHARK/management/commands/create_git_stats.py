@@ -35,14 +35,16 @@ class Command(BaseCommand):
         parser.add_argument('project', help='which project')
 
     def get_version_tags(self, project_name, vcs_id):
-        versions = tag_filter(project_name, Tag.objects.filter(vcs_system_id=vcs_id), discard_qualifiers=True, discard_patch=True)
+        commit_ids = Commit.objects.filter(vcs_system_ids=vcs_id).scalar('id')
+        tags = Tag.objects.filter(commit_id__in=commit_ids) if commit_ids else []
+        versions = tag_filter(project_name, tags, discard_qualifiers=True, discard_patch=True) if tags else []
 
-        cg = CommitGraph.objects.get(vcs_system_id=vcs_id)
+        cg = CommitGraph.objects.filter(vcs_system_id=vcs_id).first()
+        if not getattr(cg, 'directed_pickle', None): return []
         dg = nx.read_gpickle(cg.directed_pickle.path)
 
         import importlib
         approach = 'commit_to_commit'
-        # mod = importlib.import_module('mynbouSHARK.path_approaches.{}'.format(approach))
         try:
             mod = importlib.import_module('mynbou.path_approaches.{}'.format(approach))
         except ModuleNotFoundError:
@@ -136,7 +138,10 @@ class Command(BaseCommand):
         for k, v in file_authors.items():
             data['avg_authors_per_file'] += len(v)
 
-        data['avg_authors_per_file'] /= len(file_authors)
+        if len(file_authors) > 0:
+            data['avg_authors_per_file'] /= len(file_authors)
+        else:
+            data['avg_authors_per_file'] = 0
         data['authors'] = len(commit_authors)
         return data
 

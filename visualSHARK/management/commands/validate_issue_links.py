@@ -7,7 +7,7 @@ import sys
 import re
 
 from django.core.management.base import BaseCommand
-from visualSHARK.models import Issue, Project, Commit
+from visualSHARK.models import Issue, VCSSystem, Project, Commit
 
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
@@ -24,8 +24,7 @@ class Command(BaseCommand):
 
     help = 'Validate the issue links with a heuristic'
 
-    # direct_link_jira = re.compile('(?P<ID>[A-Z][A-Z0-9_]+-[0-9]+)', re.M)
-    direct_link_jira = re.compile('(?P<ID>([A-Z][A-Z0-9_]+-[0-9]+|#[0-9]+|[0-9]+))', re.M)
+    direct_link_jira = re.compile('(?P<ID>([A-Z][A-Z0-9_]+-[0-9]+|#[0-9]+))', re.M)
 
     def handle(self, *args, **options):
         start = timeit.default_timer()
@@ -37,33 +36,17 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('[OK]') + ' Finished in {:.3f}s '.format(end))
 
     def perform_heuristic(self, project_id):
-        print(f"Running perform_heuristic for Project ID: {project_id}")
-
-        # Bypass the model lookup mismatch and find all commits with links directly
-        commits_query = Commit.objects.timeout(False).filter(
-            __raw__={
-                'linked_issue_ids.0': {'$exists': True}
-            }
-        ).only('id', 'revision_hash', 'vcs_system_ids', 'linked_issue_ids', 'message', 'labels', 'szz_issue_ids')
-
-        print(f"Found {commits_query.count()} raw commits with active issue associations.")
-
+        vcs_system_id = VCSSystem.objects(project_id=project_id).first()
         processed_count = 0
         matched_count = 0
-
-        for commit in commits_query:
+        for commit in Commit.objects(vcs_system_ids=vcs_system_id).only('id',
+                                                                       'revision_hash', 'vcs_system_ids',
+                                                                       'linked_issue_ids', 'message',
+                                                                       'labels', 'szz_issue_ids'):
             processed_count += 1
-            
-            # The heuristic logic by design only evaluates commits that have exactly 1 link
+            # heuristic only applies to commits that have a single issue link
             if commit.linked_issue_ids and len(commit.linked_issue_ids) == 1:
-                try:
-                    issue = Issue.objects(id=commit.linked_issue_ids[0]).get()
-                except Exception:
-                    # Skip cleanly if the referenced issue object does not exist in the database
-                    continue
-
-                # print(f"Commit Message: '{commit.message.strip()}'")
-                # print(f"Linked Issue External ID: '{issue.external_id}'")
+                issue = Issue.objects(id=commit.linked_issue_ids[0]).get()
                 
                 # Safe parsing block for the Issue tracking ID string
                 try:
@@ -106,4 +89,4 @@ class Command(BaseCommand):
                         set__validations=commit.validations
                     )
 
-        print(f"Processed {processed_count} loops. Successfully matched & saved {matched_count} links to DB!")
+        log.info(f"Processed {processed_count} loops. Successfully matched & saved {matched_count} links to DB!")

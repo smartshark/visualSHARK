@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 import os
 import sys
-from pycoshark.mongomodels import IssueSystem, Commit, Issue
-IssueSystem._meta['strict'] = False
-Commit._meta['strict'] = False
-Issue._meta['strict'] = False
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sntest.settings")
