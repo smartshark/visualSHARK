@@ -1446,7 +1446,9 @@ class LineLabelSet(APIView):
 
     def _last_training_issue(self, username):
         for external_id in self.training_issues:
-            i = Issue.objects.get(external_id=external_id, issue_type_verified='bug')
+            i = Issue.objects.filter(external_id=external_id, issue_type_verified='bug').first()
+            if not i:
+                continue
             for c in Commit.objects.filter(fixed_issue_ids=i.id).only('id'):
                 for fa in FileAction.objects.filter(commit_id=c.id):
                     for h in Hunk.objects.filter(file_action_id=fa.id):

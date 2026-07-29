@@ -27,11 +27,6 @@ class CommitGraphSerializer(rserializers.ModelSerializer):
         fields = ('id', 'vcs_system_id', 'title', 'directed_graph')
         lookup_field = ('vcs_system_id')
 
-    def to_representation(self, instance):
-        ret = super().to_representation(instance)
-        ret['directed_graph'] = json.load(instance.directed_graph.file)
-        return ret
-
 
 class FileSerializer(serializers.DocumentSerializer):
     vcs_system_ids = rserializers.SerializerMethodField()
