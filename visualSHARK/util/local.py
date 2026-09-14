@@ -23,7 +23,7 @@ def create_vcs_history(data):
 
 
     agg = {}
-    for c in Commit.objects.filter(vcs_system_id=data['vcs_system_id']).order_by('committer_date'):
+    for c in Commit.objects.filter(vcs_system_ids=data['vcs_system_id']).order_by('committer_date'):
         dt = c.committer_date
         utc = datetime.fromtimestamp(c.committer_date.timestamp() + (c.committer_date_offset * 60))
         date = str(utc.date())

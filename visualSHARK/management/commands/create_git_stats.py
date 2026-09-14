@@ -35,14 +35,24 @@ class Command(BaseCommand):
         parser.add_argument('project', help='which project')
 
     def get_version_tags(self, project_name, vcs_id):
-        versions = tag_filter(project_name, Tag.objects.filter(vcs_system_id=vcs_id), discard_qualifiers=True, discard_patch=True)
+        commit_ids = Commit.objects.filter(vcs_system_ids=vcs_id).scalar('id')
+        tags = Tag.objects.filter(commit_id__in=commit_ids) if commit_ids else []
+        versions = tag_filter(project_name, tags, discard_qualifiers=True, discard_patch=True) if tags else []
 
-        cg = CommitGraph.objects.get(vcs_system_id=vcs_id)
+        cg = CommitGraph.objects.filter(vcs_system_id=vcs_id).first()
+        if not getattr(cg, 'directed_pickle', None): return []
         dg = nx.read_gpickle(cg.directed_pickle.path)
 
         import importlib
         approach = 'commit_to_commit'
-        mod = importlib.import_module('mynbouSHARK.path_approaches.{}'.format(approach))
+        try:
+            mod = importlib.import_module('mynbou.path_approaches.{}'.format(approach))
+        except ModuleNotFoundError:
+            mod = None
+        
+        if mod is None:
+            print(f"[Warning] Approach module '{approach}' not found. Skipping version tag extraction.")
+            return []
 
         for i, version in enumerate(versions):
             if len(versions) <= i + 1:
@@ -52,7 +62,7 @@ class Command(BaseCommand):
 
             # tags without branches from svn->git
             start_commit = versions[i]['revision']
-            while not Commit.objects.get(vcs_system_id=vcs_id, revision_hash=start_commit).branches:
+            while not Commit.objects.get(vcs_system_ids=vcs_id, revision_hash=start_commit).branches:
                 print('start_commit {} has no branches, trying parent'.format(start_commit))
                 start_commit = list(dg.pred[start_commit])[0]
 
@@ -84,7 +94,7 @@ class Command(BaseCommand):
                 'other_lines_deleted': 0,
                 'tags': []
                 }
-        for c in Commit.objects.filter(vcs_system_id=vcs_id):
+        for c in Commit.objects.filter(vcs_system_ids=vcs_id):
 
             for tag in Tag.objects.filter(commit_id=c.id):
                 data['tags'].append(tag.name)
@@ -128,7 +138,10 @@ class Command(BaseCommand):
         for k, v in file_authors.items():
             data['avg_authors_per_file'] += len(v)
 
-        data['avg_authors_per_file'] /= len(file_authors)
+        if len(file_authors) > 0:
+            data['avg_authors_per_file'] /= len(file_authors)
+        else:
+            data['avg_authors_per_file'] = 0
         data['authors'] = len(commit_authors)
         return data
 

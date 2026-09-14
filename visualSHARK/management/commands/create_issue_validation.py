@@ -35,13 +35,33 @@ class Command(BaseCommand):
 
         # map issue_ids to their linked commits
         cmap = {}
-        for commit in Commit.objects.timeout(False).filter(linked_issue_ids__0__exists=True).only('id', 'linked_issue_ids'):
+        commit_qs = Commit.objects.timeout(False).filter(linked_issue_ids__0__exists=True).only('id', 'linked_issue_ids')
+        log.info(f"Total commits with 'linked_issue_ids' found by MongoEngine: {commit_qs.count()}")
+        
+        for commit in commit_qs:
             for l in commit.linked_issue_ids:
                 cmap[l] = commit.id
 
-        for project in Project.objects.timeout(False).all():
-            for issue_system in IssueSystem.objects.timeout(False).filter(project_id=project.id):
-                for issue in Issue.objects.timeout(False).filter(issue_system_id=issue_system.id):
+        log.info(f"Total mapped issue keys collected in cmap: {len(cmap.keys())}")
+
+        projects = Project.objects.timeout(False).all()
+        log.info(f"Total projects found in MongoEngine: {projects.count()}")
+
+        for project in projects:
+            log.info(f"Processing Project: {project.name} (ID: {project.id})")
+            
+            issue_systems = IssueSystem.objects.timeout(False).filter(project_id=project.id)
+            log.info(f"Found {issue_systems.count()} IssueSystems for this project.")
+            
+            for issue_system in issue_systems:
+                log.info(f"Processing IssueSystem ID: {issue_system.id}")
+                
+                issues = Issue.objects.timeout(False).filter(issue_system_ids=issue_system.id)
+                log.info(f"Found {issues.count()} raw Issues inside this IssueSystem.")
+
+                created_in_this_system = 0
+                
+                for issue in issues:
                     linked = issue.id in cmap.keys()
                     issue_type_unified = ""
                     issue_type = ""
@@ -51,7 +71,6 @@ class Command(BaseCommand):
                         issue_type_unified = TICKET_TYPE_MAPPING.get(issue.issue_type.lower().strip())
                         if not issue_type_unified:
                             issue_type_unified = 'other'
-                            self.stdout.write(self.style.WARNING('[WARN]') + ' Issue type {} not found in unified mapping, setting to {}'.format(issue.issue_type, issue_type_unified))
 
                     validation, created = IssueValidation.objects.get_or_create(
                         project_id=project.id,
@@ -63,6 +82,8 @@ class Command(BaseCommand):
                         resolution=issue.issue_type_verified is not None
                     )
                     validation.save()
+                    if created:
+                        created_in_this_system += 1 
                     for key, value in issue.issue_type_manual.items():
                         validationUser, created = IssueValidationUser.objects.get_or_create(
                             user=User.objects.get(username=key),
@@ -70,6 +91,7 @@ class Command(BaseCommand):
                             label=value
                         )
                         validationUser.save()
+                log.info(f"Successfully saved {created_in_this_system} new SQL validation rows for this system.")
 
         end = timeit.default_timer() - start
         self.stdout.write(self.style.SUCCESS('[OK]') + ' Finished in {:.3f}s '.format(end))

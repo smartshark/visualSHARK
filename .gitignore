@@ -5,3 +5,7 @@ node_modules
 frontend/app/config/prod.env.js
 docs/build
 .idea/
+*build/*
+*.egg-info
+*.env.development.local
+*.pickle

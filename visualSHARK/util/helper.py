@@ -103,7 +103,7 @@ class Label(object):
             # now this is expensive but we really want to know what we had beforehand
             # this would be problematic for renamings!
             for parent_hash in commit.parents:
-                parent = Commit.objects.get(revision_hash=parent_hash, vcs_system_id=commit.vcs_system_id)
+                parent = Commit.objects.get(revision_hash=parent_hash, vcs_system_ids=commit.vcs_system_id)
                 for ces2 in CodeEntityState.objects.filter(file_id=file.id, id__in=parent.code_entity_states, ce_type='file'):
                     entities[k]['pmd_linter_previous'] += ces2.linter
 
@@ -181,7 +181,7 @@ class Label(object):
                 # if project_identifier in ['ZK', 'KEEPER', 'ZOOKEEPR']:
                 #     issue_id = issue_id.replace(project_identifier, 'ZOOKEEPER')
 
-                i = Issue.objects.get(issue_system_id=its.id, external_id=issue_id)
+                i = Issue.objects.get(issue_system_ids=its.id, external_id=issue_id)
                 tmp = {'issue_id': str(i.id), 'issue': issue_id, 'exists': True, 'type': i.issue_type, 'status': i.status, 'resolution': i.resolution, 'created_at': str(i.created_at), 'updated_at': str(i.updated_at), 'confidence': 1, 'confidence_reasons': []}
                 tmp['confidence_reasons'].append({'score': 1, 'reason': 'Issue with this ID found.'})
 
@@ -224,7 +224,7 @@ class Label(object):
                 # if project_identifier in ['ZK', 'KEEPER', 'ZOOKEEPR']:
                 #     issue_id = issue_id.replace(project_identifier, 'ZOOKEEPER')
 
-                i = Issue.objects.get(issue_system_id=its.id, external_id=issue_id)
+                i = Issue.objects.get(issue_system_ids=its.id, external_id=issue_id)
                 tmp = {'issue_id': str(i.id), 'issue': issue_id, 'exists': True, 'type': i.issue_type, 'status': i.status, 'resolution': i.resolution, 'created_at': str(i.created_at), 'updated_at': str(i.updated_at), 'confidence': 1, 'confidence_reasons': []}
                 tmp['confidence_reasons'].append({'score': 1, 'reason': 'Issue with this ID found.'})
 

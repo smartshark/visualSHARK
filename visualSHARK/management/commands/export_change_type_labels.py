@@ -31,5 +31,5 @@ class Command(BaseCommand):
 
             labels.append({'project_name': c1.project_name, 'revision_hash': c1.revision_hash, 'internal_quality': quality_improving, 'external_quality': bug_fixing})
 
-        with open('change_type_label_export.pickle', 'wb') as f:
+        with open('change_types.pickle', 'wb') as f:
             pickle.dump(labels, f)
